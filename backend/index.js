@@ -14,6 +14,8 @@ app.get("/api/accept-connection/:request_id", (req, res) => {
   res.redirect(deepLink);
 });
 
-app.listen(3000, () => {
+const PORT = process.env.PORT || 3000;
+
+app.listen(PORT, () => {
   console.log("Servidor en http://localhost:3000");
 });
