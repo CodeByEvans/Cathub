@@ -6,7 +6,7 @@ app.get("/", (req, res) => {
   res.send("Aquí está el backend de Cathub :)");
 });
 
-app.get("/api/accept-connection/:request_id", (req, res) => {
+app.get("/accept-connection/:request_id", (req, res) => {
   const requestId = req.params.request_id;
 
   const deepLink = `cathub://accept-connection/${requestId}`;
@@ -14,8 +14,10 @@ app.get("/api/accept-connection/:request_id", (req, res) => {
   res.redirect(deepLink);
 });
 
-const PORT = process.env.PORT || 3000;
+module.exports = app;
 
-app.listen(PORT, () => {
-  console.log("Servidor en http://localhost:3000");
-});
+if (require.main === module) {
+  app.listen(3000, () => {
+    console.log("🚀 Server started on http://localhost:3000");
+  });
+}
