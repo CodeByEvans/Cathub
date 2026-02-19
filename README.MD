@@ -43,18 +43,25 @@ my-romantic-widget/
 
 # Instalar dependencias de frontend y backend
 
+```text
 npm install
+```
 
 # Levantar frontend Vite
 
+```text
 npm run dev:frontend
+```
 
 # Levantar Tauri (desktop)
 
+```text
 npm run tauri-dev:frontend
+```
 
 # Levantar backend Node.js
 
+```text
 npm run dev:backend
 
 Copyright (c) 2026 CodeByEvans
@@ -64,3 +71,4 @@ Todos los derechos reservados.
 Queda prohibido cualquier uso, copia, distribución, modificación o explotación de este software sin autorización expresa del autor.
 
 Se permite únicamente la descarga y ejecución local con fines personales y educativos, sin fines comerciales ni distribución.
+```
