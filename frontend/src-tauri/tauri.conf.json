@@ -1,0 +1,104 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "Cathub",
+  "version": "0.1.0",
+  "identifier": "com.codebyevans.cathub",
+  "build": {
+    "beforeDevCommand": "npm run dev",
+    "devUrl": "http://localhost:1420",
+    "beforeBuildCommand": "npm run build",
+    "frontendDist": "../dist"
+  },
+  "app": {
+    "enableGTKAppId": false,
+    "macOSPrivateApi": true,
+    "security": {
+      "assetProtocol": {
+        "enable": false,
+        "scope": []
+      },
+      "capabilities": [
+        {
+          "identifier": "draggable-window",
+          "windows": [
+            "*"
+          ],
+          "permissions": [
+            "core:window:default",
+            "core:window:allow-start-dragging",
+            "store:default",
+            "core:window:allow-set-size",
+            "core:event:default",
+            "deep-link:default",
+            "deep-link:allow-register",
+            "deep-link:allow-get-current"
+          ]
+        }
+      ],
+      "dangerousDisableAssetCspModification": false,
+      "freezePrototype": false,
+      "pattern": {
+        "use": "brownfield"
+      },
+      "csp": null
+    },
+    "windows": [
+      {
+        "label": "main",
+        "title": "Cathub",
+        "width": 700,
+        "height": 200,
+        "resizable": false,
+        "transparent": true,
+        "decorations": false,
+        "shadow": false
+      }
+    ],
+    "withGlobalTauri": false
+  },
+  "bundle": {
+    "active": true,
+    "targets": "all",
+    "icon": [
+      "icons/android-chrome-512x512.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ],
+    "macOS": {
+      "dmg": {
+        "appPosition": {
+          "x": 180,
+          "y": 170
+        },
+        "applicationFolderPosition": {
+          "x": 480,
+          "y": 170
+        },
+        "windowSize": {
+          "height": 400,
+          "width": 660
+        }
+      },
+      "files": {},
+      "hardenedRuntime": true,
+      "minimumSystemVersion": "10.13",
+      "entitlements": "entitlements.plist"
+    }
+  },
+  "plugins": {
+    "features": {
+      "protocol": [
+        "all"
+      ]
+    },
+    "deep-link": {
+      "desktop": {
+        "schemes": [
+          "cathub"
+        ]
+      }
+    }
+  }
+}
