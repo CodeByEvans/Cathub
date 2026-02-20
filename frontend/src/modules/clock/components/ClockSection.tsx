@@ -1,5 +1,3 @@
-"use client";
-
 import { CathubLogo } from "@/globals/components/atoms/logo";
 import { useState, useEffect } from "react";
 
