@@ -9,12 +9,16 @@ import LinkModal from "./modules/connection/components/LinkModal";
 import { callService } from "./modules/call/services/call.service";
 import { appService } from "./services/app.service";
 import { IncomingCallModal } from "./modules/call/components/IncomingCallModal";
+import { SettingsPanel } from "./modules/settings/Settings";
+import { Button } from "./globals/components/atoms/button";
+import { Settings } from "lucide-react";
 
 function App() {
   const [userLinked, setUserLinked] = React.useState(true);
   const [partnerName, setPartnerName] = React.useState("Amor");
   const [isLoading, setIsLoading] = React.useState(true);
   const [incomingCall, setIncomingCall] = React.useState(false);
+  const [showSettings, setShowSettings] = React.useState(false);
 
   useEffect(() => {
     const init = async () => {
@@ -85,6 +89,22 @@ function App() {
       className="w-[700px] h-[200px] rounded-xl border border-border/50 shadow-xl overflow-hidden py-4"
       data-tauri-drag-region
     >
+      <Button
+        variant="ghost"
+        size="icon"
+        onClick={() => setShowSettings(true)}
+        className="absolute top-1 right-1 z-10"
+      >
+        <Settings />
+      </Button>
+      <SettingsPanel
+        isOpen={showSettings}
+        onClose={() => setShowSettings(false)}
+        onThemeChange={(theme) => console.log("Theme changed to:", theme)}
+        onEditProfile={() => console.log("Edit profile")}
+        onBreakConnection={() => console.log("Break connection")}
+        onLogout={() => console.log("Logout")}
+      />
       {userLinked ? null : <LinkModal />}
       {/* Clima + Reloj */}
       <section className="flex h-full divide-x divide-border/30">
