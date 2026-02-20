@@ -16,11 +16,7 @@ export function CathubLogo({ size = "md", className, mode }: CathubLogoProps) {
 
   return (
     <motion.div
-      className={cn(
-        "relative flex items-center justify-center rounded-full bg-primary shadow-md overflow-hidden",
-        sizeClasses[size],
-        className,
-      )}
+      className={cn("rounded-full", sizeClasses[size], className)}
       animate={{
         rotateY: mode === "register" ? 180 : 0,
         scale: mode === "register" ? 1.05 : 1,
@@ -31,9 +27,9 @@ export function CathubLogo({ size = "md", className, mode }: CathubLogoProps) {
       }}
     >
       <img
-        src="/cathub.svg"
+        src="/logo.svg"
         alt="Cathub Logo"
-        className="w-3/4 h-3/4 object-contain -translate-y-1"
+        className="w-full h-full object-contain"
       />
     </motion.div>
   );
