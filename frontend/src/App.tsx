@@ -9,7 +9,7 @@ import LinkModal from "./modules/connection/components/LinkModal";
 import { callService } from "./modules/call/services/call.service";
 import { appService } from "./services/app.service";
 import { IncomingCallModal } from "./modules/call/components/IncomingCallModal";
-import { SettingsPanel } from "./modules/settings/Settings";
+import { SettingsPanel } from "./modules/settings/components/Settings";
 import { Button } from "./globals/components/atoms/button";
 import { Settings } from "lucide-react";
 
