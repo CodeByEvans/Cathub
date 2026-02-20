@@ -11,6 +11,8 @@ import {
   Sparkles,
   ArrowRight,
   Monitor,
+  AppWindow,
+  Layers,
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
@@ -41,9 +43,31 @@ export function Introduction({
 }: IntroductionProps) {
   const [step, setStep] = useState(0);
   const [selectedTheme, setSelectedTheme] = useState<ThemeType>("light");
-  const [selectedBehavior, setSelectedBehavior] =
-    useState<BehaviorType>("widget");
+  const [selectedBehavior, setSelectedBehavior] = useState<BehaviorType | null>(
+    null,
+  );
   const [isAnimating, setIsAnimating] = useState(false);
+
+  const behaviorDetails: Record<
+    BehaviorType,
+    { title: string; content: string }
+  > = {
+    widget: {
+      title: "Widget en escritorio",
+      content:
+        "Se ancla en tu escritorio como un gadget. No ocupa espacio en la barra de tareas y siempre está ahí sin molestar.",
+    },
+    app: {
+      title: "Ventana normal",
+      content:
+        "Se comporta como cualquier otra app. Puedes minimizarla, moverla y alternar con otras ventanas fácilmente.",
+    },
+    floating: {
+      title: "Siempre visible",
+      content:
+        "Flota sobre todas las demás ventanas. Perfecto si quieres tenerla presente mientras trabajas en otra cosa.",
+    },
+  };
 
   const steps: Step[] = [
     {
@@ -134,71 +158,69 @@ export function Introduction({
 
   const renderFeaturePreview = (feature: FeatureType) => {
     if (feature === "behavior") {
+      const options: {
+        value: BehaviorType;
+        label: string;
+        sub: string;
+        icon: React.ReactNode;
+      }[] = [
+        {
+          value: "widget",
+          label: "Widget",
+          sub: "Solo en escritorio",
+          icon: <Monitor className="w-4 h-4" />,
+        },
+        {
+          value: "app",
+          label: "App",
+          sub: "Ventana normal",
+          icon: <AppWindow className="w-4 h-4" />,
+        },
+        {
+          value: "floating",
+          label: "Flotante",
+          sub: "Siempre visible",
+          icon: <Layers className="w-4 h-4" />,
+        },
+      ];
+
       return (
         <div className="flex flex-col gap-1.5">
-          <button
-            onClick={() => handleBehaviorChange("widget")}
-            className={cn(
-              "w-40 h-9 rounded-lg flex items-center gap-2 px-3 transition-all duration-300 border-2",
-              "bg-secondary/50",
-              selectedBehavior === "widget"
-                ? "border-primary ring-2 ring-primary/30 scale-[1.02]"
-                : "border-border hover:border-primary/50",
-            )}
-            title="Widget en escritorio"
-          >
-            <div className="w-2.5 h-2.5 rounded bg-primary/70" />
-            <div className="flex-1 text-left">
-              <div className="text-xs font-bold text-foreground leading-tight">
-                Widget
+          {options.map(({ value, label, sub, icon }) => (
+            <button
+              key={value}
+              onClick={() => handleBehaviorChange(value)}
+              className={cn(
+                "w-44 h-9 rounded-lg flex items-center gap-3 px-3 transition-all duration-300 border-2",
+                "bg-secondary/50",
+                selectedBehavior === value
+                  ? "border-primary ring-2 ring-primary/30 scale-[1.02] bg-primary/10 text-primary"
+                  : "border-border text-muted-foreground hover:border-primary/50 hover:text-foreground",
+              )}
+            >
+              <div
+                className={cn(
+                  "flex-shrink-0 transition-colors duration-300",
+                  selectedBehavior === value
+                    ? "text-primary"
+                    : "text-muted-foreground",
+                )}
+              >
+                {icon}
               </div>
-              <div className="text-[8px] text-muted-foreground leading-tight">
-                Solo en escritorio
+              <div className="flex-1 text-left leading-none">
+                <div className="text-xs font-semibold text-foreground">
+                  {label}
+                </div>
+                <div className="text-[10px] text-muted-foreground mt-0.5">
+                  {sub}
+                </div>
               </div>
-            </div>
-          </button>
-          <button
-            onClick={() => handleBehaviorChange("app")}
-            className={cn(
-              "w-40 h-9 rounded-lg flex items-center gap-2 px-3 transition-all duration-300 border-2",
-              "bg-secondary/50",
-              selectedBehavior === "app"
-                ? "border-primary ring-2 ring-primary/30 scale-[1.02]"
-                : "border-border hover:border-primary/50",
-            )}
-            title="App normal"
-          >
-            <div className="w-2.5 h-2.5 rounded bg-primary/70" />
-            <div className="flex-1 text-left">
-              <div className="text-xs font-bold text-foreground leading-tight">
-                App
-              </div>
-              <div className="text-[8px] text-muted-foreground leading-tight">
-                Ventana normal
-              </div>
-            </div>
-          </button>
-          <button
-            onClick={() => handleBehaviorChange("floating")}
-            className={cn(
-              "w-40 h-9 rounded-lg flex items-center gap-2 px-3 transition-all duration-300 border-2",
-              "bg-secondary/50",
-              selectedBehavior === "floating"
-                ? "border-primary ring-2 ring-primary/30 scale-[1.02]"
-                : "border-border hover:border-primary/50",
-            )}
-            title="Flotante sobre todo"
-          >
-            <div className="w-2.5 h-2.5 rounded bg-primary/70" />
-            <div className="flex-1 text-left">
-              <div className="text-xs font-bold text-foreground leading-tight">
-                Flotante
-              </div>
-              <div className="text-[8px] text-muted-foreground leading-tight">
-                Siempre visible
-              </div>
-            </div>
-          </button>
+              {selectedBehavior === value && (
+                <div className="w-1.5 h-1.5 rounded-full bg-primary flex-shrink-0" />
+              )}
+            </button>
+          ))}
         </div>
       );
     }
@@ -291,11 +313,21 @@ export function Introduction({
 
           {/* Text content */}
           <div className="flex-1 min-w-0">
-            <h1 className="text-xl font-bold text-foreground mb-2">
-              {currentStep.title}
+            <h1
+              key={`title-${currentStep.feature === "behavior" && selectedBehavior ? selectedBehavior : step}`}
+              className="text-xl font-bold text-foreground mb-2 animate-in fade-in slide-in-from-bottom-4 duration-300"
+            >
+              {currentStep.feature === "behavior" && selectedBehavior
+                ? behaviorDetails[selectedBehavior].title
+                : currentStep.title}
             </h1>
-            <p className="text-sm text-muted-foreground leading-relaxed line-clamp-2">
-              {currentStep.content}
+            <p
+              key={`content-${currentStep.feature === "behavior" && selectedBehavior ? selectedBehavior : step}`}
+              className="text-sm text-muted-foreground leading-relaxed line-clamp-2 animate-in fade-in slide-in-from-bottom-4 duration-300 delay-75"
+            >
+              {currentStep.feature === "behavior" && selectedBehavior
+                ? behaviorDetails[selectedBehavior].content
+                : currentStep.content}
             </p>
           </div>
         </div>
