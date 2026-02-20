@@ -1,5 +1,3 @@
-"use client";
-
 import React from "react";
 
 import { useState } from "react";
@@ -12,15 +10,16 @@ import {
   ChevronRight,
   Sparkles,
   ArrowRight,
+  Monitor,
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { Button } from "@/globals/components/atoms/button";
 import { CathubLogo } from "@/globals/components/atoms/logo";
-import { load } from "@tauri-apps/plugin-store";
 
-type FeatureType = "clock" | "messages" | "call" | "theme";
+type FeatureType = "clock" | "messages" | "call" | "theme" | "behavior";
 type ThemeType = "light" | "dark" | "glass";
+type BehaviorType = "widget" | "app" | "floating";
 
 interface Step {
   title: string;
@@ -31,11 +30,19 @@ interface Step {
 
 interface IntroductionProps {
   onComplete?: () => void;
+  onThemeChange?: (theme: ThemeType) => void;
+  onBehaviorChange?: (behavior: BehaviorType) => void;
 }
 
-export function Introduction({ onComplete }: IntroductionProps) {
+export function Introduction({
+  onComplete,
+  onThemeChange,
+  onBehaviorChange,
+}: IntroductionProps) {
   const [step, setStep] = useState(0);
   const [selectedTheme, setSelectedTheme] = useState<ThemeType>("light");
+  const [selectedBehavior, setSelectedBehavior] =
+    useState<BehaviorType>("widget");
   const [isAnimating, setIsAnimating] = useState(false);
 
   const steps: Step[] = [
@@ -63,6 +70,11 @@ export function Introduction({ onComplete }: IntroductionProps) {
       feature: "call",
     },
     {
+      title: "Comportamiento del widget",
+      content: "Elige como quieres que Cathub se comporte en tu escritorio.",
+      feature: "behavior",
+    },
+    {
       title: "Tu estilo",
       content: "Personaliza Cathub con el tema que mas te guste.",
       feature: "theme",
@@ -70,16 +82,6 @@ export function Introduction({ onComplete }: IntroductionProps) {
   ];
 
   const currentStep = steps[step];
-
-  const finishIntro = async () => {
-    try {
-      const store = await load("store.json");
-      await store.set("theme", selectedTheme);
-      await store.set("introduction_completed", true);
-    } catch (error) {
-      console.error(error);
-    }
-  };
 
   const handleNext = () => {
     if (isAnimating) return;
@@ -91,7 +93,6 @@ export function Introduction({ onComplete }: IntroductionProps) {
         setIsAnimating(false);
       }, 150);
     } else {
-      finishIntro();
       onComplete?.();
     }
   };
@@ -112,6 +113,12 @@ export function Introduction({ onComplete }: IntroductionProps) {
     if (theme !== "light") {
       document.documentElement.classList.add(theme);
     }
+    onThemeChange?.(theme);
+  };
+
+  const handleBehaviorChange = (behavior: BehaviorType) => {
+    setSelectedBehavior(behavior);
+    onBehaviorChange?.(behavior);
   };
 
   const FeatureIcon = ({ feature }: { feature: FeatureType }) => {
@@ -119,12 +126,83 @@ export function Introduction({ onComplete }: IntroductionProps) {
       clock: <Clock className="w-8 h-8" />,
       messages: <MessageSquare className="w-8 h-8" />,
       call: <Phone className="w-8 h-8" />,
+      behavior: <Monitor className="w-8 h-8" />,
       theme: <Palette className="w-8 h-8" />,
     };
     return icons[feature];
   };
 
   const renderFeaturePreview = (feature: FeatureType) => {
+    if (feature === "behavior") {
+      return (
+        <div className="flex flex-col gap-1.5">
+          <button
+            onClick={() => handleBehaviorChange("widget")}
+            className={cn(
+              "w-40 h-9 rounded-lg flex items-center gap-2 px-3 transition-all duration-300 border-2",
+              "bg-secondary/50",
+              selectedBehavior === "widget"
+                ? "border-primary ring-2 ring-primary/30 scale-[1.02]"
+                : "border-border hover:border-primary/50",
+            )}
+            title="Widget en escritorio"
+          >
+            <div className="w-2.5 h-2.5 rounded bg-primary/70" />
+            <div className="flex-1 text-left">
+              <div className="text-xs font-bold text-foreground leading-tight">
+                Widget
+              </div>
+              <div className="text-[8px] text-muted-foreground leading-tight">
+                Solo en escritorio
+              </div>
+            </div>
+          </button>
+          <button
+            onClick={() => handleBehaviorChange("app")}
+            className={cn(
+              "w-40 h-9 rounded-lg flex items-center gap-2 px-3 transition-all duration-300 border-2",
+              "bg-secondary/50",
+              selectedBehavior === "app"
+                ? "border-primary ring-2 ring-primary/30 scale-[1.02]"
+                : "border-border hover:border-primary/50",
+            )}
+            title="App normal"
+          >
+            <div className="w-2.5 h-2.5 rounded bg-primary/70" />
+            <div className="flex-1 text-left">
+              <div className="text-xs font-bold text-foreground leading-tight">
+                App
+              </div>
+              <div className="text-[8px] text-muted-foreground leading-tight">
+                Ventana normal
+              </div>
+            </div>
+          </button>
+          <button
+            onClick={() => handleBehaviorChange("floating")}
+            className={cn(
+              "w-40 h-9 rounded-lg flex items-center gap-2 px-3 transition-all duration-300 border-2",
+              "bg-secondary/50",
+              selectedBehavior === "floating"
+                ? "border-primary ring-2 ring-primary/30 scale-[1.02]"
+                : "border-border hover:border-primary/50",
+            )}
+            title="Flotante sobre todo"
+          >
+            <div className="w-2.5 h-2.5 rounded bg-primary/70" />
+            <div className="flex-1 text-left">
+              <div className="text-xs font-bold text-foreground leading-tight">
+                Flotante
+              </div>
+              <div className="text-[8px] text-muted-foreground leading-tight">
+                Siempre visible
+              </div>
+            </div>
+          </button>
+        </div>
+      );
+    }
+
     if (feature === "theme") {
       return (
         <div className="flex gap-3">
@@ -188,11 +266,8 @@ export function Introduction({ onComplete }: IntroductionProps) {
   };
 
   return (
-    <main className="w-[700px] h-[200px] rounded-xl border border-border/50 shadow-xl overflow-hidden">
-      <div
-        data-tauri-drag-region
-        className="h-full flex flex-col justify-between p-5"
-      >
+    <section className="w-[800px] h-[200px] bg-card/95 glass-effect rounded-xl border border-border/50 shadow-xl overflow-hidden">
+      <div className="h-full flex flex-col justify-between p-5">
         {/* Main content */}
         <div
           className={cn(
@@ -282,7 +357,7 @@ export function Introduction({ onComplete }: IntroductionProps) {
           </div>
         </div>
       </div>
-    </main>
+    </section>
   );
 }
 
