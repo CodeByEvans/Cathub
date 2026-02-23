@@ -3,6 +3,7 @@ import { ArrowLeft, Palette, UserX, UserCog, LogOut, X } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { Button } from "@/globals/components/atoms/button";
+import { themeService } from "@/services/theme.service";
 
 type ThemeType = "light" | "dark" | "glass";
 type WidgetSize = "lg" | "md" | "sm";
@@ -11,7 +12,7 @@ type ViewType = "main" | "theme";
 interface SettingsPanelProps {
   isOpen: boolean;
   onClose: () => void;
-  currentTheme?: ThemeType;
+  actualTheme: ThemeType;
   onThemeChange?: (theme: ThemeType) => void;
   onEditProfile?: () => void;
   onBreakConnection?: () => void;
@@ -22,24 +23,19 @@ interface SettingsPanelProps {
 export function SettingsPanel({
   isOpen,
   onClose,
-  currentTheme = "light",
-  onThemeChange,
+  actualTheme,
   onEditProfile,
   onBreakConnection,
   onLogout,
   size = "lg",
 }: SettingsPanelProps) {
-  const [selectedTheme, setSelectedTheme] = useState<ThemeType>(currentTheme);
+  const [selectedTheme, setSelectedTheme] = useState<ThemeType>(actualTheme);
   const [showConfirmBreak, setShowConfirmBreak] = useState(false);
   const [currentView, setCurrentView] = useState<ViewType>("main");
 
   const handleThemeChange = (theme: ThemeType) => {
+    themeService.setTheme(theme);
     setSelectedTheme(theme);
-    document.documentElement.classList.remove("light", "dark", "glass");
-    if (theme !== "light") {
-      document.documentElement.classList.add(theme);
-    }
-    onThemeChange?.(theme);
   };
 
   const handleBreakConnection = () => {
