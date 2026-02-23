@@ -19,6 +19,7 @@ function App() {
   const [isLoading, setIsLoading] = React.useState(true);
   const [incomingCall, setIncomingCall] = React.useState(false);
   const [showSettings, setShowSettings] = React.useState(false);
+  const [theme, setTheme] = React.useState<"light" | "dark" | "glass">("light");
 
   useEffect(() => {
     const init = async () => {
@@ -30,6 +31,7 @@ function App() {
 
         setUserLinked(state.isLinked);
         setPartnerName(state.partnerName);
+        setTheme(state.theme);
 
         callService.onIncomingCall(() => {
           console.log("📞 Estado React: llamada entrante");
@@ -55,10 +57,10 @@ function App() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-screen bg-white">
+      <div className="flex items-center justify-center h-screen bg-background text-foreground rounded-xl">
         <div className="text-center">
-          <div className="animate-spin h-12 w-12 border-4 border-blue-500 border-t-transparent rounded-full mx-auto mb-4"></div>
-          <p className="text-gray-600">Cargando...</p>
+          <div className="animate-spin h-12 w-12 border-4 border-current border-t-transparent rounded-full mx-auto mb-4"></div>
+          <p>Cargando...</p>
         </div>
       </div>
     );
@@ -100,7 +102,7 @@ function App() {
       <SettingsPanel
         isOpen={showSettings}
         onClose={() => setShowSettings(false)}
-        onThemeChange={(theme) => console.log("Theme changed to:", theme)}
+        actualTheme={theme}
         onEditProfile={() => console.log("Edit profile")}
         onBreakConnection={() => console.log("Break connection")}
         onLogout={() => console.log("Logout")}
