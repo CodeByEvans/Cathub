@@ -3,8 +3,9 @@ import { connectionService } from "@/modules/connection/services/connection.serv
 import { callService } from "@/modules/call/services/call.service";
 import { presenceService } from "./presence.service"; // ← Importar
 import { getValue, setValue, deleteValue } from "./store.service";
+import { Theme, themeService } from "./theme.service";
 
-interface AppState {
+export interface AppState {
   isLinked: boolean;
   partnerName: string;
   partnerId: string | null;
@@ -12,8 +13,16 @@ interface AppState {
 }
 
 class AppService {
-  async initialize(): Promise<AppState> {
+  async initialize(): Promise<AppState & { theme: Theme }> {
+    // --------------------------
+    // 0. Inicializar theme
+    // --------------------------
+    const theme = themeService.currentTheme();
+    // Aquí tu singleton ya actualizó document.documentElement con la clase correcta
+
+    // --------------------------
     // 1. Obtener usuario actual
+    // --------------------------
     const {
       data: { user },
       error,
@@ -25,23 +34,24 @@ class AppService {
 
     const currentUserId = user.id;
 
-    // 2. Verificar si la caché es del usuario actual
+    // --------------------------
+    // 2. Verificar caché
+    // --------------------------
     const cachedUserId = await getValue("user_id");
-
     if (cachedUserId && cachedUserId !== currentUserId) {
       console.log("🧹 Usuario diferente detectado, limpiando caché...");
       await this.clearCache();
     }
 
-    // 3. Guardar el user_id actual
     await setValue("user_id", currentUserId);
 
-    // 4. Intentar obtener conexión desde caché
+    // --------------------------
+    // 3. Intentar obtener conexión desde caché
+    // --------------------------
     const cachedConnectionId = await getValue("connection_id");
     const cachedPartnerId = await getValue("partner_id");
     const cachedPartnerName = await getValue("partner_name");
 
-    // 5. Validar que la conexión en caché sea válida
     if (cachedConnectionId && cachedPartnerId) {
       const isValid = await this.validateConnection(
         currentUserId,
@@ -52,9 +62,7 @@ class AppService {
       if (isValid) {
         console.log("✅ Conexión en caché válida");
 
-        // ✅ CAMBIO: Usar presenceService en lugar de startHeartbeat
         await presenceService.start(currentUserId);
-
         await callService.initialize();
 
         return {
@@ -62,6 +70,7 @@ class AppService {
           partnerName: cachedPartnerName || "Amor",
           partnerId: cachedPartnerId,
           connectionId: cachedConnectionId,
+          theme, // ← incluir aquí
         };
       } else {
         console.log("⚠️ Conexión en caché inválida, limpiando...");
@@ -69,8 +78,9 @@ class AppService {
       }
     }
 
-    // 6. Si no hay caché válida, buscar conexión en BD
-    console.log("🔍 Buscando conexión en BD...");
+    // --------------------------
+    // 4. Buscar conexión en BD
+    // --------------------------
     const connection = await connectionService.getConnection();
 
     if (connection) {
@@ -88,9 +98,7 @@ class AppService {
         await setValue("partner_id", partnerId);
       }
 
-      // ✅ CAMBIO: Usar presenceService
       await presenceService.start(currentUserId);
-
       await callService.initialize();
 
       return {
@@ -98,16 +106,21 @@ class AppService {
         partnerName: connection.partnerName,
         partnerId: partnerId,
         connectionId: connection.id,
+        theme, // ← incluir aquí también
       };
     }
 
-    // 7. No hay conexión
+    // --------------------------
+    // 5. Usuario sin pareja
+    // --------------------------
     console.log("ℹ️ Usuario sin pareja");
+
     return {
       isLinked: false,
       partnerName: "",
       partnerId: null,
       connectionId: null,
+      theme, // ← fallback theme
     };
   }
 
