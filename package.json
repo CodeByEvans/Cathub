@@ -6,7 +6,7 @@
     ],
     "scripts": {
         "dev:frontend": "npm --prefix frontend run dev",
-        "tauri-dev:frontend": "npm --prefix frontend run tauri dev",
+        "tauri-dev": "npm --prefix frontend run tauri dev",
         "dev:backend": "npm --prefix backend run dev"
     }
 }
