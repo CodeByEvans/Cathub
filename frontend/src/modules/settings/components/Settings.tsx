@@ -1,13 +1,13 @@
 import { useState } from "react";
-import { ArrowLeft, Palette, UserX, UserCog, LogOut, X } from "lucide-react";
+import { UserX, UserCog, LogOut, X, Layout } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { Button } from "@/globals/components/atoms/button";
-import { themeService } from "@/services/theme.service";
+import { AppSettings } from "./AppSettings";
 
 type ThemeType = "light" | "dark" | "glass";
 type WidgetSize = "lg" | "md" | "sm";
-type ViewType = "main" | "theme";
+type ViewType = "main" | "app-settings";
 
 interface SettingsPanelProps {
   isOpen: boolean;
@@ -23,20 +23,13 @@ interface SettingsPanelProps {
 export function SettingsPanel({
   isOpen,
   onClose,
-  actualTheme,
   onEditProfile,
   onBreakConnection,
   onLogout,
   size = "lg",
 }: SettingsPanelProps) {
-  const [selectedTheme, setSelectedTheme] = useState<ThemeType>(actualTheme);
   const [showConfirmBreak, setShowConfirmBreak] = useState(false);
   const [currentView, setCurrentView] = useState<ViewType>("main");
-
-  const handleThemeChange = (theme: ThemeType) => {
-    themeService.setTheme(theme);
-    setSelectedTheme(theme);
-  };
 
   const handleBreakConnection = () => {
     setShowConfirmBreak(false);
@@ -96,16 +89,16 @@ export function SettingsPanel({
                   buttonClasses,
                   "flex-1 flex flex-col items-center justify-center border-2 bg-gradient-to-br from-primary/10 to-primary/5 hover:from-primary/20 hover:to-primary/10 border-primary/30 hover:border-primary/50 transition-all duration-200",
                 )}
-                onClick={() => setCurrentView("theme")}
+                onClick={() => setCurrentView("app-settings")}
               >
-                <Palette className={cn(iconSize, "text-primary mb-1")} />
+                <Layout className={cn(iconSize, "text-primary mb-1")} />
                 <span
                   className={cn(
                     textSize,
                     " text-foreground text-center leading-tight",
                   )}
                 >
-                  Cambiar tema
+                  Configurar app
                 </span>
               </Button>
 
@@ -221,137 +214,8 @@ export function SettingsPanel({
             </div>
           </div>
         )}
-
-        {/* Theme Selection View */}
-        {currentView === "theme" && (
-          <div className={cn("h-full flex flex-col", padding)}>
-            {/* Back button */}
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setCurrentView("main")}
-              className={cn(
-                "self-start mb-2",
-                isSmall ? "h-5 text-[9px]" : "h-6 text-[10px]",
-              )}
-            >
-              <ArrowLeft
-                className={cn(isSmall ? "w-2.5 h-2.5 mr-1" : "w-3 h-3 mr-1")}
-              />
-              Volver
-            </Button>
-
-            {/* Theme options in horizontal row */}
-            <div className={cn("flex flex-1 items-center", gap)}>
-              <button
-                onClick={() => handleThemeChange("light")}
-                className={cn(
-                  "flex-1 h-full rounded-lg flex flex-col items-center justify-center gap-2 transition-all duration-200 border-2",
-                  "bg-gradient-to-br from-slate-50 to-slate-100",
-                  selectedTheme === "light"
-                    ? "border-primary ring-2 ring-primary/30"
-                    : "border-slate-200 hover:border-slate-300",
-                )}
-              >
-                <div
-                  className={cn(
-                    "rounded-full bg-gradient-to-br from-slate-300 to-slate-400",
-                    isSmall ? "w-8 h-8" : isMedium ? "w-12 h-12" : "w-16 h-16",
-                  )}
-                />
-                <div className="text-center px-2">
-                  <div
-                    className={cn(
-                      "text-slate-700 font-bold",
-                      isSmall ? "text-xs" : "text-sm",
-                    )}
-                  >
-                    Claro
-                  </div>
-                  <div
-                    className={cn(
-                      "text-slate-500 leading-tight",
-                      isSmall ? "text-[9px]" : "text-[10px]",
-                    )}
-                  >
-                    Para el día
-                  </div>
-                </div>
-              </button>
-
-              <button
-                onClick={() => handleThemeChange("dark")}
-                className={cn(
-                  "flex-1 h-full rounded-lg flex flex-col items-center justify-center gap-2 transition-all duration-200 border-2",
-                  "bg-gradient-to-br from-slate-800 to-slate-900",
-                  selectedTheme === "dark"
-                    ? "border-primary ring-2 ring-primary/30"
-                    : "border-slate-700 hover:border-slate-600",
-                )}
-              >
-                <div
-                  className={cn(
-                    "rounded-full bg-gradient-to-br from-slate-400 to-slate-500",
-                    isSmall ? "w-8 h-8" : isMedium ? "w-12 h-12" : "w-16 h-16",
-                  )}
-                />
-                <div className="text-center px-2">
-                  <div
-                    className={cn(
-                      "text-slate-300 font-bold",
-                      isSmall ? "text-xs" : "text-sm",
-                    )}
-                  >
-                    Oscuro
-                  </div>
-                  <div
-                    className={cn(
-                      "text-slate-400 leading-tight",
-                      isSmall ? "text-[9px]" : "text-[10px]",
-                    )}
-                  >
-                    Para la noche
-                  </div>
-                </div>
-              </button>
-
-              <button
-                onClick={() => handleThemeChange("glass")}
-                className={cn(
-                  "flex-1 h-full rounded-lg flex flex-col items-center justify-center gap-2 transition-all duration-200 border-2",
-                  "bg-gradient-to-br from-white/40 to-white/20 backdrop-blur-sm",
-                  selectedTheme === "glass"
-                    ? "border-primary ring-2 ring-primary/30"
-                    : "border-slate-300/30 hover:border-slate-400/50",
-                )}
-              >
-                <div
-                  className={cn(
-                    "rounded-full bg-gradient-to-br from-blue-300 to-slate-400 opacity-80",
-                    isSmall ? "w-8 h-8" : isMedium ? "w-12 h-12" : "w-16 h-16",
-                  )}
-                />
-                <div className="text-center px-2">
-                  <div
-                    className={cn(
-                      "text-slate-700 font-bold",
-                      isSmall ? "text-xs" : "text-sm",
-                    )}
-                  >
-                    Cristal
-                  </div>
-                  <div
-                    className={cn(
-                      "text-slate-600 leading-tight",
-                      isSmall ? "text-[9px]" : "text-[10px]",
-                    )}
-                  >
-                    Transparente
-                  </div>
-                </div>
-              </button>
-            </div>
-          </div>
+        {currentView === "app-settings" && (
+          <AppSettings setCurrentView={(view) => setCurrentView(view)} />
         )}
       </div>
     </>
