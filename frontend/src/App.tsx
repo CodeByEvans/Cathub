@@ -12,6 +12,7 @@ import { IncomingCallModal } from "./modules/call/components/IncomingCallModal";
 import { SettingsPanel } from "./modules/settings/components/Settings";
 import { Button } from "./globals/components/atoms/button";
 import { Settings } from "lucide-react";
+import { useClampOnMouseUp } from "./hooks/useClampOnMouseUp";
 
 function App() {
   const [userLinked, setUserLinked] = React.useState(true);
@@ -20,6 +21,9 @@ function App() {
   const [incomingCall, setIncomingCall] = React.useState(false);
   const [showSettings, setShowSettings] = React.useState(false);
   const [theme, setTheme] = React.useState<"light" | "dark" | "glass">("light");
+
+  const mainRef = React.useRef<HTMLElement>(null);
+  useClampOnMouseUp(mainRef, isLoading);
 
   useEffect(() => {
     const init = async () => {
@@ -34,11 +38,8 @@ function App() {
         setTheme(state.theme);
 
         callService.onIncomingCall(() => {
-          console.log("📞 Estado React: llamada entrante");
           setIncomingCall(true);
         });
-
-        console.log("✅ App inicializada:", state);
       } catch (error) {
         console.error("❌ Error inicializando app:", error);
         setUserLinked(false);
@@ -88,6 +89,7 @@ function App() {
 
   return (
     <main
+      ref={mainRef}
       className="w-[700px] h-[200px] rounded-xl border border-border/50 shadow-xl overflow-hidden py-4"
       data-tauri-drag-region
     >
