@@ -129,6 +129,11 @@
   --offline: oklch(0.5 0.02 240);
 }
 
+/* OS fixes */
+[data-platform="windows"] {
+  --radius: 0.3rem;
+}
+
 /* ==== Color overrides por usuario ==== */
 
 [data-color="red"] {

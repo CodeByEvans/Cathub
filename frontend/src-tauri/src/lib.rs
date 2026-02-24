@@ -21,6 +21,7 @@ pub fn run() {
         .plugin(tauri_plugin_deep_link::init())
         .plugin(tauri_plugin_store::Builder::new().build())
         .plugin(tauri_plugin_geolocation::init())
+        .plugin(tauri_plugin_os::init())
         .setup(|app| {
             let window = app.get_webview_window("main").unwrap();
 
@@ -34,8 +35,24 @@ pub fn run() {
             });
 
             #[cfg(target_os = "windows")]
-            apply_acrylic(&window, Some((0, 0, 0, 10)))
-                .expect("Unsupported platform! 'apply_blur' is only supported on Windows");
+            {
+                use windows_sys::Win32::Graphics::Dwm::{
+                    DwmSetWindowAttribute, DWMWA_WINDOW_CORNER_PREFERENCE,
+                };
+
+                apply_acrylic(&window, Some((0, 0, 0, 125))).expect("Windows only");
+
+                let hwnd = window.hwnd().unwrap().0; // sin el as isize
+                let preference: u32 = 2;
+                unsafe {
+                    DwmSetWindowAttribute(
+                        hwnd,
+                        DWMWA_WINDOW_CORNER_PREFERENCE.try_into().unwrap(),
+                        &preference as *const u32 as *const _,
+                        std::mem::size_of::<u32>() as u32,
+                    );
+                }
+            }
 
             #[cfg(target_os = "macos")]
             apply_vibrancy(&window, NSVisualEffectMaterial::HudWindow, None, Some(16.0))

@@ -288,7 +288,7 @@ export function Introduction({
   };
 
   return (
-    <section className="w-[800px] h-[200px] bg-card/95 glass-effect rounded-xl border border-border/50 shadow-xl overflow-hidden">
+    <section className="w-[700px] h-[200px] bg-background rounded-xl border border-border/50 shadow-xl overflow-hidden">
       <div className="h-full flex flex-col justify-between p-5">
         {/* Main content */}
         <div

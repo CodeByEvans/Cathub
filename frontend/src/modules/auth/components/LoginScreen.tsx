@@ -66,7 +66,7 @@ export const LoginScreen = () => {
     if (introduction_completed === true) {
       getCurrentWindow().setSize(new LogicalSize(400, 600));
     } else {
-      getCurrentWindow().setSize(new LogicalSize(800, 200));
+      getCurrentWindow().setSize(new LogicalSize(700, 200));
     }
   }, [introduction_completed]);
 
@@ -98,7 +98,7 @@ export const LoginScreen = () => {
       await authService.login(data.email, data.password);
       toast.success("Inicio de sesion exitoso");
       reset();
-      getCurrentWindow().setSize(new LogicalSize(800, 200));
+      getCurrentWindow().setSize(new LogicalSize(700, 200));
     } catch (error) {
       handleAuthError(error);
     }
