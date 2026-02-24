@@ -18,6 +18,8 @@ import {
 import { cn } from "@/lib/utils";
 import { Button } from "@/globals/components/atoms/button";
 import { CathubLogo } from "@/globals/components/atoms/logo";
+import { themeService } from "@/modules/settings/services/theme.service";
+import { windowService } from "../settings/services/window.service";
 
 type FeatureType = "clock" | "messages" | "call" | "theme" | "behavior";
 type ThemeType = "light" | "dark" | "glass";
@@ -32,13 +34,11 @@ interface Step {
 
 interface IntroductionProps {
   onComplete?: () => void;
-  onThemeChange?: (theme: ThemeType) => void;
   onBehaviorChange?: (behavior: BehaviorType) => void;
 }
 
 export function Introduction({
   onComplete,
-  onThemeChange,
   onBehaviorChange,
 }: IntroductionProps) {
   const [step, setStep] = useState(0);
@@ -132,17 +132,13 @@ export function Introduction({
   };
 
   const handleThemeChange = (theme: ThemeType) => {
+    themeService.setTheme(theme);
     setSelectedTheme(theme);
-    document.documentElement.classList.remove("light", "dark", "glass");
-    if (theme !== "light") {
-      document.documentElement.classList.add(theme);
-    }
-    onThemeChange?.(theme);
   };
 
   const handleBehaviorChange = (behavior: BehaviorType) => {
+    windowService.setBehavior(behavior);
     setSelectedBehavior(behavior);
-    onBehaviorChange?.(behavior);
   };
 
   const FeatureIcon = ({ feature }: { feature: FeatureType }) => {
