@@ -39,7 +39,7 @@ class CallService {
     }
 
     if (this.initializing) {
-      console.log("⚠️ Inicialización en progreso");
+      // console.log("⚠️ Inicialización en progreso");
       return;
     }
 
@@ -56,8 +56,8 @@ class CallService {
 
       this.partnerId = partnerId;
 
-      console.log("📞 Inicializando Peer con ID:", this.userId);
-      console.log("🔗 Conectando con partner ID:", this.partnerId);
+      //console.log("📞 Inicializando Peer con ID:", this.userId);
+      // console.log("🔗 Conectando con partner ID:", this.partnerId);
 
       if (this.peer && !this.peer.destroyed) {
         this.peer.destroy();
@@ -77,8 +77,8 @@ class CallService {
         },
       });
 
-      this.peer.on("open", (id) => {
-        console.log("✅ Peer listo:", id);
+      this.peer.on("open", () => {
+        // console.log("✅ Peer listo:", id);
         this.isInitialized = true;
         this.reconnectAttempts = 0;
       });
