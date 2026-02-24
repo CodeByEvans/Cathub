@@ -25,13 +25,16 @@
           "permissions": [
             "core:window:default",
             "core:window:allow-start-dragging",
-            "store:default",
             "core:window:allow-set-size",
+            "core:window:allow-set-always-on-top",
+            "core:window:allow-set-always-on-bottom",
             "core:event:default",
+            "store:default",
             "deep-link:default",
             "deep-link:allow-register",
             "deep-link:allow-get-current",
-            "os:default"
+            "os:default",
+            "window-state:default"
           ]
         }
       ],
