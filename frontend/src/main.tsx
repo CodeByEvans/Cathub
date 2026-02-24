@@ -4,12 +4,13 @@ import App from "./App";
 import AuthGuard from "./modules/auth/components/AuthGuard";
 import { Toaster } from "./components/ui/sonner";
 import DeepLinkListener from "./modules/deep-link/DeepLinkListener";
-import { themeService } from "./services/theme.service";
+import { themeService } from "@/modules/settings/services/theme.service";
 import { platform } from "@tauri-apps/plugin-os";
+import { windowService } from "./modules/settings/services/window.service";
 
 async function bootstrap() {
-  // 1️⃣ Espera a que se cargue el theme
-  await themeService.getTheme(); // Esto ya aplica la clase en document.documentElement
+  await themeService.getTheme();
+  await windowService.getBehavior();
 
   const os = await platform();
   if (os === "windows") {
