@@ -40,9 +40,9 @@ class PresenceService {
       return;
     }
 
-    console.log("🚀 Iniciando presence service");
-    console.log("   📤 Enviando heartbeat como:", userId);
-    console.log("   📥 Escuchando heartbeat de:", this.partnerId);
+    // console.log("🚀 Iniciando presence service");
+    // console.log("   📤 Enviando heartbeat como:", userId);
+    // console.log("   📥 Escuchando heartbeat de:", this.partnerId);
 
     // Iniciar ambos
     this.startHeartbeat();
@@ -58,7 +58,7 @@ class PresenceService {
       clearInterval(this.heartbeatInterval);
     }
 
-    console.log("💓 Iniciando heartbeat");
+    // console.log("💓 Iniciando heartbeat");
 
     // Enviar inmediatamente
     this.sendHeartbeat();
@@ -90,7 +90,7 @@ class PresenceService {
     if (this.heartbeatInterval) {
       clearInterval(this.heartbeatInterval);
       this.heartbeatInterval = null;
-      console.log("⏹️ Heartbeat detenido");
+      // console.log("⏹️ Heartbeat detenido");
     }
   }
 
@@ -103,7 +103,7 @@ class PresenceService {
       clearInterval(this.checkInterval);
     }
 
-    console.log("👀 Iniciando listening de pareja");
+    // console.log("👀 Iniciando listening de pareja");
 
     // Check inmediato
     this.checkPartnerStatus();
@@ -138,9 +138,10 @@ class PresenceService {
       const diffMs = Date.now() - lastSeen.getTime();
       const isOnline = diffMs < this.ONLINE_THRESHOLD_MS;
 
-      console.log(
+      /*console.log(
         `${isOnline ? "🟢" : "🔴"} Pareja ${isOnline ? "ONLINE" : "OFFLINE"} (${Math.floor(diffMs / 1000)}s)`,
       );
+      */
 
       this.notifyStatusChange({ isOnline, lastSeen });
     } catch (err) {

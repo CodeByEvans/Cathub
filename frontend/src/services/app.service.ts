@@ -3,7 +3,7 @@ import { connectionService } from "@/modules/connection/services/connection.serv
 import { callService } from "@/modules/call/services/call.service";
 import { presenceService } from "./presence.service"; // ← Importar
 import { getValue, setValue, deleteValue } from "./store.service";
-import { Theme, themeService } from "./theme.service";
+import { Theme, themeService } from "@/modules/settings/services/theme.service";
 
 export interface AppState {
   isLinked: boolean;
@@ -60,7 +60,7 @@ class AppService {
       );
 
       if (isValid) {
-        console.log("✅ Conexión en caché válida");
+        // console.log("✅ Conexión en caché válida");
 
         await presenceService.start(currentUserId);
         await callService.initialize();
@@ -70,7 +70,7 @@ class AppService {
           partnerName: cachedPartnerName || "Amor",
           partnerId: cachedPartnerId,
           connectionId: cachedConnectionId,
-          theme, // ← incluir aquí
+          theme,
         };
       } else {
         console.log("⚠️ Conexión en caché inválida, limpiando...");
@@ -106,7 +106,7 @@ class AppService {
         partnerName: connection.partnerName,
         partnerId: partnerId,
         connectionId: connection.id,
-        theme, // ← incluir aquí también
+        theme,
       };
     }
 
@@ -120,7 +120,7 @@ class AppService {
       partnerName: "",
       partnerId: null,
       connectionId: null,
-      theme, // ← fallback theme
+      theme,
     };
   }
 
