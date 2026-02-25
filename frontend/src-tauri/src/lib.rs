@@ -46,8 +46,6 @@ pub fn run() {
         .setup(|app| {
             let window = app.get_webview_window("main").unwrap();
 
-                println!("{:?}", app.path().app_config_dir());
-
             #[cfg(desktop)]
             if let Err(e) = app.deep_link().register("cathub") {
                 println!("Failed to register deep link scheme: {:?}", e);

@@ -37,10 +37,7 @@ interface IntroductionProps {
   onBehaviorChange?: (behavior: BehaviorType) => void;
 }
 
-export function Introduction({
-  onComplete,
-  onBehaviorChange,
-}: IntroductionProps) {
+export function Introduction({ onComplete }: IntroductionProps) {
   const [step, setStep] = useState(0);
   const [selectedTheme, setSelectedTheme] = useState<ThemeType>("light");
   const [selectedBehavior, setSelectedBehavior] = useState<BehaviorType | null>(
