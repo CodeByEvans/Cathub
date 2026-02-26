@@ -9,8 +9,8 @@
 
 - Desarrollo activo ✅
 - Aplicación de escritorio (Tauri) 🖥
-- Backend para manejo de conexiones y endpoints 🔗
-- Monorepo: frontend y backend en un solo repositorio 📦
+- Versión Web para manejo de conexiones y endpoints 🔗
+- Monorepo: App y Web en un solo repositorio 📦
 
 ---
 
@@ -30,12 +30,11 @@
 ## 📂 Estructura del repositorio
 
 ```text
-my-romantic-widget/
-├─ frontend/       # Aplicación Tauri + Vite
-├─ backend/        # API Node.js/Express
+cathub/
+├─ app/            # Aplicación Tauri + Vite
+├─ web/            # API Node.js/Express
 ├─ tests/          # Scripts y pruebas
 ├─ .gitignore      # Reglas de git
-├─ .env-template   # Variables de entorno de ejemplo
 └─ package.json    # Workspaces raíz
 ```
 
@@ -50,19 +49,20 @@ npm install
 # Levantar frontend Vite
 
 ```text
-npm run dev:frontend
+npm run dev:app
 ```
 
 # Levantar Tauri (desktop)
 
 ```text
-npm run tauri-dev:frontend
+npm run tauri-dev:app
 ```
 
-# Levantar backend Node.js
+# Levantar web
 
 ```text
-npm run dev:backend
+npm run dev:web
+```
 
 Copyright (c) 2026 CodeByEvans
 
@@ -71,4 +71,3 @@ Todos los derechos reservados.
 Queda prohibido cualquier uso, copia, distribución, modificación o explotación de este software sin autorización expresa del autor.
 
 Se permite únicamente la descarga y ejecución local con fines personales y educativos, sin fines comerciales ni distribución.
-```

@@ -1,12 +1,12 @@
 {
     "private": true,
     "workspaces": [
-        "frontend",
-        "backend"
+        "app",
+        "web"
     ],
     "scripts": {
-        "dev:frontend": "npm --prefix frontend run dev",
-        "tauri-dev": "npm --prefix frontend run tauri dev",
-        "dev:backend": "npm --prefix backend run dev"
+        "dev:app": "npm --prefix app run dev",
+        "tauri-dev": "npm --prefix app run tauri dev",
+        "dev:web": "npm --prefix web run dev"
     }
 }
