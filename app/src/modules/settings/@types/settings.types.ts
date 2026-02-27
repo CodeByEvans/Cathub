@@ -1,9 +1,12 @@
-import { ThemeType } from "@/@types/theme.types";
+export type ThemeType = "light" | "dark" | "glass";
+
+export type ThemeColor = "red" | "blue" | "yellow" | "purple" | "pink";
 
 export type ViewType =
   | "main"
   | "app-settings"
   | "theme-settings"
+  | "color-settings"
   | "window-settings"
   | "edit-profile"
   | "change-username"
@@ -11,8 +14,6 @@ export type ViewType =
   | "change-email"
   | "break-connection"
   | "logout";
-
-type WidgetSize = "lg" | "md" | "sm";
 
 export interface SettingsButtonProps {
   variant?:
@@ -31,17 +32,6 @@ export interface SettingsButtonProps {
   textClasses?: string;
 }
 
-export interface SettingsProps {
-  isOpen: boolean;
-  onClose: () => void;
-  actualTheme: ThemeType;
-  onThemeChange?: (theme: ThemeType) => void;
-  onEditProfile?: () => void;
-  onBreakConnection?: () => void;
-  onLogout?: () => void;
-  size?: WidgetSize;
-}
-
 export interface OptionCardProps<T> {
   icon: React.ReactNode;
   title: string;
@@ -50,28 +40,4 @@ export interface OptionCardProps<T> {
   value: T;
   onClick?: (value: T) => void;
   className?: string;
-}
-
-export interface ButtonLayoutProps {
-  children: React.ReactNode;
-  className?: string;
-}
-
-export interface CardLayoutProps {
-  children: React.ReactNode;
-  className?: string;
-}
-
-export interface SettingsTemplateProps {
-  buttons: SettingsButtonProps[];
-  onAction: (action: string) => void;
-}
-
-export interface CardSettingsTemplateProps<T> {
-  cards: OptionCardProps<T>[];
-  onAction: (action: T) => void;
-  selectedValue?: T;
-}
-export interface SettingsPanelProps {
-  setCurrentView: (view: ViewType) => void;
 }

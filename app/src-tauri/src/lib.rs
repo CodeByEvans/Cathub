@@ -125,7 +125,7 @@ pub fn run() {
             }
 
             #[cfg(target_os = "macos")]
-            apply_vibrancy(&window, NSVisualEffectMaterial::HudWindow, None, Some(16.0))
+            apply_liquid_glass(&window, NSGlassEffectViewStyle::Regular, None, Some(16.0))
                 .expect("Unsupported platform! 'apply_vibrancy' is only supported on macOS");
 
 

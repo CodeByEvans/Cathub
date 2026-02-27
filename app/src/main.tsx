@@ -9,8 +9,11 @@ import { platform } from "@tauri-apps/plugin-os";
 import { windowService } from "./modules/settings/services/window.service";
 
 async function bootstrap() {
-  await themeService.getTheme();
-  await windowService.getBehavior();
+  Promise.all([
+    themeService.getTheme(),
+    windowService.getBehavior(),
+    themeService.getColor(),
+  ]).catch(console.error);
 
   const os = await platform();
   if (os === "windows") {

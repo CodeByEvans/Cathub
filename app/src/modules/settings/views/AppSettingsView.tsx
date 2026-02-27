@@ -24,6 +24,9 @@ export const AppSettingsView: React.FC<AppSettingsProps> = ({
             case "window-settings":
               setCurrentView("window-settings");
               break;
+            case "theme-color-settings":
+              setCurrentView("color-settings");
+              break;
             default:
               break;
           }

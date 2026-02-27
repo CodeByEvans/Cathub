@@ -1,23 +1,27 @@
 import { toast } from "sonner";
 import { getValue, setValue } from "@/services/store.service";
-
-export type Theme = "dark" | "light" | "glass";
+import { ThemeColor, ThemeType } from "../@types/settings.types";
 
 interface ThemeState {
-  theme: Theme;
+  theme: ThemeType;
 }
 
 class ThemeService {
-  private theme: Theme = "light";
-  private themes: Theme[] = ["light", "dark", "glass"];
+  private theme: ThemeType = "light";
+  private themes: ThemeType[] = ["light", "dark", "glass"];
+  private themeColor: ThemeColor = "blue";
 
-  currentTheme(): Theme {
+  currentTheme(): ThemeType {
     return this.theme;
+  }
+
+  currentThemeColor(): ThemeColor {
+    return this.themeColor;
   }
 
   async getTheme(): Promise<ThemeState> {
     try {
-      const storedTheme = (await getValue("theme")) as Theme | null;
+      const storedTheme = (await getValue("theme")) as ThemeType | null;
 
       this.theme =
         storedTheme && this.themes.includes(storedTheme)
@@ -36,7 +40,7 @@ class ThemeService {
     }
   }
 
-  async setTheme(theme: Theme) {
+  async setTheme(theme: ThemeType) {
     if (!this.themes.includes(theme)) {
       toast.error("Tema no válido");
       return;
@@ -50,6 +54,34 @@ class ThemeService {
       this.theme = theme;
     } catch (error) {
       toast.error("Error al guardar el tema, no se pudo cambiar.");
+    }
+  }
+
+  async getColor(): Promise<ThemeColor> {
+    try {
+      const color = (await getValue("themeColor")) as ThemeColor;
+      document.documentElement.setAttribute("data-color", color);
+
+      this.themeColor = color;
+      return color;
+    } catch (error) {
+      toast.error(
+        "Error al obtener el color, se usara el color negro por defecto.",
+      );
+      return "blue";
+    }
+  }
+
+  async setColor(color: ThemeColor) {
+    try {
+      await setValue("themeColor", color);
+
+      document.documentElement.removeAttribute("data-color");
+      document.documentElement.setAttribute("data-color", color);
+
+      this.themeColor = color;
+    } catch (error) {
+      toast.error("Error al guardar el color, no se pudo cambiar.");
     }
   }
 }

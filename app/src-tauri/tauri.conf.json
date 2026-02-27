@@ -28,6 +28,7 @@
             "core:window:allow-set-size",
             "core:window:allow-set-always-on-top",
             "core:window:allow-set-always-on-bottom",
+            "core:window:allow-set-skip-taskbar",
             "core:event:default",
             "store:default",
             "deep-link:default",

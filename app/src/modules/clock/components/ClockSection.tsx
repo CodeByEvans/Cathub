@@ -35,7 +35,7 @@ export function ClockSection({
   return (
     <div className="flex flex-col items-center justify-center gap-2 px-4 h-full min-w-[180px]">
       {/* Time display */}
-      <div className="text-4xl font-bold text-foreground tracking-tight">
+      <div className="text-4xl font-bold text-primary tracking-tight">
         {formatTime(time)}
       </div>
 
@@ -55,7 +55,7 @@ export function ClockSection({
         ) : (
           <CathubLogo size="sm" className="w-6 h-6" />
         )}
-        <span className="text-sm font-medium text-foreground truncate max-w-[100px]">
+        <span className="text-sm font-medium text-muted-foreground truncate max-w-[100px]">
           {partnerName}
         </span>
       </div>

@@ -64,14 +64,17 @@ class WindowService {
     switch (behavior) {
       case "widget":
         await window.setAlwaysOnBottom(true);
+        await window.setSkipTaskbar(true);
         break;
       case "floating":
         await window.setAlwaysOnTop(true);
+        await window.setSkipTaskbar(false);
         break;
       case "app":
       default:
         await window.setAlwaysOnTop(false);
         await window.setAlwaysOnBottom(false);
+        await window.setSkipTaskbar(false);
         break;
     }
   }

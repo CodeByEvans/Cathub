@@ -12,7 +12,7 @@ import { IncomingCallModal } from "./modules/call/components/IncomingCallModal";
 import { Button } from "./globals/components/atoms/button";
 import { Settings } from "lucide-react";
 import { useClampOnMouseUp } from "./hooks/useClampOnMouseUp";
-import { SettingsPage } from "./modules/settings/components/SettingsPage";
+import { SettingsPage } from "./modules/settings/SettingsPage";
 
 function App() {
   const [userLinked, setUserLinked] = React.useState(true);
@@ -97,17 +97,13 @@ function App() {
         variant="ghost"
         size="icon"
         onClick={() => setShowSettings(true)}
-        className="absolute top-1 right-1 z-10"
+        className="absolute top-1 right-1 z-10 text-muted-foreground hover:text-foreground transition-colors"
       >
         <Settings />
       </Button>
       <SettingsPage
         isOpen={showSettings}
         onClose={() => setShowSettings(false)}
-        actualTheme={theme}
-        onEditProfile={() => console.log("Edit profile")}
-        onBreakConnection={() => console.log("Break connection")}
-        onLogout={() => console.log("Logout")}
       />
       {userLinked ? null : <LinkModal />}
       {/* Clima + Reloj */}

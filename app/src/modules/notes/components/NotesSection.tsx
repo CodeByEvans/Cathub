@@ -54,10 +54,10 @@ export function NotesSection() {
         <div className="h-full p-3 overflow-y-auto">
           {latestNote ? (
             <div className="flex flex-col gap-1">
-              <p className="text-sm text-foreground leading-relaxed line-clamp-3">
+              <p className="text-sm text-primary leading-relaxed line-clamp-3">
                 {latestNote.content}
               </p>
-              <span className="text-[10px] text-muted-foreground">
+              <span className="text-[10px] text-muted-foreground glass:text-secondary-foreground">
                 {latestNote.timestamp.toLocaleTimeString("es-ES", {
                   hour: "2-digit",
                   minute: "2-digit",

@@ -94,7 +94,7 @@ export function CallSection() {
                   isOnline ? "bg-online animate-pulse" : "bg-offline",
                 )}
               />
-              <span className="text-xs font-medium text-foreground">
+              <span className="text-xs font-medium text-muted-foreground">
                 {isOnline ? "En línea" : "Desconectado"}
               </span>
             </div>

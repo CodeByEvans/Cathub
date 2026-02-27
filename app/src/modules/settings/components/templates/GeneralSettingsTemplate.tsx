@@ -1,6 +1,11 @@
 import { SettingsButton } from "../molecules/SettingsButton";
-import { SettingsTemplateProps } from "../../@types/settings.types";
+import { SettingsButtonProps } from "../../@types/settings.types";
 import { ButtonLayout } from "../organisms/ButtonLayout";
+
+export interface SettingsTemplateProps {
+  buttons: SettingsButtonProps[];
+  onAction: (action: string) => void;
+}
 
 export const GeneralSettingsTemplate: React.FC<SettingsTemplateProps> = ({
   buttons,

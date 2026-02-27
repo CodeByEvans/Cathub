@@ -5,10 +5,10 @@ import { BehaviorType } from "@/@types/window.types";
 import { CardLayout } from "../components/organisms/CardLayout";
 
 import { WINDOW_BEHAVIOR_OPTIONS } from "../constants/settings-navigation";
-import { OptionCard } from "../components/molecules/OptionCard";
+import { CardSettingsTemplate } from "../components/templates/CardSettingsTemplate";
 
 interface WindowSettingsProps {
-  selectedBehavior: BehaviorType | null;
+  selectedBehavior: BehaviorType;
   onBehaviorChange: (behavior: BehaviorType) => void;
 }
 
@@ -26,20 +26,12 @@ export const WindowSettingsView: React.FC<WindowSettingsProps> = ({
   };
 
   return (
-    <div className="h-full flex flex-col">
-      <CardLayout>
-        {WINDOW_BEHAVIOR_OPTIONS.map((option) => (
-          <OptionCard<BehaviorType>
-            key={option.theme}
-            icon={option.icon}
-            title={option.title}
-            description={option.description}
-            value={option.theme}
-            isActive={selectedBehavior === option.theme}
-            onClick={handleSelectBehavior}
-          />
-        ))}
-      </CardLayout>
-    </div>
+    <>
+      <CardSettingsTemplate<BehaviorType>
+        cards={WINDOW_BEHAVIOR_OPTIONS}
+        selectedValue={selectedBehavior}
+        onAction={handleSelectBehavior}
+      />
+    </>
   );
 };

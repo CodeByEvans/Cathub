@@ -1,32 +1,36 @@
-import { useEffect, useState } from "react";
-import { SettingsProps, ViewType } from "../@types/settings.types";
+import { useState } from "react";
+import { ThemeColor, ThemeType, ViewType } from "./@types/settings.types";
 import { X } from "lucide-react";
-import { MainSettingsView } from "../views/MainSettingsView";
-import { AppSettingsView } from "../views/AppSettingsView";
-import { themeService } from "../services/theme.service";
-import { ThemeType } from "@/@types/theme.types";
+
 import { BehaviorType } from "@/@types/window.types";
-import { windowService } from "../services/window.service";
-import { BackButton } from "./molecules/BackButton";
-import { ThemeSettingsView } from "../views/ThemeSettingsView";
-import { WindowSettingsView } from "../views/WindowSettingsView";
-import { EditProfileView } from "../views/EditProfileView";
+import { BackButton } from "./components/molecules/BackButton";
+import {
+  MainSettingsView,
+  AppSettingsView,
+  ThemeSettingsView,
+  WindowSettingsView,
+  EditProfileView,
+  ColorSettingsView,
+} from "./views";
+import { themeService, windowService } from "./services";
+
+export interface SettingsProps {
+  isOpen: boolean;
+  onClose: () => void;
+}
 
 export const SettingsPage: React.FC<SettingsProps> = ({ isOpen, onClose }) => {
   const [currentView, setCurrentView] = useState<ViewType>("main");
-  const [selectedTheme, setSelectedTheme] = useState<ThemeType>("light");
-  const [behavior, setBehavior] = useState<BehaviorType>("app");
+  const [selectedTheme, setSelectedTheme] = useState<ThemeType>(
+    themeService.currentTheme(),
+  );
+  const [selectedColor, setSelectedColor] = useState<ThemeColor>(
+    themeService.currentThemeColor(),
+  );
+  const [behavior, setBehavior] = useState<BehaviorType>(
+    windowService.currentBehavior(),
+  );
   const [history, setHistory] = useState<ViewType[]>([]);
-
-  useEffect(() => {
-    const init = async () => {
-      const current = await themeService.getTheme();
-      setSelectedTheme(current.theme);
-      const windowBehavior = await windowService.currentBehavior();
-      setBehavior(windowBehavior);
-    };
-    init();
-  }, []);
 
   const goToView = (view: ViewType) => {
     setHistory((prev) => [...prev, currentView]);
@@ -53,7 +57,7 @@ export const SettingsPage: React.FC<SettingsProps> = ({ isOpen, onClose }) => {
       {/* Backdrop */}
       <div className="absolute inset-0 bg-black/50 backdrop-blur-sm z-40 animate-in fade-in duration-200 rounded-xl" />
       {/* Panel - Full widget overlay */}
-      <div className="absolute inset-0 bg-card/95 backdrop-blur-md z-50 animate-in fade-in duration-300 rounded-xl overflow-hidden">
+      <div className="absolute inset-0 bg-card/10 dark:bg-card/30 backdrop-blur-md z-50 animate-in fade-in duration-300 rounded-xl overflow-hidden">
         {/* Main Menu */}
         {/* Close button */}
         <button
@@ -88,6 +92,13 @@ export const SettingsPage: React.FC<SettingsProps> = ({ isOpen, onClose }) => {
         )}
 
         {currentView === "edit-profile" && <EditProfileView />}
+
+        {currentView === "color-settings" && (
+          <ColorSettingsView
+            selectedColor={selectedColor}
+            setSelectedColor={setSelectedColor}
+          />
+        )}
       </div>
     </>
   );

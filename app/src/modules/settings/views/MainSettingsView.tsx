@@ -1,7 +1,12 @@
 import { authService } from "@/modules/auth/services/auth.service";
-import { SettingsPanelProps } from "../@types/settings.types";
+
 import { GeneralSettingsTemplate } from "../components/templates/GeneralSettingsTemplate";
 import { MAIN_SETTINGS } from "../constants/settings-navigation";
+import { ViewType } from "../@types/settings.types";
+
+export interface SettingsPanelProps {
+  setCurrentView: (view: ViewType) => void;
+}
 
 export const MainSettingsView: React.FC<SettingsPanelProps> = ({
   setCurrentView,

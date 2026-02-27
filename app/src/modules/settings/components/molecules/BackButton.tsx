@@ -9,7 +9,7 @@ export const BackButton: React.FC<{ onClickAction: () => void }> = ({
     size="sm"
     className="
       absolute top-2 left-2 z-50
-      flex items-center gap-1
+      flex items-center gap-1 text-muted-foreground
     "
     onClick={onClickAction}
   >

@@ -7,7 +7,6 @@ interface Props extends SettingsButtonProps {
 }
 
 export const SettingsButton: React.FC<Props> = ({
-  variant,
   buttonClasses,
   onClickAction,
   icon,
@@ -15,16 +14,18 @@ export const SettingsButton: React.FC<Props> = ({
   textClasses,
 }) => (
   <Button
-    variant={variant}
-    className={`h-full flex-1 flex flex-col items-center justify-center border-2 ${buttonClasses}`}
+    variant="outline"
+    className={`h-full flex-1 flex flex-col items-center justify-center border-2 border-primary ring-2 ring-primary/20 ${buttonClasses ? buttonClasses : "bg-muted-foreground/5 dark:bg-muted-foreground/10 hover:scale-[1.02] border-border/50 hover:border-primary/50 transition-all  duration-300"}`}
     onClick={onClickAction}
   >
-    {icon}
+    <div className="text-white dark:text-foreground glass:text-white">
+      {icon}
+    </div>
     <span
       className={
         textClasses
           ? textClasses
-          : "text-sm text-foreground text-center leading-tight"
+          : "text-sm  text-white e  text-center leading-tight "
       }
     >
       {text}

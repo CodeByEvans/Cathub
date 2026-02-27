@@ -26,7 +26,7 @@ export const OptionCard = <T,>({
         "hover:scale-[1.02] active:scale-[0.98]",
 
         // base colors
-        "bg-secondary/40",
+        "bg-muted-foreground/5 dark:bg-muted-foreground/10 ",
 
         // active vs inactive
         isActive
@@ -49,15 +49,17 @@ export const OptionCard = <T,>({
     >
       <div
         className={cn(
-          "transition-colors duration-300",
-          isActive ? "text-primary" : "text-muted-foreground",
+          "transition-colors duration-300  ",
+          isActive ? "text-accent " : "text-muted-foreground",
         )}
       >
         {icon}
       </div>
 
       <div className="text-center leading-tight">
-        <div className="text-sm font-semibold text-foreground">{title}</div>
+        <div className="text-sm font-semibold text-foreground glass:text-white">
+          {title}
+        </div>
 
         {description && (
           <div className="text-xs text-muted-foreground">{description}</div>

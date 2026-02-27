@@ -2,6 +2,7 @@
 @import "tw-animate-css";
 
 @custom-variant dark (&:is(.dark *));
+@custom-variant glass (&:where(.glass, .glass *));
 
 /* Light theme - Blue-gray neutral */
 :root {
@@ -99,7 +100,7 @@
 /* Glass theme - Frosted translucent effect */
 .glass {
   --background: transparent;
-  --foreground: oklch(0.55 0.1 240);
+  --foreground: var(--primary);
   --card: oklch(0.98 0.005 240 / 0.7);
   --card-foreground: oklch(0.22 0.02 240);
   --popover: oklch(0.98 0.005 240 / 0.8);
@@ -137,43 +138,53 @@
 /* ==== Color overrides por usuario ==== */
 
 [data-color="red"] {
-  --primary: oklch(0.55 0.12 0); /* rojo base */
+  --primary: oklch(52.278% 0.20363 28.124); /* rojo base */
   --primary-foreground: oklch(1 0 0); /* texto claro */
-  --secondary: oklch(0.65 0.1 0);
-  --accent: oklch(0.7 0.15 0);
+
+  --accent: oklch(62.793% 0.25768 29.223);
   --ring: var(--primary);
+
+  --call-button: oklch(0.55 0.12 0);
 }
 
 [data-color="blue"] {
-  --primary: oklch(0.55 0.12 240);
+  --primary: oklch(65.979% 0.13352 238.59);
   --primary-foreground: oklch(0.98 0 0);
-  --secondary: oklch(0.65 0.1 240);
-  --accent: oklch(0.7 0.15 240);
+
+  --accent: oklch(77.105% 0.13275 235.537);
   --ring: var(--primary);
+
+  --call-button: oklch(74.449% 0.15 237.997);
 }
 
 [data-color="yellow"] {
   --primary: oklch(0.9 0.12 100);
-  --primary-foreground: oklch(0.15 0 100);
-  --secondary: oklch(0.85 0.1 100);
-  --accent: oklch(0.8 0.15 100);
+  --primary-foreground: oklch(97.391% 0.00104 11.32);
+  --secondary: oklch(84.741% 0.00819 98.997);
+  --accent: oklch(90.503% 0.18418 98.839);
   --ring: var(--primary);
+
+  --call-button: oklch(0.9 0.12 100);
 }
 
 [data-color="purple"] {
   --primary: oklch(0.6 0.12 280);
   --primary-foreground: oklch(0.98 0 280);
-  --secondary: oklch(0.65 0.1 280);
-  --accent: oklch(0.7 0.15 280);
+  --secondary: oklch(89.625% 0.02882 281.438);
+  --accent: oklch(59.993% 0.21892 275.315);
   --ring: var(--primary);
+
+  --call-button: oklch(0.6 0.12 280);
 }
 
 [data-color="pink"] {
   --primary: oklch(0.75 0.12 320);
   --primary-foreground: oklch(0.98 0 320);
-  --secondary: oklch(0.7 0.1 320);
-  --accent: oklch(0.72 0.15 320);
+  --secondary: oklch(97.918% 0.01571 319.147);
+  --accent: oklch(81.915% 0.14795 320.016);
   --ring: var(--primary);
+
+  --call-button: oklch(0.75 0.12 320);
 }
 
 @theme inline {
