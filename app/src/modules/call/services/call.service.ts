@@ -163,18 +163,27 @@ class CallService {
   }
 
   // Configurar eventos de la llamada
+  private remoteAudioElement: HTMLAudioElement | null = null;
+
   private setupCallListeners(call: MediaConnection) {
-    // Cuando llega el stream remoto
-    call.on("stream", (remoteStream) => {
+    call.on("stream", async (remoteStream) => {
       console.log("📹 Stream remoto recibido");
+
+      if (!this.remoteAudioElement) {
+        this.remoteAudioElement = document.createElement("audio");
+        this.remoteAudioElement.autoplay = true;
+        document.body.appendChild(this.remoteAudioElement);
+      }
+
+      this.remoteAudioElement.srcObject = remoteStream;
+      await this.remoteAudioElement.play();
+
       this.onRemoteStreamCallback?.(remoteStream);
       this.onCallConnectedCallback?.();
       this.inCall = true;
     });
 
-    // Cuando se cierra la llamada
     call.on("close", () => {
-      console.log("🔴 Llamada cerrada");
       this.cleanup();
       this.onCallEndedCallback?.();
       this.inCall = false;
@@ -187,11 +196,18 @@ class CallService {
     });
   }
 
-  // Limpiar recursos
+  // Y en cleanup, limpiar también el audio
   private cleanup() {
     this.incomingCall = false;
+
+    if (this.remoteAudioElement) {
+      this.remoteAudioElement.srcObject = null;
+      this.remoteAudioElement.remove();
+      this.remoteAudioElement = null;
+    }
+
     if (this.localStream) {
-      this.localStream.getTracks().forEach((track) => track.stop());
+      this.localStream.getTracks().forEach((t) => t.stop());
       this.localStream = null;
     }
 
