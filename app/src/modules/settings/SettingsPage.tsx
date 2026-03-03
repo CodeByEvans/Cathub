@@ -13,6 +13,7 @@ import {
   ColorSettingsView,
 } from "./views";
 import { themeService, windowService } from "./services";
+import React from "react";
 
 export interface SettingsProps {
   isOpen: boolean;
@@ -30,20 +31,16 @@ export const SettingsPage: React.FC<SettingsProps> = ({ isOpen, onClose }) => {
   const [behavior, setBehavior] = useState<BehaviorType>(
     windowService.currentBehavior(),
   );
-  const [history, setHistory] = useState<ViewType[]>([]);
+  const historyRef = React.useRef<ViewType[]>([]);
 
   const goToView = (view: ViewType) => {
-    setHistory((prev) => [...prev, currentView]);
+    historyRef.current.push(currentView);
     setCurrentView(view);
   };
 
   const goBack = () => {
-    setHistory((prev) => {
-      if (prev.length === 0) return prev;
-      const last = prev[prev.length - 1];
-      setCurrentView(last);
-      return prev.slice(0, -1);
-    });
+    const last = historyRef.current.pop();
+    if (last) setCurrentView(last);
   };
 
   const handleClose = () => {

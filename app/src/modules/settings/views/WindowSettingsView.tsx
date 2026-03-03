@@ -2,8 +2,6 @@ import React from "react";
 import { windowService } from "../services/window.service";
 import { BehaviorType } from "@/@types/window.types";
 
-import { CardLayout } from "../components/organisms/CardLayout";
-
 import { WINDOW_BEHAVIOR_OPTIONS } from "../constants/settings-navigation";
 import { CardSettingsTemplate } from "../components/templates/CardSettingsTemplate";
 

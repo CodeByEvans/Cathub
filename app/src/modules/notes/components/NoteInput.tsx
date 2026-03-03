@@ -3,15 +3,22 @@ import { Input } from "@/globals/components/atoms/input";
 import React from "react";
 import { Button } from "@/globals/components/atoms/button";
 import { Send } from "lucide-react";
+import { toast } from "sonner";
 
 export const NoteInput = () => {
   const [note, setNote] = React.useState("");
 
   const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+    try {
+      e.preventDefault();
 
-    notesService.sendNote(note);
-    setNote("");
+      notesService.sendNote(note);
+      setNote("");
+      toast.success("Nota enviada con exito ❤️");
+    } catch (error) {
+      console.error(error);
+      toast.error("Error al enviar la nota 😭");
+    }
   };
   return (
     <form className="flex items-center gap-2 mt-2" onSubmit={handleSubmit}>
@@ -20,7 +27,7 @@ export const NoteInput = () => {
         placeholder="Escribe una nota..."
         value={note}
         onChange={(e) => setNote(e.target.value)}
-        className="flex-1 h-8 text-sm bg-input/50 border-border/50 focus:border-primary/50"
+        className="flex-1 h-8 text-primary glass:text-white text-sm bg-input/50 border-border/50 focus:border-primary/50"
       />
       <Button
         type="submit"

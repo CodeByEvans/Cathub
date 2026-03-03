@@ -3,7 +3,6 @@ import { Input } from "@/globals/components/atoms/input";
 import { CathubLogo } from "@/globals/components/atoms/logo";
 
 import Introduction from "@/modules/introduction/Introduction";
-import { Label } from "@radix-ui/react-label";
 import { getCurrentWindow, LogicalSize } from "@tauri-apps/api/window";
 import { zodResolver } from "@hookform/resolvers/zod";
 
@@ -50,11 +49,6 @@ export const LoginScreen = () => {
         setIntroductionCompleted(
           introduction_completed === true ? true : false,
         );
-        const theme = await store.get<string>("theme");
-        document.documentElement.classList.remove("light", "dark", "glass");
-        if (theme && theme !== "light") {
-          document.documentElement.classList.add(theme);
-        }
       } catch (error) {
         console.error(error);
       }
@@ -151,7 +145,6 @@ export const LoginScreen = () => {
     <main
       className="w-[400px] rounded-2xl border border-border/50 shadow-2xl overflow-hidden "
       style={{ height: mode === "login" ? 600 : 700 }}
-      data-color={mode === "login" ? "blue" : "purple"}
     >
       {/* Header with logo */}
       <div
@@ -169,15 +162,12 @@ export const LoginScreen = () => {
       <form onSubmit={handleSubmit(onSubmit)} className="px-8 pb-8 space-y-4">
         {mode === "register" && (
           <div className="space-y-2">
-            <Label htmlFor="name" className="text-sm font-medium">
-              Nombre
-            </Label>
             <div className="relative">
               <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input
                 id="username"
                 type="text"
-                placeholder="Tu nombre"
+                placeholder="Nombre de usuario"
                 {...register("username")}
                 className="pl-10 bg-input/50"
                 {...(errors.username && (
@@ -191,15 +181,12 @@ export const LoginScreen = () => {
         )}
 
         <div className="space-y-2">
-          <Label htmlFor="email" className="text-sm font-medium">
-            Correo electronico
-          </Label>
           <div className="relative">
             <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input
               id="email"
               type="email"
-              placeholder="tu@email.com"
+              placeholder="Correo electrónico"
               {...register("email")}
               className="pl-10 bg-input/50"
               {...(errors.email && (
@@ -215,15 +202,12 @@ export const LoginScreen = () => {
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="password" className="text-sm font-medium">
-            Contraseña
-          </Label>
           <div className="relative">
             <Lock className=" absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input
               id="password"
               type={showPassword ? "text" : "password"}
-              placeholder="********"
+              placeholder="Contraseña"
               {...register("password")}
               className="pl-10 bg-input/50"
               {...(errors.password && (
@@ -238,15 +222,12 @@ export const LoginScreen = () => {
 
         {mode === "register" && (
           <div className="space-y-2">
-            <Label htmlFor="confirmPassword" className="text-sm font-medium">
-              Confirmar contraseña
-            </Label>
             <div className="relative">
               <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input
                 id="confirmPassword"
                 type={showConfirmPassword ? "text" : "password"}
-                placeholder="********"
+                placeholder="Confirmar contraseña"
                 className="pl-10 bg-input/50"
                 {...register("confirmPassword")}
                 {...(errors.confirmPassword && (
@@ -291,15 +272,19 @@ export const LoginScreen = () => {
           className="w-full text-sm text-foreground hover:text-primary transition-colors"
         >
           {mode === "login" ? (
-            <>
-              No tienes cuenta?{" "}
-              <span className="font-semibold text-primary">Registrate</span>
-            </>
+            <div className="flex flex-row items-center justify-center gap-1">
+              <p className="text-sm text-muted-foreground">No tienes cuenta?</p>
+              <span className="font-semibold text-foreground">Registrate</span>
+            </div>
           ) : (
-            <>
-              Ya tienes cuenta?{" "}
-              <span className="font-semibold text-primary">Inicia sesion</span>
-            </>
+            <div className="flex flex-row items-center justify-center gap-1">
+              <p className="text-sm text-muted-foreground">
+                Ya tienes una cuenta?
+              </p>
+              <span className="font-semibold text-foreground">
+                Inicia sesion
+              </span>
+            </div>
           )}
         </button>
       </form>

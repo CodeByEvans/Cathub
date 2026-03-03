@@ -20,7 +20,6 @@ function App() {
   const [isLoading, setIsLoading] = React.useState(true);
   const [incomingCall, setIncomingCall] = React.useState(false);
   const [showSettings, setShowSettings] = React.useState(false);
-  const [theme, setTheme] = React.useState<"light" | "dark" | "glass">("light");
 
   const mainRef = React.useRef<HTMLElement>(null);
   useClampOnMouseUp(mainRef, isLoading);
@@ -35,7 +34,6 @@ function App() {
 
         setUserLinked(state.isLinked);
         setPartnerName(state.partnerName);
-        setTheme(state.theme);
 
         callService.onIncomingCall(() => {
           setIncomingCall(true);

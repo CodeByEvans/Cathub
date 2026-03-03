@@ -3,7 +3,8 @@ import { connectionService } from "@/modules/connection/services/connection.serv
 import { callService } from "@/modules/call/services/call.service";
 import { presenceService } from "./presence.service"; // ← Importar
 import { getValue, setValue, deleteValue } from "./store.service";
-import { Theme, themeService } from "@/modules/settings/services/theme.service";
+import { themeService } from "@/modules/settings/services/theme.service";
+import { ThemeType } from "@/modules/settings/@types/settings.types";
 
 export interface AppState {
   isLinked: boolean;
@@ -13,7 +14,7 @@ export interface AppState {
 }
 
 class AppService {
-  async initialize(): Promise<AppState & { theme: Theme }> {
+  async initialize(): Promise<AppState & { theme: ThemeType }> {
     // --------------------------
     // 0. Inicializar theme
     // --------------------------
