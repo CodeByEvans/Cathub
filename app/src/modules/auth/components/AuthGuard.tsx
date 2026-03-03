@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "../../../services/supabaseClient";
 import { Session } from "@supabase/supabase-js";
-import { LoginScreen } from "./LoginScreen";
+import { LoginScreen } from "../LoginScreen";
 
 export const AuthGuard = ({ children }: { children: React.ReactNode }) => {
   const [session, setSession] = useState<Session | null>(null);
