@@ -29,13 +29,17 @@
             "core:window:allow-set-always-on-top",
             "core:window:allow-set-always-on-bottom",
             "core:window:allow-set-skip-taskbar",
+            "core:window:allow-set-minimizable",
             "core:event:default",
             "store:default",
             "deep-link:default",
             "deep-link:allow-register",
             "deep-link:allow-get-current",
             "os:default",
-            "window-state:default"
+            "window-state:default",
+            "autostart:allow-enable",
+            "autostart:allow-disable",
+            "autostart:allow-is-enabled"
           ]
         }
       ],

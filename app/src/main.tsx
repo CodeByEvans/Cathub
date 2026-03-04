@@ -7,8 +7,15 @@ import DeepLinkListener from "./modules/deep-link/DeepLinkListener";
 import { themeService } from "@/modules/settings/services/theme.service";
 import { platform } from "@tauri-apps/plugin-os";
 import { windowService } from "./modules/settings/services/window.service";
+import { hasValue, setValue } from "./services/store.service";
+import { enable } from "@tauri-apps/plugin-autostart";
 
 async function bootstrap() {
+  const firstLaunch = await hasValue("firstLaunch");
+  if (!firstLaunch) {
+    await enable();
+    await setValue("firstLaunch", true);
+  }
   Promise.all([
     themeService.getTheme(),
     windowService.getBehavior(),

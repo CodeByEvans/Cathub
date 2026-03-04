@@ -1,8 +1,8 @@
-use tauri::{Manager};
+use tauri::Manager;
 #[cfg(desktop)]
 use tauri_plugin_deep_link::DeepLinkExt;
+use tauri_plugin_window_state::StateFlags;
 use window_vibrancy::*;
-use tauri_plugin_window_state::{ StateFlags};
 
 // Comando de ejemplo
 #[tauri::command]
@@ -60,8 +60,18 @@ unsafe extern "system" fn subclass_proc(
 
         let mut mi = MONITORINFO {
             cbSize: std::mem::size_of::<MONITORINFO>() as u32,
-            rcMonitor: RECT { left: 0, top: 0, right: 0, bottom: 0 },
-            rcWork: RECT { left: 0, top: 0, right: 0, bottom: 0 },
+            rcMonitor: RECT {
+                left: 0,
+                top: 0,
+                right: 0,
+                bottom: 0,
+            },
+            rcWork: RECT {
+                left: 0,
+                top: 0,
+                right: 0,
+                bottom: 0,
+            },
             dwFlags: 0,
         };
         GetMonitorInfoW(monitor, &mut mi);
@@ -84,13 +94,24 @@ unsafe extern "system" fn subclass_proc(
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
-        .plugin(tauri_plugin_window_state::Builder::new().with_state_flags(StateFlags::POSITION).build())
+        .plugin(tauri_plugin_autostart::init(
+            tauri_plugin_autostart::MacosLauncher::LaunchAgent,
+            None,
+        ))
+        .plugin(
+            tauri_plugin_window_state::Builder::new()
+                .with_state_flags(StateFlags::POSITION)
+                .build(),
+        )
         .plugin(tauri_plugin_deep_link::init())
         .plugin(tauri_plugin_store::Builder::new().build())
         .plugin(tauri_plugin_geolocation::init())
         .plugin(tauri_plugin_os::init())
         .plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| {
-            let _ = app.get_webview_window("main").expect("no main window").set_focus();
+            let _ = app
+                .get_webview_window("main")
+                .expect("no main window")
+                .set_focus();
         }))
         .setup(|app| {
             let window = app.get_webview_window("main").unwrap();
@@ -110,11 +131,11 @@ pub fn run() {
                     DwmSetWindowAttribute, DWMWA_WINDOW_CORNER_PREFERENCE,
                 };
                 use windows_sys::Win32::UI::Shell::SetWindowSubclass;
-            
+
                 apply_acrylic(&window, Some((0, 0, 0, 10))).expect("Windows only");
-            
+
                 let hwnd = window.hwnd().unwrap().0;
-            
+
                 // Esquinas redondeadas
                 let preference: u32 = 2;
                 unsafe {
@@ -124,25 +145,18 @@ pub fn run() {
                         &preference as *const u32 as *const _,
                         std::mem::size_of::<u32>() as u32,
                     );
-                
+
                     // ← Registrar el clamping nativo
                     SetWindowSubclass(hwnd, Some(subclass_proc), 1, 0);
                 }
             }
 
             #[cfg(target_os = "macos")]
+            apply_liquid_glass(&window, NSGlassEffectViewStyle::Regular, None, Some(16.0))
+           .expect("Unsupported platform! 'apply_vibrancy' is only supported on macOS");
 
-            //apply_liquid_glass(&window, NSGlassEffectViewStyle::Regular, None, Some(16.0))
-             //   .expect("Unsupported platform! 'apply_vibrancy' is only supported on macOS");
 
-            apply_liquid_glass(
-                &window,
-                NSGlassEffectViewStyle::Regular,
-                Some(NSVisualEffectState::Active), // <- esto
-                Some(16.0)
-            )
-            .expect("Unsupported platform! 'apply_vibrancy' is only supported on macOS");
-
+            
 
             Ok(())
         })
