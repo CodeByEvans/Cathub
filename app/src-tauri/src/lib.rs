@@ -1,4 +1,8 @@
-use tauri::Manager;
+use tauri::{
+    Manager,
+    menu::{Menu, MenuItem},
+    tray::{MouseButton, TrayIconBuilder, TrayIconEvent},
+};
 #[cfg(desktop)]
 use tauri_plugin_deep_link::DeepLinkExt;
 use tauri_plugin_window_state::StateFlags;
@@ -154,10 +158,37 @@ pub fn run() {
             #[cfg(target_os = "macos")]
             apply_liquid_glass(&window, NSGlassEffectViewStyle::Regular, None, Some(16.0))
            .expect("Unsupported platform! 'apply_vibrancy' is only supported on macOS");
-
-
+        
+            #[cfg(desktop)]
+            {
+                let show = MenuItem::with_id(app, "show", "Mostrar", true, None::<&str>)?;
+                let quit = MenuItem::with_id(app, "quit", "Cerrar app", true, None::<&str>)?;
+                let menu = Menu::with_items(app, &[&show, &quit])?;
             
-
+                TrayIconBuilder::new()
+                    .icon(app.default_window_icon().unwrap().clone())
+                    .menu(&menu)
+                    .menu_on_left_click(false)
+                    .on_menu_event(|app, event | match event.id.as_ref() {
+                        "show" => {
+                            let window = app.get_webview_window("main").unwrap();
+                            let _ = window.show();
+                            let _ = window.set_focus();
+                        }
+                        "quit" => app.exit(0),
+                        _ => {},
+                    })
+                    .on_tray_icon_event(|tray, event| {
+                        if let TrayIconEvent::Click {button: MouseButton::Left, ..} = event {
+                            let app = tray.app_handle();
+                            let window = app.get_webview_window("main").unwrap();
+                            let _ = window.show();
+                            let _ = window.set_focus();
+                        }
+                    })
+                    .build(app)?;
+            }            
+        
             Ok(())
         })
         .plugin(tauri_plugin_opener::init())
