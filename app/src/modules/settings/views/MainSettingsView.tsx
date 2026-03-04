@@ -20,6 +20,9 @@ export const MainSettingsView: React.FC<SettingsPanelProps> = ({
             case "app-settings":
               setCurrentView("app-settings");
               break;
+            case "audio-settings":
+              setCurrentView("audio-settings");
+              break;
             case "edit-profile":
               setCurrentView("edit-profile");
               break;

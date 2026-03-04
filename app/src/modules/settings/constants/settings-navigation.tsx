@@ -5,6 +5,7 @@ import {
   Layers,
   Layout,
   LogOut,
+  Mic,
   Monitor,
   Moon,
   Palette,
@@ -25,6 +26,11 @@ export const MAIN_SETTINGS: SettingsButtonProps[] = [
     icon: <Layout className="w-6 h-6  mb-1" />,
     text: "Configurar app",
     action: "app-settings",
+  },
+  {
+    icon: <Mic className="w-6 h-6 mb-1" />,
+    text: "Audio",
+    action: "audio-settings",
   },
   {
     icon: <UserCog className="w-6 h-6 mb-1" />,

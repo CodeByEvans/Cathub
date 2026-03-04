@@ -8,6 +8,7 @@ export type ViewType =
   | "theme-settings"
   | "color-settings"
   | "window-settings"
+  | "audio-settings"
   | "edit-profile"
   | "change-username"
   | "change-password"

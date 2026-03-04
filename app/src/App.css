@@ -131,7 +131,7 @@
 }
 
 .glass html,
-.glass body {
+[data-platform="windows"].glass body {
   background-color: rgba(0, 0, 0, 0.45);
   height: 100%;
   overflow: hidden;

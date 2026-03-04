@@ -14,6 +14,7 @@ import {
 } from "./views";
 import { themeService, windowService } from "./services";
 import React from "react";
+import { AudioSettingsView } from "./views/AudioSettingsView";
 
 export interface SettingsProps {
   isOpen: boolean;
@@ -96,6 +97,7 @@ export const SettingsPage: React.FC<SettingsProps> = ({ isOpen, onClose }) => {
             setSelectedColor={setSelectedColor}
           />
         )}
+        {currentView === "audio-settings" && <AudioSettingsView />}
       </div>
     </>
   );

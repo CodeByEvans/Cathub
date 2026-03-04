@@ -1,5 +1,5 @@
 // src/services/call.service.ts
-import { getValue } from "@/services/store.service";
+import { getValue, setValue } from "@/services/store.service";
 import { supabase } from "@/services/supabaseClient";
 import Peer, { MediaConnection } from "peerjs";
 
@@ -17,6 +17,8 @@ class CallService {
 
   private incomingCall: boolean = false;
   private inCall: boolean = false;
+  private selectedMicId: string | null = null;
+  private selectedSpeakerId: string | null = null;
 
   public isIncomingCall(): boolean {
     return this.incomingCall;
@@ -55,6 +57,13 @@ class CallService {
       if (typeof partnerId !== "string") throw new Error("No partner");
 
       this.partnerId = partnerId;
+
+      const savedMic = await getValue("selectedMicId");
+      const savedSpeaker = await getValue("selectedSpeakerId");
+
+      if (typeof savedMic === "string") this.selectedMicId = savedMic;
+      if (typeof savedSpeaker === "string")
+        this.selectedSpeakerId = savedSpeaker;
 
       //console.log("📞 Inicializando Peer con ID:", this.userId);
       // console.log("🔗 Conectando con partner ID:", this.partnerId);
@@ -110,7 +119,9 @@ class CallService {
     // Obtener permisos de cámara/micrófono
     this.localStream = await navigator.mediaDevices.getUserMedia({
       video: !audioOnly,
-      audio: true,
+      audio: this.selectedMicId
+        ? { deviceId: { exact: this.selectedMicId } }
+        : true, // 👈 ahora sí usa el micro elegido
     });
 
     console.log("📹 Stream local listo, iniciando llamada a:", this.partnerId);
@@ -134,7 +145,9 @@ class CallService {
     // Obtener permisos
     this.localStream = await navigator.mediaDevices.getUserMedia({
       video: !audioOnly,
-      audio: true,
+      audio: this.selectedMicId
+        ? { deviceId: { exact: this.selectedMicId } }
+        : true,
     });
 
     // Responder con nuestro stream
@@ -162,6 +175,24 @@ class CallService {
     this.onCallEndedCallback?.();
   }
 
+  async getAudioDevices() {
+    await navigator.mediaDevices.getUserMedia({ audio: true });
+    const devices = await navigator.mediaDevices.enumerateDevices();
+    return {
+      microphones: devices.filter((d) => d.kind === "audioinput"),
+      speakers: devices.filter((d) => d.kind === "audiooutput"),
+    };
+  }
+
+  setAudioDevices(micId: string, speakerId: string) {
+    this.selectedMicId = micId;
+    this.selectedSpeakerId = speakerId;
+
+    // Persistir para la próxima sesión
+    setValue("selectedMicId", micId);
+    setValue("selectedSpeakerId", speakerId);
+  }
+
   // Configurar eventos de la llamada
   private remoteAudioElement: HTMLAudioElement | null = null;
 
@@ -176,6 +207,11 @@ class CallService {
       }
 
       this.remoteAudioElement.srcObject = remoteStream;
+
+      if (this.selectedSpeakerId && this.remoteAudioElement.setSinkId) {
+        await this.remoteAudioElement.setSinkId(this.selectedSpeakerId);
+      }
+
       await this.remoteAudioElement.play();
 
       this.onRemoteStreamCallback?.(remoteStream);
