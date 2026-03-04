@@ -14,6 +14,21 @@ fn greet(name: &str) -> String {
     format!("Hello, {}! You've been greeted from Rust!", name)
 }
 
+// Método para ocultar el dock (Sólo para macOS)
+#[tauri::command]
+fn set_dock_visibility(app: tauri::AppHandle, visible: bool) {
+    #[cfg(target_os = "macos")]
+    {
+        use tauri::ActivationPolicy;
+        if visible {
+            let _ = app.set_activation_policy(ActivationPolicy::Regular);
+        } else {
+            let _ = app.set_activation_policy(ActivationPolicy::Accessory);
+        }
+    }
+}
+
+// Comando para clamar la ventana
 #[tauri::command]
 async fn clamp_window(window: tauri::Window) {
     if let Ok(monitor) = window.current_monitor() {
@@ -192,7 +207,7 @@ pub fn run() {
             Ok(())
         })
         .plugin(tauri_plugin_opener::init())
-        .invoke_handler(tauri::generate_handler![greet, clamp_window])
+        .invoke_handler(tauri::generate_handler![greet, clamp_window, set_dock_visibility])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

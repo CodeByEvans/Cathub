@@ -1,4 +1,5 @@
 import { getValue, setValue } from "@/services/store.service";
+import { invoke } from "@tauri-apps/api/core";
 import { Window } from "@tauri-apps/api/window";
 
 type Behavior = "widget" | "app" | "floating";
@@ -66,11 +67,13 @@ class WindowService {
         await window.setAlwaysOnBottom(true);
         await window.setSkipTaskbar(true);
         await window.setMinimizable(false);
+        await invoke("set_dock_visibility", { visible: false });
         break;
       case "floating":
         await window.setAlwaysOnTop(true);
         await window.setSkipTaskbar(false);
         await window.setMinimizable(true);
+        await invoke("set_dock_visibility", { visible: true });
         break;
       case "app":
       default:
@@ -78,6 +81,7 @@ class WindowService {
         await window.setAlwaysOnBottom(false);
         await window.setSkipTaskbar(false);
         await window.setMinimizable(true);
+        await invoke("set_dock_visibility", { visible: true });
         break;
     }
   }
