@@ -1,9 +1,8 @@
-use std::thread;
-use tauri::{Manager, PhysicalPosition, WindowEvent};
+use tauri::{Manager};
 #[cfg(desktop)]
 use tauri_plugin_deep_link::DeepLinkExt;
 use window_vibrancy::*;
-use tauri_plugin_window_state::{AppHandleExt, StateFlags};
+use tauri_plugin_window_state::{ StateFlags};
 
 // Comando de ejemplo
 #[tauri::command]
@@ -86,6 +85,9 @@ pub fn run() {
         .plugin(tauri_plugin_store::Builder::new().build())
         .plugin(tauri_plugin_geolocation::init())
         .plugin(tauri_plugin_os::init())
+        .plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| {
+            let _ = app.get_webview_window("main").expect("no main window").set_focus();
+        }))
         .setup(|app| {
             let window = app.get_webview_window("main").unwrap();
 
