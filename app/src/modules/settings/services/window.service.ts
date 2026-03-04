@@ -65,16 +65,19 @@ class WindowService {
       case "widget":
         await window.setAlwaysOnBottom(true);
         await window.setSkipTaskbar(true);
+        await window.setMinimizable(false);
         break;
       case "floating":
         await window.setAlwaysOnTop(true);
         await window.setSkipTaskbar(false);
+        await window.setMinimizable(true);
         break;
       case "app":
       default:
         await window.setAlwaysOnTop(false);
         await window.setAlwaysOnBottom(false);
         await window.setSkipTaskbar(false);
+        await window.setMinimizable(true);
         break;
     }
   }
