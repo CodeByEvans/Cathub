@@ -105,7 +105,7 @@ pub fn run() {
                 };
                 use windows_sys::Win32::UI::Shell::SetWindowSubclass;
             
-                apply_acrylic(&window, Some((0, 0, 0, 125))).expect("Windows only");
+                apply_acrylic(&window, Some((0, 0, 0, 10))).expect("Windows only");
             
                 let hwnd = window.hwnd().unwrap().0;
             
