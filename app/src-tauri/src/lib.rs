@@ -48,7 +48,11 @@ unsafe extern "system" fn subclass_proc(
         GetMonitorInfoW, MonitorFromWindow, MONITORINFO, MONITOR_DEFAULTTONEAREST,
     };
     use windows_sys::Win32::UI::Shell::DefSubclassProc;
-    use windows_sys::Win32::UI::WindowsAndMessaging::WM_MOVING;
+    use windows_sys::Win32::UI::WindowsAndMessaging::{WM_MOVING, WM_NCACTIVATE};
+
+    if msg == WM_NCACTIVATE {
+        return DefSubclassProc(hwnd, msg, 1, lparam);
+    }
 
     if msg == WM_MOVING {
         let rect = &mut *(lparam as *mut RECT);
@@ -127,8 +131,17 @@ pub fn run() {
             }
 
             #[cfg(target_os = "macos")]
-            apply_liquid_glass(&window, NSGlassEffectViewStyle::Regular, None, Some(16.0))
-                .expect("Unsupported platform! 'apply_vibrancy' is only supported on macOS");
+
+            //apply_liquid_glass(&window, NSGlassEffectViewStyle::Regular, None, Some(16.0))
+             //   .expect("Unsupported platform! 'apply_vibrancy' is only supported on macOS");
+
+            apply_liquid_glass(
+                &window,
+                NSGlassEffectViewStyle::Regular,
+                Some(NSVisualEffectState::Active), // <- esto
+                Some(16.0)
+            )
+            .expect("Unsupported platform! 'apply_vibrancy' is only supported on macOS");
 
 
             Ok(())
