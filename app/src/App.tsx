@@ -1,64 +1,35 @@
-import { useEffect } from "react";
 import "./App.css";
-
-import { CallSection } from "./modules/call/components/CallSection";
-import { ClockSection } from "./modules/clock/components/ClockSection";
-import { NotesSection } from "./modules/notes/components/NotesSection";
-import React from "react";
-import LinkModal from "./modules/connection/components/LinkModal";
 import { callService } from "./modules/call/services/call.service";
-import { appService } from "./services/app.service";
-import { IncomingCallModal } from "./modules/call/components/IncomingCallModal";
+import { IncomingCallModal } from "./modules/call/components/views/IncomingCallModal";
+import { CallScreen } from "./modules/call/components/views/CallScreen";
 import { Button } from "./globals/components/atoms/button";
 import { Settings } from "lucide-react";
-import { useClampOnMouseUp } from "./hooks/useClampOnMouseUp";
 import { SettingsPage } from "./modules/settings/SettingsPage";
+import { useClampOnMouseUp } from "./hooks/useClampOnMouseUp";
+import { MainView } from "./MainView";
+import { useAppInit } from "./hooks/useAppInit";
+import { useSettings } from "./hooks/useSettings";
 
 function App() {
-  const [userLinked, setUserLinked] = React.useState(true);
-  const [partnerName, setPartnerName] = React.useState("Amor");
-  const [isLoading, setIsLoading] = React.useState(true);
-  const [incomingCall, setIncomingCall] = React.useState(false);
-  const [showSettings, setShowSettings] = React.useState(false);
+  const {
+    isLoading,
+    userLinked,
+    partnerName,
+    incomingCall,
+    setIncomingCall,
+    inCall,
+    setInCall,
+  } = useAppInit();
 
-  const mainRef = React.useRef<HTMLElement>(null);
-  useClampOnMouseUp(mainRef, isLoading);
+  const { showSettings, openSettings, closeSettings } = useSettings();
 
-  useEffect(() => {
-    const init = async () => {
-      try {
-        setIsLoading(true);
-
-        // ✅ Una sola llamada que hace todo
-        const state = await appService.initialize();
-
-        setUserLinked(state.isLinked);
-        setPartnerName(state.partnerName);
-
-        callService.onIncomingCall(() => {
-          setIncomingCall(true);
-        });
-      } catch (error) {
-        console.error("❌ Error inicializando app:", error);
-        setUserLinked(false);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    init();
-
-    // Cleanup al desmontar
-    return () => {
-      callService.destroy();
-    };
-  }, []);
+  useClampOnMouseUp(isLoading);
 
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-screen bg-background text-foreground rounded-xl">
         <div className="text-center">
-          <div className="animate-spin h-12 w-12 border-4 border-current border-t-transparent rounded-full mx-auto mb-4"></div>
+          <div className="animate-spin h-12 w-12 border-4 border-current border-t-transparent rounded-full mx-auto mb-4" />
           <p>Cargando...</p>
         </div>
       </div>
@@ -71,11 +42,11 @@ function App() {
         <IncomingCallModal
           callerName={partnerName}
           isVisible={callService.isIncomingCall()}
-          onAccept={async () => {
+          onAccept={() => {
             callService.acceptCall();
             setIncomingCall(false);
           }}
-          onReject={async () => {
+          onReject={() => {
             callService.rejectCall();
             setIncomingCall(false);
           }}
@@ -85,34 +56,41 @@ function App() {
     );
   }
 
+  if (inCall) {
+    return (
+      <>
+        <CallScreen
+          partnerName={partnerName}
+          onEndCall={() => {
+            callService.endCall();
+            setInCall(false);
+          }}
+          settingsButton={
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={openSettings}
+              className="absolute top-1 right-1 z-10 text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <Settings />
+            </Button>
+          }
+        />
+        <SettingsPage isOpen={showSettings} onClose={closeSettings} />
+      </>
+    );
+  }
+
   return (
-    <main
-      ref={mainRef}
-      className="w-[700px] h-[200px] rounded-xl border border-border/50 shadow-xl overflow-hidden py-4"
-      data-tauri-drag-region
-    >
-      <Button
-        variant="ghost"
-        size="icon"
-        onClick={() => setShowSettings(true)}
-        className="absolute top-1 right-1 z-10 text-muted-foreground hover:text-foreground transition-colors"
-      >
-        <Settings />
-      </Button>
-      <SettingsPage
-        isOpen={showSettings}
-        onClose={() => setShowSettings(false)}
-      />
-      {userLinked ? null : <LinkModal />}
-      {/* Clima + Reloj */}
-      <section className="flex h-full divide-x divide-border/30">
-        <ClockSection partnerName={partnerName} />
-
-        <NotesSection />
-
-        <CallSection />
-      </section>
-    </main>
+    <MainView
+      partnerName={partnerName}
+      userLinked={userLinked}
+      onSimulateIncomingCall={() => callService.simulateIncomingCall()}
+      onSimulateInCall={() => {
+        callService.simulateInCall();
+        setInCall(true);
+      }}
+    />
   );
 }
 

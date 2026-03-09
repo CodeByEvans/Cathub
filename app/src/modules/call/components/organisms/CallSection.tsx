@@ -1,8 +1,10 @@
 import { cn } from "@/lib/utils";
-import { CallButton } from "./CallButton";
+
 import { useEffect, useState } from "react";
-import { callService } from "../services/call.service";
+
 import { presenceService } from "@/services/presence.service";
+import { callService } from "../../services/call.service";
+import { CallButton } from "../molecules/CallButton";
 
 export function CallSection() {
   const [inCall, setInCall] = useState(false);

@@ -1,6 +1,6 @@
 import { getValue, setValue } from "@/services/store.service";
 import { invoke } from "@tauri-apps/api/core";
-import { Window } from "@tauri-apps/api/window";
+import { getCurrentWindow, Window } from "@tauri-apps/api/window";
 
 type Behavior = "widget" | "app" | "floating";
 
@@ -83,6 +83,25 @@ class WindowService {
         await window.setMinimizable(true);
         await invoke("set_dock_visibility", { visible: true });
         break;
+    }
+  }
+
+  async bringToFront() {
+    const win = getCurrentWindow();
+    await win.setAlwaysOnBottom(false);
+    await win.show();
+    await win.setFocus();
+  }
+
+  async restoreBehavior() {
+    const behavior = this.currentBehavior();
+    if (behavior === "widget") {
+      const win = getCurrentWindow();
+      await win.setAlwaysOnBottom(true);
+    } else if (behavior === "app") {
+      const win = getCurrentWindow();
+      await win.setAlwaysOnBottom(false);
+      await win.setAlwaysOnTop(false);
     }
   }
 }

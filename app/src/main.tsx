@@ -27,7 +27,16 @@ async function bootstrap() {
   ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
     <React.StrictMode>
       <DeepLinkListener />
-      <Toaster />
+      <Toaster
+        duration={3000}
+        toastOptions={{
+          classNames: {
+            title: "!text-primary",
+            description: "!text-muted-foreground",
+            toast: "!backdrop-blur-md !bg-popover/80",
+          },
+        }}
+      />
       <AuthGuard>
         <App />
       </AuthGuard>

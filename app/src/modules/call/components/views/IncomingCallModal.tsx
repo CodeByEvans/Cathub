@@ -56,7 +56,7 @@ export function IncomingCallModal({
     <div
       className={cn(
         sizeClasses[size],
-        "absolute inset-0 z-50 bg-card/98 glass-effect rounded-xl border border-border/50 shadow-2xl overflow-hidden",
+        "absolute inset-0 z-50 bg-background rounded-xl border border-border/50 shadow-2xl overflow-hidden",
         "animate-in fade-in zoom-in-95 duration-300",
       )}
     >

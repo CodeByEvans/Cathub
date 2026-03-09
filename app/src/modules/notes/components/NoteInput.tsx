@@ -4,17 +4,36 @@ import React from "react";
 import { Button } from "@/globals/components/atoms/button";
 import { Send } from "lucide-react";
 import { toast } from "sonner";
+import { audioService } from "@/services/audio.service";
 
 export const NoteInput = () => {
   const [note, setNote] = React.useState("");
+  const play = (key: string) => audioService.play(key, { volume: 0.1 });
+
+  const lastSentRef = React.useRef<number>(0);
+  const COOLDOWN_MS = 4000; // 4 segundos entre notas
 
   const handleSubmit = (e: React.FormEvent) => {
-    try {
-      e.preventDefault();
+    e.preventDefault();
 
+    const now = Date.now();
+    if (now - lastSentRef.current < COOLDOWN_MS) {
+      toast.warning("Espera un momento antes de enviar otra nota", {
+        id: "note-cooldown",
+      });
+      play("error");
+      return;
+    }
+
+    try {
+      lastSentRef.current = now;
       notesService.sendNote(note);
+      toast("Nota enviada con exito", {
+        id: "note-success",
+        description: note,
+      });
+      play("send");
       setNote("");
-      toast.success("Nota enviada con exito ❤️");
     } catch (error) {
       console.error(error);
       toast.error("Error al enviar la nota 😭");

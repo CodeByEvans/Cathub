@@ -2,6 +2,8 @@ import { Button } from "@/globals/components/atoms/button";
 import { cn } from "@/lib/utils";
 import { OptionCardProps } from "../../@types/settings.types";
 
+import { audioService } from "@/services/audio.service";
+
 export const OptionCard = <T,>({
   icon,
   title,
@@ -11,10 +13,15 @@ export const OptionCard = <T,>({
   onClick,
   className,
 }: OptionCardProps<T>) => {
+  const play = (key: string) => audioService.play(key, { volume: 0.1 });
   return (
     <Button
       variant="outline"
-      onClick={() => onClick?.(value)}
+      onClick={() => {
+        onClick?.(value);
+        play("click");
+      }}
+      onMouseEnter={() => play("hover")}
       className={cn(
         // layout
         "flex-1 h-full px-3 py-4",
@@ -50,7 +57,7 @@ export const OptionCard = <T,>({
       <div
         className={cn(
           "transition-colors duration-300  ",
-          isActive ? "text-accent " : "text-muted-foreground",
+          isActive ? "text-accent text-shadow-md " : "text-muted-foreground",
         )}
       >
         {icon}

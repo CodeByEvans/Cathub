@@ -1,7 +1,9 @@
 // src/services/call.service.ts
+import { windowService } from "@/modules/settings/services";
 import { getValue, setValue } from "@/services/store.service";
 import { supabase } from "@/services/supabaseClient";
 import Peer, { MediaConnection } from "peerjs";
+import { audioService } from "@/services/audio.service";
 
 class CallService {
   private peer: Peer | null = null;
@@ -105,6 +107,10 @@ class CallService {
         this.currentCall = call;
         this.incomingCall = true;
         this.onIncomingCallCallback?.(call.peer);
+
+        audioService.play("ringtone", { volume: 0.3, loop: true });
+
+        windowService.bringToFront();
       });
     } finally {
       this.initializing = false;
@@ -156,6 +162,10 @@ class CallService {
     // Configurar listeners
     this.setupCallListeners(this.currentCall);
 
+    audioService.stop("ringtone");
+
+    windowService.restoreBehavior();
+
     return this.localStream;
   }
 
@@ -167,11 +177,18 @@ class CallService {
       this.currentCall = null;
     }
     this.onCallEndedCallback?.();
+
+    audioService.stop("ringtone");
+
+    this.incomingCall = false;
+
+    windowService.restoreBehavior();
   }
 
   // ✅ Colgar llamada
   async endCall() {
     this.cleanup();
+    this.inCall = false;
     this.onCallEndedCallback?.();
   }
 
@@ -321,6 +338,23 @@ class CallService {
       this.peer = null;
     }
     this.isInitialized = false;
+  }
+
+  simulateIncomingCall() {
+    if (import.meta.env.DEV) {
+      // 👈 solo en desarrollo
+      this.incomingCall = true;
+      this.onIncomingCallCallback?.("fake-caller-id");
+      audioService.play("ringtone", { loop: true, volume: 0.4 });
+    }
+  }
+
+  simulateInCall() {
+    if (import.meta.env.DEV) {
+      // 👈 solo en desarrollo
+      this.inCall = true;
+      this.onCallConnectedCallback?.();
+    }
   }
 }
 

@@ -1,7 +1,7 @@
 import { cn } from "@/lib/utils";
 import { Phone, PhoneOff } from "lucide-react";
 import { Button } from "@/globals/components/atoms/button";
-import { callService } from "../services/call.service";
+import { callService } from "../../services/call.service";
 
 export const CallButton = ({
   inCall,

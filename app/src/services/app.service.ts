@@ -5,6 +5,7 @@ import { presenceService } from "./presence.service"; // ← Importar
 import { getValue, setValue, deleteValue } from "./store.service";
 import { themeService } from "@/modules/settings/services/theme.service";
 import { ThemeType } from "@/modules/settings/@types/settings.types";
+import { audioService } from "./audio.service";
 
 export interface AppState {
   isLinked: boolean;
@@ -16,9 +17,10 @@ export interface AppState {
 class AppService {
   async initialize(): Promise<AppState & { theme: ThemeType }> {
     // --------------------------
-    // 0. Inicializar theme
+    // 0. Inicializar theme y audio service
     // --------------------------
     const theme = themeService.currentTheme();
+    await audioService.init();
     // Aquí tu singleton ya actualizó document.documentElement con la clase correcta
 
     // --------------------------
