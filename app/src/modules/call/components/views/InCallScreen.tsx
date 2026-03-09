@@ -13,9 +13,13 @@ import { LogicalSize } from "@tauri-apps/api/dpi";
 import { cn } from "@/lib/utils";
 import { Button } from "@/globals/components/atoms/button";
 import { peerService } from "../../../../services/peer.service";
+import { ChatSection } from "@/modules/chat/ChatSection";
+import { Message } from "@/modules/chat/@types/chat.types";
 
 interface CallScreenProps {
-  partnerName?: string;
+  messages: Message[];
+  onSendMessage: (message: string) => void;
+  partnerName: string;
   partnerAvatar?: string;
   onEndCall?: () => void;
   settingsButton?: ReactNode;
@@ -25,6 +29,8 @@ const FULL_SIZE = { width: 700, height: 200 };
 const MINI_SIZE = { width: 280, height: 60 };
 
 export function InCallScreen({
+  messages,
+  onSendMessage,
   partnerName = "Pareja",
   partnerAvatar,
   onEndCall,
@@ -183,21 +189,12 @@ export function InCallScreen({
       <div className="w-px self-stretch bg-border/40 mx-1" />
 
       {/* Center — status badges */}
-      <div className="flex-1 flex items-center justify-center gap-1.5 px-2">
-        {isMuted ? (
-          <span className="text-[10px] px-2 py-0.5 rounded-full bg-destructive/10 border border-destructive/30 text-destructive font-medium">
-            Silenciado
-          </span>
-        ) : (
-          <span className="text-[10px] px-2 py-0.5 rounded-full bg-primary/10 border border-primary/20 text-primary font-medium">
-            Activo
-          </span>
-        )}
-        {isDeafened && (
-          <span className="text-[10px] px-2 py-0.5 rounded-full bg-destructive/10 border border-destructive/30 text-destructive font-medium">
-            Audio off
-          </span>
-        )}
+      <div className="flex-1 flex flex-col h-full min-h-0 overflow-hidden px-2">
+        <ChatSection
+          partnerName="{partnerName}"
+          messages={messages}
+          onSendMessage={onSendMessage}
+        />
       </div>
 
       {/* Divider */}

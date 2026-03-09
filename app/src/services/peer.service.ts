@@ -2,7 +2,7 @@
 import { windowService } from "@/modules/settings/services";
 import { getValue, setValue } from "@/services/store.service";
 import { supabase } from "@/services/supabaseClient";
-import Peer, { MediaConnection } from "peerjs";
+import Peer, { DataConnection, MediaConnection } from "peerjs";
 import { audioService } from "@/services/audio.service";
 
 class PeerService {
@@ -12,6 +12,7 @@ class PeerService {
   private partnerId: string = "";
   private localStream: MediaStream | null = null;
   private currentCall: MediaConnection | null = null;
+  private currentDataConnection: DataConnection | null = null;
 
   private initializing = false;
   private reconnectAttempts = 0;
@@ -37,6 +38,8 @@ class PeerService {
   private onCallConnectedCallback: (() => void) | null = null;
   private onCallEndedCallback: (() => void) | null = null;
   private onRemoteStreamCallback: ((stream: MediaStream) => void) | null = null;
+  private onChatMessageReceivedCallback: ((message: string) => void) | null =
+    null;
 
   async initialize() {
     if (this.isInitialized && this.peer && !this.peer.destroyed) {
@@ -88,6 +91,14 @@ class PeerService {
             { urls: "stun:stun1.l.google.com:19302" },
           ],
         },
+      });
+
+      this.peer.on("connection", (conn) => {
+        this.currentDataConnection = conn;
+        conn.on("open", () => console.log("📡 Canal de datos recibido"));
+        conn.on("data", (data) =>
+          this.onChatMessageReceivedCallback?.(data as string),
+        );
       });
 
       this.peer.on("open", () => {
@@ -165,7 +176,6 @@ class PeerService {
     this.setupCallListeners(this.currentCall);
 
     audioService.stop("ringtone");
-
     audioService.play("callStarted", { volume: 0.3 });
 
     windowService.restoreBehavior();
@@ -272,6 +282,11 @@ class PeerService {
       this.currentCall.close();
       this.currentCall = null;
     }
+
+    if (this.currentDataConnection) {
+      this.currentDataConnection.close();
+      this.currentDataConnection = null;
+    }
   }
 
   private async handleReconnect() {
@@ -374,6 +389,10 @@ class PeerService {
     this.onRemoteStreamCallback = callback;
   }
 
+  onChatMessageReceived(callback: (message: string) => void) {
+    this.onChatMessageReceivedCallback = callback;
+  }
+
   destroy() {
     this.cleanup();
     if (this.peer) {
@@ -408,6 +427,16 @@ class PeerService {
 
       this.inCall = true;
       this.onCallConnectedCallback?.();
+    }
+  }
+
+  // CHAT SECTION
+
+  async sendChatMessage(message: string) {
+    if (this.currentDataConnection && this.currentDataConnection.open) {
+      this.currentDataConnection.send(message);
+    } else {
+      console.error("❌ No hay conexión de chat abierta");
     }
   }
 }

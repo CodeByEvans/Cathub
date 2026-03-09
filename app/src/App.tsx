@@ -21,6 +21,8 @@ function App() {
     setIncomingCall,
     inCall,
     setInCall,
+    messages,
+    sendChatMessage,
   } = useAppInit();
 
   const { showSettings, openSettings, closeSettings } = useSettings();
@@ -63,6 +65,8 @@ function App() {
       <>
         <InCallScreen
           partnerName={partnerName}
+          messages={messages}
+          onSendMessage={sendChatMessage}
           onEndCall={() => {
             peerService.endCall();
             setInCall(false);
