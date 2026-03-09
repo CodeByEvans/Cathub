@@ -55,7 +55,7 @@ npm run dev:app
 # Levantar Tauri (desktop)
 
 ```text
-npm run tauri-dev:app
+npm run tauri-dev
 ```
 
 # Levantar web
