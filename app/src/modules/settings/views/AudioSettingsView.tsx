@@ -2,7 +2,8 @@ import React, { useEffect, useState } from "react";
 import { Mic, Volume2 } from "lucide-react";
 import { CardLayout } from "../components/organisms/CardLayout";
 import { OptionCard } from "../components/molecules/OptionCard";
-import { callService } from "@/modules/call/services/call.service";
+import { peerService } from "@/services/peer.service";
+import { getValue } from "@/services/store.service";
 
 export const AudioSettingsView: React.FC = () => {
   const [microphones, setMicrophones] = useState<MediaDeviceInfo[]>([]);
@@ -12,34 +13,30 @@ export const AudioSettingsView: React.FC = () => {
 
   useEffect(() => {
     const load = async () => {
-      const { microphones, speakers } = await callService.getAudioDevices();
+      const { microphones, speakers } = await peerService.getAudioDevices();
       setMicrophones(microphones);
       setSpeakers(speakers);
 
       // Cargar selección guardada (si la tienes en store) o usar default
-      const savedMic =
-        localStorage.getItem("selectedMicId") ?? microphones[0]?.deviceId ?? "";
-      const savedSpeaker =
-        localStorage.getItem("selectedSpeakerId") ??
-        speakers[0]?.deviceId ??
-        "";
+      const savedMic = await getValue("selectedMicId");
+      const savedSpeaker = await getValue("selectedSpeakerId");
+
+      if (savedMic === null || savedSpeaker === null) return;
       setSelectedMic(savedMic);
       setSelectedSpeaker(savedSpeaker);
-      callService.setAudioDevices(savedMic, savedSpeaker);
+      peerService.setAudioDevices(savedMic, savedSpeaker);
     };
     load();
   }, []);
 
   const handleMicChange = (deviceId: string) => {
     setSelectedMic(deviceId);
-    localStorage.setItem("selectedMicId", deviceId);
-    callService.setAudioDevices(deviceId, selectedSpeaker);
+    peerService.setAudioDevices(deviceId, selectedSpeaker);
   };
 
   const handleSpeakerChange = (deviceId: string) => {
     setSelectedSpeaker(deviceId);
-    localStorage.setItem("selectedSpeakerId", deviceId);
-    callService.setAudioDevices(selectedMic, deviceId);
+    peerService.setAudioDevices(selectedMic, deviceId);
   };
 
   return (

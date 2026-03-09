@@ -12,7 +12,7 @@ import { getCurrentWindow } from "@tauri-apps/api/window";
 import { LogicalSize } from "@tauri-apps/api/dpi";
 import { cn } from "@/lib/utils";
 import { Button } from "@/globals/components/atoms/button";
-import { callService } from "../../services/call.service";
+import { peerService } from "../../../../services/peer.service";
 
 interface CallScreenProps {
   partnerName?: string;
@@ -61,22 +61,22 @@ export function InCallScreen({
     if (isDeafened) {
       setIsDeafened(false);
       setIsMuted(false);
-      callService.toggleDeaf();
+      peerService.toggleDeaf();
       return;
     }
     setIsMuted((prev) => !prev);
-    callService.toggleMute();
+    peerService.toggleMute();
   };
 
   const toggleDeafed = () => {
     if (isMuted && !isDeafened) {
       setIsDeafened(true);
-      callService.toggleDeaf();
+      peerService.toggleDeaf();
       return;
     }
     setIsMuted((prev) => !prev);
     setIsDeafened((prev) => !prev);
-    callService.toggleDeaf();
+    peerService.toggleDeaf();
   };
 
   const formatTime = (seconds: number) => {

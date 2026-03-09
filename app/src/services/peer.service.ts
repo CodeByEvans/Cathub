@@ -5,7 +5,7 @@ import { supabase } from "@/services/supabaseClient";
 import Peer, { MediaConnection } from "peerjs";
 import { audioService } from "@/services/audio.service";
 
-class CallService {
+class PeerService {
   private peer: Peer | null = null;
   private isInitialized: boolean = false;
   private userId: string = "";
@@ -21,6 +21,8 @@ class CallService {
   private inCall: boolean = false;
   private selectedMicId: string | null = null;
   private selectedSpeakerId: string | null = null;
+
+  private remoteAudioElement: HTMLAudioElement | null = null;
 
   public isIncomingCall(): boolean {
     return this.incomingCall;
@@ -214,9 +216,6 @@ class CallService {
     setValue("selectedMicId", micId);
     setValue("selectedSpeakerId", speakerId);
   }
-
-  // Configurar eventos de la llamada
-  private remoteAudioElement: HTMLAudioElement | null = null;
 
   private setupCallListeners(call: MediaConnection) {
     call.on("stream", async (remoteStream) => {
@@ -413,4 +412,4 @@ class CallService {
   }
 }
 
-export const callService = new CallService();
+export const peerService = new PeerService();

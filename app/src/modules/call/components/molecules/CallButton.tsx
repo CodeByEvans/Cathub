@@ -1,7 +1,7 @@
 import { cn } from "@/lib/utils";
 import { Phone, PhoneOff } from "lucide-react";
 import { Button } from "@/globals/components/atoms/button";
-import { callService } from "../../services/call.service";
+import { peerService } from "../../../../services/peer.service";
 
 export const CallButton = ({
   inCall,
@@ -25,7 +25,7 @@ export const CallButton = ({
             : "var(--call-button-foreground)",
         }}
         onClick={() =>
-          inCall ? callService.endCall() : callService.startCall(true)
+          inCall ? peerService.endCall() : peerService.startCall(true)
         }
       >
         {inCall ? (

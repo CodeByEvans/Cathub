@@ -9,7 +9,7 @@ import Introduction from "@/modules/introduction/Introduction";
 
 import { AuthTemplate } from "./components/templates/AuthTemplate";
 import { AuthMode } from "./constants/auth-form.constants";
-import { loginSchema, registerSchema } from "./schemas/loginSchema";
+import { loginSchema, registerSchema } from "./schemas/authSchema";
 import { authService } from "./services/auth.service";
 import { handleAuthError } from "./helpers/authErrorHandler";
 

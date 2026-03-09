@@ -1,13 +1,14 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
 import App from "./App";
-import AuthGuard from "./modules/auth/components/AuthGuard";
+
 import { Toaster } from "./components/ui/sonner";
 import DeepLinkListener from "./modules/deep-link/DeepLinkListener";
 import { themeService } from "@/modules/settings/services/theme.service";
 import { platform } from "@tauri-apps/plugin-os";
 import { windowService } from "./modules/settings/services/window.service";
 import { initAutostart } from "./services/autostart.service";
+import { AuthGuard } from "./modules/auth/AuthGuard";
 
 async function bootstrap() {
   await initAutostart();

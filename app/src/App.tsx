@@ -1,5 +1,5 @@
 import "./App.css";
-import { callService } from "./modules/call/services/call.service";
+
 import { IncomingCallModal } from "./modules/call/components/views/IncomingCallModal";
 import { InCallScreen } from "./modules/call/components/views/InCallScreen";
 import { Button } from "./globals/components/atoms/button";
@@ -10,6 +10,7 @@ import { MainView } from "./MainView";
 import { useAppInit } from "./hooks/useAppInit";
 import { useSettings } from "./hooks/useSettings";
 import { audioService } from "./services/audio.service";
+import { peerService } from "./services/peer.service";
 
 function App() {
   const {
@@ -42,13 +43,13 @@ function App() {
       <div className="relative">
         <IncomingCallModal
           callerName={partnerName}
-          isVisible={callService.isIncomingCall()}
+          isVisible={peerService.isIncomingCall()}
           onAccept={() => {
-            callService.acceptCall();
+            peerService.acceptCall();
             setIncomingCall(false);
           }}
           onReject={() => {
-            callService.rejectCall();
+            peerService.rejectCall();
             setIncomingCall(false);
           }}
           size="lg"
@@ -63,7 +64,7 @@ function App() {
         <InCallScreen
           partnerName={partnerName}
           onEndCall={() => {
-            callService.endCall();
+            peerService.endCall();
             setInCall(false);
           }}
           settingsButton={
@@ -86,9 +87,9 @@ function App() {
     <MainView
       partnerName={partnerName}
       userLinked={userLinked}
-      onSimulateIncomingCall={() => callService.simulateIncomingCall()}
+      onSimulateIncomingCall={() => peerService.simulateIncomingCall()}
       onSimulateInCall={() => {
-        callService.simulateInCall();
+        peerService.simulateInCall();
         setInCall(true);
         audioService.play("callStarted", { volume: 0.3 });
       }}

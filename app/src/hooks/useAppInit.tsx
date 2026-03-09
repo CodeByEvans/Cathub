@@ -1,4 +1,4 @@
-import { callService } from "@/modules/call/services/call.service";
+import { peerService } from "@/services/peer.service";
 import { appService } from "@/services/app.service";
 import { useEffect, useState } from "react";
 
@@ -16,9 +16,9 @@ export const useAppInit = () => {
         setUserLinked(state.isLinked);
         setPartnerName(state.partnerName);
 
-        callService.onIncomingCall(() => setIncomingCall(true));
-        callService.onCallConnected(() => setInCall(true));
-        callService.onCallEnded(() => setInCall(false));
+        peerService.onIncomingCall(() => setIncomingCall(true));
+        peerService.onCallConnected(() => setInCall(true));
+        peerService.onCallEnded(() => setInCall(false));
       } catch (error) {
         console.error("❌ Error inicializando app:", error);
         setUserLinked(false);
@@ -28,7 +28,7 @@ export const useAppInit = () => {
     };
 
     init();
-    return () => callService.destroy();
+    return () => peerService.destroy();
   }, []);
 
   return {

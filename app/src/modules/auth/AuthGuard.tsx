@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
-import { supabase } from "../../../services/supabaseClient";
+
 import { Session } from "@supabase/supabase-js";
-import { LoginScreen } from "../LoginScreen";
+import { supabase } from "@/services/supabaseClient";
+import { LoginScreen } from "./LoginScreen";
 
 export const AuthGuard = ({ children }: { children: React.ReactNode }) => {
   const [session, setSession] = useState<Session | null>(null);
@@ -34,5 +35,3 @@ export const AuthGuard = ({ children }: { children: React.ReactNode }) => {
 
   return children;
 };
-
-export default AuthGuard;

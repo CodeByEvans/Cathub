@@ -1,11 +1,12 @@
 import { supabase } from "./supabaseClient";
 import { connectionService } from "@/modules/connection/services/connection.service";
-import { callService } from "@/modules/call/services/call.service";
+
 import { presenceService } from "./presence.service"; // ← Importar
 import { getValue, setValue, deleteValue } from "./store.service";
 import { themeService } from "@/modules/settings/services/theme.service";
 import { ThemeType } from "@/modules/settings/@types/settings.types";
 import { audioService } from "./audio.service";
+import { peerService } from "@/services/peer.service";
 
 export interface AppState {
   isLinked: boolean;
@@ -66,7 +67,7 @@ class AppService {
         // console.log("✅ Conexión en caché válida");
 
         await presenceService.start(currentUserId);
-        await callService.initialize();
+        await peerService.initialize();
 
         return {
           isLinked: true,
@@ -102,7 +103,7 @@ class AppService {
       }
 
       await presenceService.start(currentUserId);
-      await callService.initialize();
+      await peerService.initialize();
 
       return {
         isLinked: true,
@@ -194,7 +195,7 @@ class AppService {
 
     presenceService.stop();
 
-    await callService.destroy();
+    await peerService.destroy();
     console.log("✅ App limpiada completamente");
   }
 }

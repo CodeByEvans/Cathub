@@ -3,8 +3,9 @@ import { cn } from "@/lib/utils";
 import { useEffect, useState } from "react";
 
 import { presenceService } from "@/services/presence.service";
-import { callService } from "../../services/call.service";
+
 import { CallButton } from "../molecules/CallButton";
+import { peerService } from "../../../../services/peer.service";
 
 export function CallSection() {
   const [inCall, setInCall] = useState(false);
@@ -15,13 +16,13 @@ export function CallSection() {
 
   // Conectar eventos de CallService con React
   useEffect(() => {
-    callService.onCallConnected(() => {
+    peerService.onCallConnected(() => {
       console.log("📞 Estado React: llamada conectada");
       setInCall(true);
       setCallTime(0); // reinicia contador
     });
 
-    callService.onCallEnded(() => {
+    peerService.onCallEnded(() => {
       console.log("📞 Estado React: llamada terminada");
       setInCall(false);
     });
