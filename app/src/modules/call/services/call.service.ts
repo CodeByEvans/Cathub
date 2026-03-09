@@ -164,6 +164,8 @@ class CallService {
 
     audioService.stop("ringtone");
 
+    audioService.play("callStarted", { volume: 0.3 });
+
     windowService.restoreBehavior();
 
     return this.localStream;
@@ -180,6 +182,8 @@ class CallService {
 
     audioService.stop("ringtone");
 
+    audioService.play("callEnded", { volume: 0.3 });
+
     this.incomingCall = false;
 
     windowService.restoreBehavior();
@@ -189,6 +193,7 @@ class CallService {
   async endCall() {
     this.cleanup();
     this.inCall = false;
+    audioService.play("callEnded", { volume: 0.3 });
     this.onCallEndedCallback?.();
   }
 
@@ -292,14 +297,53 @@ class CallService {
   }
   // ✅ Toggle mute
   toggleMute(): boolean {
-    if (this.localStream) {
-      const audioTrack = this.localStream.getAudioTracks()[0];
-      if (audioTrack) {
-        audioTrack.enabled = !audioTrack.enabled;
-        return !audioTrack.enabled; // true = muted
-      }
+    if (!this.localStream) return false;
+
+    const audioTrack = this.localStream.getAudioTracks()[0];
+    if (!audioTrack) return false;
+
+    audioTrack.enabled = !audioTrack.enabled;
+
+    audioService.play(audioTrack.enabled ? "unmute" : "mute", { volume: 0.2 });
+
+    console.log(
+      "🔇 Microfono",
+      audioTrack.enabled ? "activado" : "desactivado",
+    );
+
+    return !audioTrack.enabled;
+  }
+
+  // ✅ Toggle Audio
+  toggleDeaf(): boolean {
+    if (!this.localStream) return false;
+
+    const audioTrack = this.localStream.getAudioTracks()[0];
+    if (!audioTrack) return false;
+    if (!this.remoteAudioElement) return false;
+
+    if (
+      audioTrack.enabled === false &&
+      this.remoteAudioElement?.muted === false
+    ) {
+      audioService.play("mute", { volume: 0.2 });
+      this.remoteAudioElement.muted = true;
+      console.log("🔇 Audio y microfonos desactivados");
+      return true;
     }
-    return false;
+
+    audioTrack.enabled = !audioTrack.enabled;
+    if (this.remoteAudioElement) {
+      this.remoteAudioElement.muted = !audioTrack.enabled;
+    }
+
+    audioService.play(audioTrack.enabled ? "unmute" : "mute", { volume: 0.2 });
+    console.log(
+      "🔊 Audio y Micrófono",
+      audioTrack.enabled ? "activados" : "desactivados",
+    );
+
+    return !audioTrack.enabled;
   }
 
   // ✅ Toggle video
@@ -349,9 +393,20 @@ class CallService {
     }
   }
 
-  simulateInCall() {
+  async simulateInCall() {
     if (import.meta.env.DEV) {
       // 👈 solo en desarrollo
+      this.localStream = await navigator.mediaDevices.getUserMedia({
+        audio: true,
+        video: false,
+      });
+
+      if (!this.remoteAudioElement) {
+        this.remoteAudioElement = document.createElement("audio");
+        this.remoteAudioElement.autoplay = true;
+        document.body.appendChild(this.remoteAudioElement);
+      }
+
       this.inCall = true;
       this.onCallConnectedCallback?.();
     }

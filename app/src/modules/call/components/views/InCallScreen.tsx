@@ -12,6 +12,7 @@ import { getCurrentWindow } from "@tauri-apps/api/window";
 import { LogicalSize } from "@tauri-apps/api/dpi";
 import { cn } from "@/lib/utils";
 import { Button } from "@/globals/components/atoms/button";
+import { callService } from "../../services/call.service";
 
 interface CallScreenProps {
   partnerName?: string;
@@ -23,7 +24,7 @@ interface CallScreenProps {
 const FULL_SIZE = { width: 700, height: 200 };
 const MINI_SIZE = { width: 280, height: 60 };
 
-export function CallScreen({
+export function InCallScreen({
   partnerName = "Pareja",
   partnerAvatar,
   onEndCall,
@@ -54,6 +55,28 @@ export function CallScreen({
   const restore = async () => {
     setIsMinimized(false);
     await resizeWindow(FULL_SIZE.width, FULL_SIZE.height);
+  };
+
+  const toggleMute = () => {
+    if (isDeafened) {
+      setIsDeafened(false);
+      setIsMuted(false);
+      callService.toggleDeaf();
+      return;
+    }
+    setIsMuted((prev) => !prev);
+    callService.toggleMute();
+  };
+
+  const toggleDeafed = () => {
+    if (isMuted && !isDeafened) {
+      setIsDeafened(true);
+      callService.toggleDeaf();
+      return;
+    }
+    setIsMuted((prev) => !prev);
+    setIsDeafened((prev) => !prev);
+    callService.toggleDeaf();
   };
 
   const formatTime = (seconds: number) => {
@@ -191,7 +214,7 @@ export function CallScreen({
               ? "border-destructive/50 bg-destructive/10 text-destructive"
               : "border-border hover:border-primary/40 text-muted-foreground",
           )}
-          onClick={() => setIsMuted(!isMuted)}
+          onClick={toggleMute}
           title={isMuted ? "Desmutear" : "Mutear"}
         >
           {isMuted ? (
@@ -210,7 +233,7 @@ export function CallScreen({
               ? "border-destructive/50 bg-destructive/10 text-destructive"
               : "border-border hover:border-primary/40 text-muted-foreground",
           )}
-          onClick={() => setIsDeafened(!isDeafened)}
+          onClick={toggleDeafed}
           title={isDeafened ? "Desensordecer" : "Ensordecer"}
         >
           {isDeafened ? (

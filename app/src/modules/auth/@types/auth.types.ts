@@ -18,7 +18,7 @@ export interface AuthFormConfig<T extends FieldValues> {
   subtitle?: string;
   fields: AuthField<T>[];
   submitText: string;
-  schema: ZodType<T>; // 🔥 ESTE ES EL FIX REAL
+  schema: ZodType<T>;
   secondaryAction?: AuthSecondaryAction;
 }
 

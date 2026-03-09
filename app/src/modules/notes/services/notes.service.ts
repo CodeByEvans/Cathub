@@ -1,6 +1,7 @@
 import { getValue } from "@/services/store.service";
 import { supabase } from "../../../services/supabaseClient";
 import { Note, Notes, noteSchema } from "../@types/notes.types";
+import { audioService } from "@/services/audio.service";
 
 class NotesService {
   private connectionId: string | null = null;
@@ -57,7 +58,7 @@ class NotesService {
     return noteSchema.parse(data);
   }
 
-  suscribeChannel(
+  subscribeChannel(
     callback: (
       notes: Notes,
       type: "INSERT" | "UPDATE" | "DELETE",
@@ -68,7 +69,12 @@ class NotesService {
       .channel("public:notes")
       .on(
         "postgres_changes",
-        { event: "*", schema: "public", table: "notes" },
+        {
+          event: "*",
+          schema: "public",
+          table: "notes",
+          filter: `connection_id=eq.${this.connectionId}`,
+        },
         async (payload) => {
           await this.initialize(); // asegura que myUserId esté cargado
 
@@ -79,6 +85,7 @@ class NotesService {
 
           switch (payload.eventType) {
             case "INSERT":
+              audioService.play("incomingNote", { volume: 0.1 });
               callback([note], "INSERT", note.id);
               break;
             case "UPDATE":

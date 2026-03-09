@@ -1,7 +1,7 @@
 import "./App.css";
 import { callService } from "./modules/call/services/call.service";
 import { IncomingCallModal } from "./modules/call/components/views/IncomingCallModal";
-import { CallScreen } from "./modules/call/components/views/CallScreen";
+import { InCallScreen } from "./modules/call/components/views/InCallScreen";
 import { Button } from "./globals/components/atoms/button";
 import { Settings } from "lucide-react";
 import { SettingsPage } from "./modules/settings/SettingsPage";
@@ -9,6 +9,7 @@ import { useClampOnMouseUp } from "./hooks/useClampOnMouseUp";
 import { MainView } from "./MainView";
 import { useAppInit } from "./hooks/useAppInit";
 import { useSettings } from "./hooks/useSettings";
+import { audioService } from "./services/audio.service";
 
 function App() {
   const {
@@ -59,7 +60,7 @@ function App() {
   if (inCall) {
     return (
       <>
-        <CallScreen
+        <InCallScreen
           partnerName={partnerName}
           onEndCall={() => {
             callService.endCall();
@@ -89,6 +90,7 @@ function App() {
       onSimulateInCall={() => {
         callService.simulateInCall();
         setInCall(true);
+        audioService.play("callStarted", { volume: 0.3 });
       }}
     />
   );

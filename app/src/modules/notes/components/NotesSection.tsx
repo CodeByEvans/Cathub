@@ -28,7 +28,7 @@ export function NotesSection() {
 
     fetchLastNote();
 
-    const unsubscribe = notesService.suscribeChannel((notes, type) => {
+    const unsubscribe = notesService.subscribeChannel((notes, type) => {
       if (type === "INSERT" && notes.length > 0) {
         const newNoteData = notes[0];
         setLatestNote({
