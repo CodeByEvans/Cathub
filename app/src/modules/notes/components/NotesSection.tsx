@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-
 import { Note as NoteType } from "../@types/notes.types";
 import { notesService } from "../services/notes.service";
 import { NoteInput } from "./NoteInput";
@@ -13,7 +12,6 @@ interface Note {
 export function NotesSection() {
   const [latestNote, setLatestNote] = useState<Note | null>(null);
 
-  // Obtener la última nota del otro usuario al montar
   useEffect(() => {
     const fetchLastNote = async () => {
       try {
@@ -23,14 +21,13 @@ export function NotesSection() {
           content: data.content,
           timestamp: new Date(data.created_at),
         });
-      } catch (error) {
+      } catch {
         console.log("No hay notas disponibles aún");
       }
     };
 
     fetchLastNote();
 
-    // Suscribirse a nuevas notas del otro usuario
     const unsubscribe = notesService.suscribeChannel((notes, type) => {
       if (type === "INSERT" && notes.length > 0) {
         const newNoteData = notes[0];
@@ -42,37 +39,71 @@ export function NotesSection() {
       }
     });
 
-    return () => {
-      unsubscribe();
-    };
+    return () => unsubscribe();
   }, []);
 
   return (
-    <div className="flex flex-col h-full flex-1 min-w-0 px-2">
-      {/* Notes display area with paper texture */}
-      <div className="flex-1 paper-texture rounded-lg overflow-hidden border border-border shadow-inner">
-        <div className="h-full p-3 overflow-y-auto">
-          {latestNote ? (
-            <div className="flex flex-col gap-1">
-              <p className="text-sm text-primary leading-relaxed line-clamp-3">
-                {latestNote.content}
-              </p>
-              <span className="text-[10px] text-muted-foreground glass:text-secondary-foreground">
-                {latestNote.timestamp.toLocaleTimeString("es-ES", {
-                  hour: "2-digit",
-                  minute: "2-digit",
-                })}
-              </span>
-            </div>
-          ) : (
-            <p className="text-sm text-muted-foreground italic text-center pt-6">
-              Sin notas aún...
+    <div className="flex flex-col h-full flex-1 min-w-0 px-2 gap-1">
+      {/* Paper note */}
+      <div
+        className="relative flex flex-1 items-center justify-center overflow-hidden rounded-md border shadow-sm pb-2 bg-note-bg"
+        style={{
+          fontFamily: "'Caveat', cursive",
+          background: "var(--note-bg, #fdf9f0)",
+          borderColor: "var(--note-border, #e8dcc8)",
+          boxShadow:
+            "2px 2px 8px rgba(0,0,0,0.08), inset 0 1px 3px rgba(0,0,0,0.04)",
+        }}
+      >
+        <div
+          style={{
+            position: "absolute",
+            bottom: 0,
+            right: 0,
+            width: 0,
+            height: 0,
+            borderStyle: "solid",
+            borderWidth: "0 0 18px 18px",
+            borderColor:
+              "transparent transparent var(--note-border, #e8dcc8) transparent",
+          }}
+        />
+        <div
+          style={{
+            position: "absolute",
+            bottom: "1px",
+            right: "1px",
+            width: 0,
+            height: 0,
+            borderStyle: "solid",
+            borderWidth: "0 0 16px 16px",
+            borderColor:
+              "transparent transparent var(--note-fold, #f5ede0) transparent",
+          }}
+        />
+
+        {latestNote ? (
+          <>
+            <p className="m-0 px-3 text-center leading-relaxed text-2xl">
+              {latestNote.content}
             </p>
-          )}
-        </div>
+            <span className="absolute bottom-1.5 left-2.5 text-[11px] text-muted-foreground">
+              {latestNote.timestamp.toLocaleTimeString("es-ES", {
+                hour: "2-digit",
+                minute: "2-digit",
+              })}
+            </span>
+          </>
+        ) : (
+          <p
+            className="m-0 text-sm italic text-center"
+            style={{ color: "var(--note-muted, #b0a090)" }}
+          >
+            Sin notas aún...
+          </p>
+        )}
       </div>
 
-      {/* Input area */}
       <NoteInput />
     </div>
   );
