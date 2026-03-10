@@ -135,6 +135,13 @@ class PeerService {
     if (!this.partnerId) throw new Error("No partner");
     if (!this.peer) throw new Error("Peer not initialized");
 
+    const dataConn = this.peer.connect(this.partnerId);
+    this.currentDataConnection = dataConn;
+    dataConn.on("open", () => console.log("📡 Canal de datos abierto"));
+    dataConn.on("data", (data) =>
+      this.onChatMessageReceivedCallback?.(data as string),
+    );
+
     // Obtener permisos de cámara/micrófono
     this.localStream = await navigator.mediaDevices.getUserMedia({
       video: !audioOnly,
