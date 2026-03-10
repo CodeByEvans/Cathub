@@ -33,7 +33,7 @@ export const IconInput: React.FC<IconInputProps> = ({
           id={id}
           type={resolvedType}
           placeholder={placeholder}
-          className="pl-10 bg-input/50"
+          className="pl-10 bg-input/50 text-foreground glass:text-primary-foreground "
           {...registration}
         />
         {isPassword && (

@@ -20,6 +20,16 @@ export const authService = {
   },
   register: async (username: string, email: string, password: string) => {
     try {
+      const { data } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("email", email)
+        .single();
+
+      if (data) {
+        throw new Error("The email is already in use");
+      }
+
       const { error } = await supabase.auth.signUp({
         email,
         password,
@@ -37,6 +47,7 @@ export const authService = {
       return;
     } catch (error) {
       console.error(error);
+      throw error;
     }
   },
   async logout() {

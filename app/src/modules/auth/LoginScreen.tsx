@@ -12,6 +12,7 @@ import { AuthMode } from "./constants/auth-form.constants";
 import { loginSchema, registerSchema } from "./schemas/authSchema";
 import { authService } from "./services/auth.service";
 import { handleAuthError } from "./helpers/authErrorHandler";
+import { getValue, hasValue } from "@/services/store.service";
 
 type LoginForm = {
   email: string;
@@ -44,8 +45,7 @@ export const LoginScreen = () => {
   useEffect(() => {
     const loadStore = async () => {
       try {
-        const store = await load("store.json");
-        const completed = await store.get<boolean>("introduction_completed");
+        const completed = await hasValue("introduction_completed");
         setIntroductionCompleted(completed === true);
       } catch (error) {
         console.error(error);
@@ -62,11 +62,17 @@ export const LoginScreen = () => {
     }
   }, [introductionCompleted, mode]);
 
+  useEffect(() => {
+    reset();
+  }, [mode]);
+
   const completeIntroduction = () => setIntroductionCompleted(true);
 
   const handleRegister = async (data: LoginForm) => {
     try {
       if (!data.username) throw new Error("Username is required");
+      if (data.password !== data.confirmPassword)
+        throw new Error("Passwords do not match");
       await authService.register(data.username, data.email, data.password);
       toast.success(
         "Registrado con exito, confirme su correo para activar su cuenta",
@@ -75,6 +81,7 @@ export const LoginScreen = () => {
       setMode("login");
     } catch (error) {
       console.error(error);
+      handleAuthError(error);
     }
   };
 

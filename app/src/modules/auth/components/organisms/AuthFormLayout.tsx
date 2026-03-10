@@ -1,5 +1,6 @@
 import { CathubLogo } from "@/globals/components/atoms/logo";
 import { AuthMode } from "../../constants/auth-form.constants";
+import { CathubLogoPrimary } from "@/globals/components/atoms/logo-primary";
 
 export interface AuthFormLayoutProps {
   mode: AuthMode;
@@ -18,8 +19,10 @@ export const AuthFormLayout: React.FC<AuthFormLayoutProps> = ({
       data-tauri-drag-region
       className="flex flex-col items-center gap-3 pt-8 pb-6 bg-gradient-to-b from-primary/10 to-transparent"
     >
-      <CathubLogo size="lg" mode={mode} />
-      <h1 className="text-2xl font-bold text-foreground">Cathub</h1>
+      <CathubLogoPrimary size="lg" mode={mode} />
+      <h1 className="text-2xl font-bold text-foreground glass:text-primary-foreground">
+        Cathub
+      </h1>
       <p className="text-sm text-muted-foreground">
         {mode === "login" ? "Bienvenido de nuevo" : "Crea tu cuenta"}
       </p>

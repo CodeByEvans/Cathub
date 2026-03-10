@@ -9,8 +9,9 @@ export const handleAuthError = (error: unknown) => {
   const errorMap: Record<string, string> = {
     "Invalid login credentials": "Credenciales invalidas",
     "Email not confirmed": "Correo no confirmado",
+    "The email is already in use": "El correo ya esta en uso",
+    "Passwords do not match": "Las contraseñas no coinciden",
   };
-  const message =
-    errorMap[error.message] || `Error al iniciar sesion: ${error.message}`;
+  const message = errorMap[error.message] || `Error: ${error.message}`;
   toast.error(message);
 };
