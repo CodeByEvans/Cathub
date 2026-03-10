@@ -1,6 +1,5 @@
 import { getCurrentWindow, LogicalSize } from "@tauri-apps/api/window";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { load } from "@tauri-apps/plugin-store";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -12,7 +11,7 @@ import { AuthMode } from "./constants/auth-form.constants";
 import { loginSchema, registerSchema } from "./schemas/authSchema";
 import { authService } from "./services/auth.service";
 import { handleAuthError } from "./helpers/authErrorHandler";
-import { getValue, hasValue } from "@/services/store.service";
+import { hasValue, setValue } from "@/services/store.service";
 
 type LoginForm = {
   email: string;
@@ -46,6 +45,7 @@ export const LoginScreen = () => {
     const loadStore = async () => {
       try {
         const completed = await hasValue("introduction_completed");
+        console.log("introduction_completed", completed);
         setIntroductionCompleted(completed === true);
       } catch (error) {
         console.error(error);
@@ -66,7 +66,10 @@ export const LoginScreen = () => {
     reset();
   }, [mode]);
 
-  const completeIntroduction = () => setIntroductionCompleted(true);
+  const completeIntroduction = () => {
+    setIntroductionCompleted(true);
+    setValue("introduction_completed", true);
+  };
 
   const handleRegister = async (data: LoginForm) => {
     try {
@@ -110,13 +113,15 @@ export const LoginScreen = () => {
   }
 
   return (
-    <AuthTemplate
-      mode={mode}
-      register={register}
-      errors={errors}
-      handleSubmit={handleSubmit}
-      onSubmit={onSubmit}
-      onToggleMode={toggleMode}
-    />
+    <>
+      <AuthTemplate
+        mode={mode}
+        register={register}
+        errors={errors}
+        handleSubmit={handleSubmit}
+        onSubmit={onSubmit}
+        onToggleMode={toggleMode}
+      />
+    </>
   );
 };

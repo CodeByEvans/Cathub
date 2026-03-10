@@ -68,12 +68,14 @@ class WindowService {
         await window.setSkipTaskbar(true);
         await window.setMinimizable(false);
         await invoke("set_dock_visibility", { visible: false });
+        await invoke("set_widget_behavior");
         break;
       case "floating":
         await window.setAlwaysOnTop(true);
         await window.setSkipTaskbar(false);
         await window.setMinimizable(true);
         await invoke("set_dock_visibility", { visible: true });
+        await invoke("set_normal_behavior");
         break;
       case "app":
       default:
@@ -82,6 +84,7 @@ class WindowService {
         await window.setSkipTaskbar(false);
         await window.setMinimizable(true);
         await invoke("set_dock_visibility", { visible: true });
+        await invoke("set_normal_behavior");
         break;
     }
   }

@@ -8,6 +8,12 @@ use tauri_plugin_deep_link::DeepLinkExt;
 use tauri_plugin_window_state::StateFlags;
 use window_vibrancy::*;
 
+#[cfg(target_os = "windows")]
+use std::sync::atomic::{AtomicBool, Ordering};
+
+#[cfg(target_os = "windows")]
+static IS_WIDGET_MODE: AtomicBool = AtomicBool::new(false);
+
 // Comando de ejemplo
 #[tauri::command]
 fn greet(name: &str) -> String {
@@ -53,6 +59,47 @@ async fn clamp_window(window: tauri::Window) {
     }
 }
 
+#[tauri::command]
+fn set_widget_behavior(window: tauri::Window) {
+    #[cfg(target_os = "windows")]
+    IS_WIDGET_MODE.store(true, Ordering::SeqCst);
+
+    #[cfg(target_os = "macos")]
+    {
+        use cocoa::appkit::{NSWindow, NSWindowCollectionBehavior};
+        use objc::runtime::Object;
+
+        let ns_window = window.ns_window().unwrap() as *mut Object;
+        unsafe {
+            let behavior =
+                NSWindowCollectionBehavior::NSWindowCollectionBehaviorCanJoinAllSpaces
+                | NSWindowCollectionBehavior::NSWindowCollectionBehaviorStationary
+                | NSWindowCollectionBehavior::NSWindowCollectionBehaviorIgnoresCycle;
+            NSWindow::setCollectionBehavior_(ns_window, behavior);
+        }
+    }
+}
+
+#[tauri::command]
+fn set_normal_behavior(window: tauri::Window) {
+    #[cfg(target_os = "windows")]
+    IS_WIDGET_MODE.store(false, Ordering::SeqCst);
+
+    #[cfg(target_os = "macos")]
+    {
+        use cocoa::appkit::{NSWindow, NSWindowCollectionBehavior};
+        use objc::runtime::Object;
+
+        let ns_window = window.ns_window().unwrap() as *mut Object;
+        unsafe {
+            NSWindow::setCollectionBehavior_(
+                ns_window,
+                NSWindowCollectionBehavior::NSWindowCollectionBehaviorDefault,
+            );
+        }
+    }
+}
+
 #[cfg(target_os = "windows")]
 unsafe extern "system" fn subclass_proc(
     hwnd: windows_sys::Win32::Foundation::HWND,
@@ -67,7 +114,13 @@ unsafe extern "system" fn subclass_proc(
         GetMonitorInfoW, MonitorFromWindow, MONITORINFO, MONITOR_DEFAULTTONEAREST,
     };
     use windows_sys::Win32::UI::Shell::DefSubclassProc;
-    use windows_sys::Win32::UI::WindowsAndMessaging::{WM_MOVING, WM_NCACTIVATE};
+    use windows_sys::Win32::UI::WindowsAndMessaging::{WM_MOVING, WM_NCACTIVATE, WM_WINDOWPOSCHANGING, WINDOWPOS, SWP_HIDEWINDOW};
+
+    if msg == WM_WINDOWPOSCHANGING && IS_WIDGET_MODE.load(Ordering::SeqCst) {
+    let pos = &mut *(lparam as *mut WINDOWPOS);
+    pos.flags &= !SWP_HIDEWINDOW;
+    return 0;
+}
 
     if msg == WM_NCACTIVATE {
         return DefSubclassProc(hwnd, msg, 1, lparam);
@@ -207,7 +260,7 @@ pub fn run() {
             Ok(())
         })
         .plugin(tauri_plugin_opener::init())
-        .invoke_handler(tauri::generate_handler![greet, clamp_window, set_dock_visibility])
+        .invoke_handler(tauri::generate_handler![greet, clamp_window, set_dock_visibility, set_widget_behavior, set_normal_behavior])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

@@ -13,6 +13,7 @@ import {
   Monitor,
   AppWindow,
   Layers,
+  Circle,
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
@@ -20,8 +21,18 @@ import { Button } from "@/globals/components/atoms/button";
 import { CathubLogo } from "@/globals/components/atoms/logo";
 import { themeService } from "@/modules/settings/services/theme.service";
 import { windowService } from "../settings/services/window.service";
+import { COLOR_OPTIONS } from "../settings/constants/settings-navigation";
+import { ThemeColor } from "../settings/@types/settings.types";
+import { CathubLogoPrimary } from "@/globals/components/atoms/logo-primary";
 
-type FeatureType = "clock" | "messages" | "call" | "theme" | "behavior";
+type FeatureType =
+  | "clock"
+  | "messages"
+  | "call"
+  | "theme"
+  | "behavior"
+  | "colors"
+  | "final";
 type ThemeType = "light" | "dark" | "glass";
 type BehaviorType = "widget" | "app" | "floating";
 
@@ -43,12 +54,15 @@ export function Introduction({ onComplete }: IntroductionProps) {
   const [selectedBehavior, setSelectedBehavior] = useState<BehaviorType | null>(
     null,
   );
+  const [selectedColor, setSelectedColor] = useState<ThemeColor>(
+    themeService.currentThemeColor(),
+  );
   const [isAnimating, setIsAnimating] = useState(false);
 
   useEffect(() => {
     setSelectedBehavior(windowService.currentBehavior());
     setSelectedTheme(themeService.currentTheme());
-  });
+  }, []);
 
   const behaviorDetails: Record<
     BehaviorType,
@@ -105,6 +119,16 @@ export function Introduction({ onComplete }: IntroductionProps) {
       content: "Personaliza Cathub con el tema que mas te guste.",
       feature: "theme",
     },
+    {
+      title: "Tus colores",
+      content: "Cambia los colores de la interfaz de Cathub.",
+      feature: "colors",
+    },
+    {
+      title: "¡Listo!",
+      content: "Disfruta de tu experiencia con Cathub.",
+      feature: "final",
+    },
   ];
 
   const currentStep = steps[step];
@@ -138,9 +162,19 @@ export function Introduction({ onComplete }: IntroductionProps) {
     setSelectedTheme(theme);
   };
 
-  const handleBehaviorChange = (behavior: BehaviorType) => {
-    windowService.setBehavior(behavior);
+  const handleColorChange = (color: ThemeColor) => {
+    themeService.setColor(color);
+    setSelectedColor(color);
+  };
+
+  const setPreviewBehavior = (behavior: BehaviorType) => {
     setSelectedBehavior(behavior);
+  };
+
+  const handleBehaviorChange = () => {
+    if (selectedBehavior === null) return;
+    windowService.setBehavior(selectedBehavior);
+    handleNext();
   };
 
   const FeatureIcon = ({ feature }: { feature: FeatureType }) => {
@@ -150,6 +184,8 @@ export function Introduction({ onComplete }: IntroductionProps) {
       call: <Phone className="w-8 h-8" />,
       behavior: <Monitor className="w-8 h-8" />,
       theme: <Palette className="w-8 h-8" />,
+      colors: <Circle className="w-8 h-8" />,
+      final: CathubLogoPrimary({ size: "lg" }),
     };
     return icons[feature];
   };
@@ -187,7 +223,7 @@ export function Introduction({ onComplete }: IntroductionProps) {
           {options.map(({ value, label, sub, icon }) => (
             <button
               key={value}
-              onClick={() => handleBehaviorChange(value)}
+              onClick={() => setPreviewBehavior(value)}
               className={cn(
                 "w-44 h-9 rounded-lg flex items-center gap-3 px-3 transition-all duration-300 border-2",
                 "bg-secondary/50",
@@ -262,7 +298,7 @@ export function Introduction({ onComplete }: IntroductionProps) {
             onClick={() => handleThemeChange("glass")}
             className={cn(
               "w-14 h-16 rounded-xl flex flex-col items-center justify-center gap-1 transition-all duration-300 border-2",
-              "bg-gradient-to-b from-white/40 to-white/20 backdrop-blur-sm",
+              "bg-gradient-to-b from-white/40 to-white/20 ",
               selectedTheme === "glass"
                 ? "border-primary ring-2 ring-primary/30 scale-105"
                 : "border-slate-300/30 hover:border-slate-400/50 hover:scale-102",
@@ -270,16 +306,44 @@ export function Introduction({ onComplete }: IntroductionProps) {
             title="Tema cristal"
           >
             <div className="w-4 h-4 rounded-full bg-gradient-to-br from-blue-300 to-slate-400 opacity-80" />
-            <span className="text-[10px] text-slate-600 font-medium">
+            <span className="text-[10px] text-slate-600 dark:text-slate-300 glass:text-white font-medium">
               Cristal
             </span>
           </button>
         </div>
       );
     }
+    if (feature === "colors") {
+      return (
+        <div className="flex gap-2">
+          {COLOR_OPTIONS.map(({ value, icon }) => (
+            <button
+              key={value}
+              onClick={() => handleColorChange(value)}
+              className={cn(
+                "w-8 h-8 rounded-full flex items-center justify-center transition-all duration-300 border-2 pt-1",
+                selectedColor === value
+                  ? "border-primary ring-2 ring-primary/30 scale-110"
+                  : "border-transparent hover:border-primary/50 hover:scale-105",
+              )}
+            >
+              {icon}
+            </button>
+          ))}
+        </div>
+      );
+    }
+
+    if (feature === "final") {
+      return (
+        <>
+          <FeatureIcon feature={feature} />
+        </>
+      );
+    }
 
     return (
-      <div className="w-16 h-16 bg-primary/10 backdrop-blur-sm rounded-2xl flex items-center justify-center shadow-lg border border-primary/20 text-primary">
+      <div className="w-16 h-16 bg-secondary/10 backdrop-blur-sm rounded-2xl flex items-center justify-center shadow-lg ring-2 ring-primary/40 text-foreground glass:text-primary-foreground">
         <FeatureIcon feature={feature} />
       </div>
     );
@@ -287,7 +351,10 @@ export function Introduction({ onComplete }: IntroductionProps) {
 
   return (
     <section className="w-[700px] h-[200px] bg-background rounded-xl border border-border/50 shadow-xl overflow-hidden">
-      <div className="h-full flex flex-col justify-between p-5">
+      <div
+        className="h-full flex flex-col justify-between p-5"
+        data-tauri-drag-region
+      >
         {/* Main content */}
         <div
           className={cn(
@@ -313,7 +380,7 @@ export function Introduction({ onComplete }: IntroductionProps) {
           <div className="flex-1 min-w-0">
             <h1
               key={`title-${currentStep.feature === "behavior" && selectedBehavior ? selectedBehavior : step}`}
-              className="text-xl font-bold text-foreground mb-2 animate-in fade-in slide-in-from-bottom-4 duration-300"
+              className="text-xl font-bold text-foreground glass:text-primary-foreground mb-2 animate-in fade-in slide-in-from-bottom-4 duration-300"
             >
               {currentStep.feature === "behavior" && selectedBehavior
                 ? behaviorDetails[selectedBehavior].title
@@ -359,7 +426,7 @@ export function Introduction({ onComplete }: IntroductionProps) {
                 size="sm"
                 onClick={handlePrevious}
                 disabled={isAnimating}
-                className="h-9 px-3 bg-secondary/50 hover:bg-secondary border-border/50 text-secondary-foreground hover:border-border hover:text-border transition-all duration-200"
+                className="h-9 px-3 bg-secondary/50 hover:bg-secondary border-border/50 text-secondary-foreground glass:text-primary-foreground hover:border-border hover:text-border transition-all duration-200"
               >
                 <ChevronLeft className="w-4 h-4 mr-1" />
                 Atras
@@ -368,7 +435,7 @@ export function Introduction({ onComplete }: IntroductionProps) {
 
             <Button
               size="sm"
-              onClick={handleNext}
+              onClick={step === 4 ? handleBehaviorChange : handleNext}
               disabled={isAnimating}
               className="h-9 px-4 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold shadow-md"
             >

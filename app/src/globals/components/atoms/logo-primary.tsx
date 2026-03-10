@@ -34,7 +34,7 @@ export function CathubLogoPrimary({
       <img
         src="/logo-primary.svg"
         alt="Cathub Logo"
-        className="w-full h-full object-contain bg-primary rounded-full ring-1 ring-black/20 shadow-md"
+        className="w-full h-full object-contain bg-primary dark:bg-primary   rounded-full ring-2 ring-black/40 shadow-md"
       />
     </motion.div>
   );

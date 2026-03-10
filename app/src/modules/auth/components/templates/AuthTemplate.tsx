@@ -1,8 +1,13 @@
 import { Button } from "@/globals/components/atoms/button";
-import { UseFormHandleSubmit, UseFormRegister, FieldErrors } from "react-hook-form";
+import {
+  UseFormHandleSubmit,
+  UseFormRegister,
+  FieldErrors,
+} from "react-hook-form";
 import { AUTH_FIELDS, AuthMode } from "../../constants/auth-form.constants";
 import { IconInput } from "../molecules/IconInput";
 import { AuthFormLayout } from "../organisms/AuthFormLayout";
+import { deleteValue } from "@/services/store.service";
 
 type LoginForm = {
   email: string;
@@ -85,12 +90,28 @@ export const AuthTemplate: React.FC<AuthTemplateProps> = ({
             </div>
           ) : (
             <div className="flex flex-row items-center justify-center gap-1">
-              <p className="text-sm text-muted-foreground">Ya tienes una cuenta?</p>
-              <span className="font-semibold text-foreground">Inicia sesion</span>
+              <p className="text-sm text-muted-foreground">
+                Ya tienes una cuenta?
+              </p>
+              <span className="font-semibold text-foreground">
+                Inicia sesion
+              </span>
             </div>
           )}
         </button>
       </form>
+
+      {import.meta.env.DEV && (
+        <button
+          className="fixed bottom-4 left-4 text-xs px-2 py-1 rounded-md bg-muted text-muted-foreground hover:bg-destructive hover:text-destructive-foreground transition-colors"
+          onClick={() => {
+            deleteValue("introduction_completed");
+            window.location.reload();
+          }}
+        >
+          ↺ Reset intro
+        </button>
+      )}
     </AuthFormLayout>
   );
 };

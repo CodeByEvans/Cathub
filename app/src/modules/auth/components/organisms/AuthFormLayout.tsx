@@ -1,4 +1,3 @@
-import { CathubLogo } from "@/globals/components/atoms/logo";
 import { AuthMode } from "../../constants/auth-form.constants";
 import { CathubLogoPrimary } from "@/globals/components/atoms/logo-primary";
 
