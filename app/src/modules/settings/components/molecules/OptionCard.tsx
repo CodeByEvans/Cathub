@@ -3,6 +3,7 @@ import { cn } from "@/lib/utils";
 import { OptionCardProps } from "../../@types/settings.types";
 
 import { audioService } from "@/services/audio.service";
+import { SoundKey } from "@/constants/sounds.constants";
 
 export const OptionCard = <T,>({
   icon,
@@ -13,7 +14,7 @@ export const OptionCard = <T,>({
   onClick,
   className,
 }: OptionCardProps<T>) => {
-  const play = (key: string) => audioService.play(key, { volume: 0.1 });
+  const play = (key: SoundKey) => audioService.play(key, { volume: 0.1 });
   return (
     <Button
       variant="outline"

@@ -1,14 +1,15 @@
+import React from "react";
 import { notesService } from "../services/notes.service";
 import { Input } from "@/globals/components/atoms/input";
-import React from "react";
 import { Button } from "@/globals/components/atoms/button";
 import { Send } from "lucide-react";
 import { toast } from "sonner";
 import { audioService } from "@/services/audio.service";
+import { SoundKey } from "@/constants/sounds.constants";
 
 export const NoteInput = () => {
   const [note, setNote] = React.useState("");
-  const play = (key: string) => audioService.play(key, { volume: 0.1 });
+  const play = (key: SoundKey) => audioService.play(key, { volume: 0.1 });
 
   const lastSentRef = React.useRef<number>(0);
   const COOLDOWN_MS = 4000; // 4 segundos entre notas

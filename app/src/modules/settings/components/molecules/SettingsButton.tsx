@@ -2,6 +2,7 @@ import { Button } from "@/globals/components/atoms/button";
 import React from "react";
 import { SettingsButtonProps } from "../../@types/settings.types";
 import { audioService } from "@/services/audio.service";
+import { SoundKey } from "@/constants/sounds.constants";
 
 interface Props extends SettingsButtonProps {
   onClickAction: () => void;
@@ -14,7 +15,7 @@ export const SettingsButton: React.FC<Props> = ({
   text,
   textClasses,
 }) => {
-  const play = (key: string) => audioService.play(key, { volume: 0.1 });
+  const play = (key: SoundKey) => audioService.play(key, { volume: 0.1 });
 
   return (
     <Button
