@@ -14,11 +14,8 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/globals/components/atoms/button";
 import { peerService } from "../../../../services/peer.service";
 import { ChatSection } from "@/modules/chat/ChatSection";
-import { Message } from "@/modules/chat/@types/chat.types";
 
 interface CallScreenProps {
-  messages: Message[];
-  onSendMessage: (message: string) => void;
   partnerName: string;
   partnerAvatar?: string;
   onEndCall?: () => void;
@@ -29,8 +26,6 @@ const FULL_SIZE = { width: 700, height: 200 };
 const MINI_SIZE = { width: 280, height: 60 };
 
 export function InCallScreen({
-  messages,
-  onSendMessage,
   partnerName = "Pareja",
   partnerAvatar,
   onEndCall,
@@ -190,11 +185,7 @@ export function InCallScreen({
 
       {/* Center — status badges */}
       <div className="flex-1 flex flex-col h-full min-h-0 overflow-hidden px-2">
-        <ChatSection
-          partnerName="{partnerName}"
-          messages={messages}
-          onSendMessage={onSendMessage}
-        />
+        <ChatSection partnerName={partnerName} />
       </div>
 
       {/* Divider */}

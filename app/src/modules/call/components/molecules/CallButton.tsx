@@ -1,15 +1,9 @@
 import { cn } from "@/lib/utils";
-import { Phone, PhoneOff } from "lucide-react";
+import { Phone } from "lucide-react";
 import { Button } from "@/globals/components/atoms/button";
 import { peerService } from "../../../../services/peer.service";
 
-export const CallButton = ({
-  inCall,
-  isOnline,
-}: {
-  inCall: boolean;
-  isOnline: boolean;
-}) => {
+export const CallButton = ({ isOnline }: { isOnline: boolean }) => {
   return (
     <div className="flex flex-col items-center justify-center">
       <Button
@@ -19,20 +13,12 @@ export const CallButton = ({
           "w-14 h-14 rounded-full p-0 shadow-lg transition-all duration-300 hover:scale-105 active:scale-95",
         )}
         style={{
-          backgroundColor: inCall ? "var(--hangup)" : "var(--call-button)",
-          color: inCall
-            ? "var(--hangup-foreground)"
-            : "var(--call-button-foreground)",
+          backgroundColor: "var(--call-button)",
+          color: "var(--call-button-foreground)",
         }}
-        onClick={() =>
-          inCall ? peerService.endCall() : peerService.startCall(true)
-        }
+        onClick={() => peerService.startCall(true)}
       >
-        {inCall ? (
-          <PhoneOff className="w-6 h-6" />
-        ) : (
-          <Phone className="w-6 h-6" />
-        )}
+        <Phone className="w-6 h-6" />
       </Button>
     </div>
   );

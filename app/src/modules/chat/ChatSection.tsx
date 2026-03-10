@@ -1,24 +1,22 @@
 import { ChatMessageList } from "./components/ChatMessageList";
 import { ChatInput } from "./components/ChatInput";
-import { Message } from "./@types/chat.types";
+import { useChat } from "@/hooks/useChat";
 
 interface ChatSectionProps {
-  messages: Message[];
   partnerName: string;
-  onSendMessage: (message: string) => void;
   isConnected?: boolean;
 }
 
 export function ChatSection({
-  messages,
   partnerName,
-  onSendMessage,
+
   isConnected = true,
 }: ChatSectionProps) {
+  const { messages, sendChatMessage } = useChat();
   return (
     <div className="flex flex-col h-full w-full overflow-hidden">
       <ChatMessageList messages={messages} partnerName={partnerName} />
-      <ChatInput onSend={onSendMessage} disabled={!isConnected} />
+      <ChatInput onSend={sendChatMessage} disabled={!isConnected} />
     </div>
   );
 }

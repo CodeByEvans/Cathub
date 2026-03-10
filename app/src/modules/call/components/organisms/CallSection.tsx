@@ -5,60 +5,22 @@ import { useEffect, useState } from "react";
 import { presenceService } from "@/services/presence.service";
 
 import { CallButton } from "../molecules/CallButton";
-import { peerService } from "../../../../services/peer.service";
 
 export function CallSection() {
-  const [inCall, setInCall] = useState(false);
-  const [callTime, setCallTime] = useState(0); // tiempo en segundos
-
   const [isOnline, setIsOnline] = useState(false);
   const [lastConnection, setLastConnection] = useState<Date | null>(null);
 
-  // Conectar eventos de CallService con React
   useEffect(() => {
-    peerService.onCallConnected(() => {
-      console.log("📞 Estado React: llamada conectada");
-      setInCall(true);
-      setCallTime(0); // reinicia contador
-    });
-
-    peerService.onCallEnded(() => {
-      console.log("📞 Estado React: llamada terminada");
-      setInCall(false);
-    });
-  }, []);
-
-  // Contador de llamada
-  useEffect(() => {
-    if (!inCall) return;
-
-    const interval = setInterval(() => {
-      setCallTime((t) => t + 1);
-    }, 1000);
-
-    return () => clearInterval(interval);
-  }, [inCall]);
-
-  useEffect(() => {
+    // Obtener estado inicial
+    const status = presenceService.getCurrentStatus();
+    setIsOnline(status.isOnline);
+    setLastConnection(status.lastSeen);
     // Configurar callback
     presenceService.onStatusChange((status) => {
       setIsOnline(status.isOnline);
       setLastConnection(status.lastSeen);
     });
-
-    // Obtener estado inicial
-    presenceService.getCurrentStatus().then((status) => {
-      setIsOnline(status.isOnline);
-      setLastConnection(status.lastSeen);
-    });
   }, []);
-
-  // Formatear tiempo a mm:ss
-  const formatCallTime = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${String(mins).padStart(2, "0")}:${String(secs).padStart(2, "0")}`;
-  };
 
   const formatLastConnection = (date: Date | null) => {
     if (!date) return "Sin conexion";
@@ -79,37 +41,31 @@ export function CallSection() {
   return (
     <div className="flex flex-col items-center justify-center gap-2 px-4 h-full min-w-[140px]">
       {/* Call button */}
-      <CallButton inCall={inCall} isOnline={isOnline} />
+      <CallButton isOnline={isOnline} />
 
       {/* Timer de llamada o estado de conexión */}
       <div className="flex flex-col items-center gap-1">
-        {inCall ? (
-          <span className="text-xs font-medium ">
-            {formatCallTime(callTime)}
-          </span>
-        ) : (
-          <div className="flex flex-col items-center gap-1 text-center">
-            {/* Estado online/offline */}
-            <div className="flex items-center gap-1.5">
-              <div
-                className={cn(
-                  "w-2 h-2 rounded-full",
-                  isOnline ? "bg-online animate-pulse" : "bg-offline",
-                )}
-              />
-              <span className="text-xs font-medium text-muted-foreground">
-                {isOnline ? "En línea" : "Desconectado"}
-              </span>
-            </div>
-
-            {/* Última conexión debajo */}
-            {!isOnline && lastConnection && (
-              <span className="text-[10px] text-muted-foreground">
-                {formatLastConnection(lastConnection)}
-              </span>
-            )}
+        <div className="flex flex-col items-center gap-1 text-center">
+          {/* Estado online/offline */}
+          <div className="flex items-center gap-1.5">
+            <div
+              className={cn(
+                "w-2 h-2 rounded-full",
+                isOnline ? "bg-online animate-pulse" : "bg-offline",
+              )}
+            />
+            <span className="text-xs font-medium text-muted-foreground">
+              {isOnline ? "En línea" : "Desconectado"}
+            </span>
           </div>
-        )}
+
+          {/* Última conexión debajo */}
+          {!isOnline && lastConnection && (
+            <span className="text-[10px] text-muted-foreground">
+              {formatLastConnection(lastConnection)}
+            </span>
+          )}
+        </div>
       </div>
     </div>
   );

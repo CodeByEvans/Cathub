@@ -7,10 +7,11 @@ import { Settings } from "lucide-react";
 import { SettingsPage } from "./modules/settings/SettingsPage";
 import { useClampOnMouseUp } from "./hooks/useClampOnMouseUp";
 import { MainView } from "./MainView";
-import { useAppInit } from "./hooks/useAppInit";
+
 import { useSettings } from "./hooks/useSettings";
 import { audioService } from "./services/audio.service";
 import { peerService } from "./services/peer.service";
+import { useAppInit } from "./hooks/useAppInit";
 
 function App() {
   const {
@@ -21,8 +22,6 @@ function App() {
     setIncomingCall,
     inCall,
     setInCall,
-    messages,
-    sendChatMessage,
   } = useAppInit();
 
   const { showSettings, openSettings, closeSettings } = useSettings();
@@ -65,8 +64,6 @@ function App() {
       <>
         <InCallScreen
           partnerName={partnerName}
-          messages={messages}
-          onSendMessage={sendChatMessage}
           onEndCall={() => {
             peerService.endCall();
             setInCall(false);
@@ -88,16 +85,18 @@ function App() {
   }
 
   return (
-    <MainView
-      partnerName={partnerName}
-      userLinked={userLinked}
-      onSimulateIncomingCall={() => peerService.simulateIncomingCall()}
-      onSimulateInCall={() => {
-        peerService.simulateInCall();
-        setInCall(true);
-        audioService.play("callStarted", { volume: 0.3 });
-      }}
-    />
+    <>
+      <MainView
+        partnerName={partnerName}
+        userLinked={userLinked}
+        onSimulateIncomingCall={() => peerService.simulateIncomingCall()}
+        onSimulateInCall={() => {
+          peerService.simulateInCall();
+          setInCall(true);
+          audioService.play("callStarted", { volume: 0.3 });
+        }}
+      />
+    </>
   );
 }
 

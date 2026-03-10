@@ -15,8 +15,16 @@ class PresenceService {
 
   // Para recibir (checking)
   private checkInterval: NodeJS.Timeout | null = null;
-  private checkFrequency = 10000; // 10 segundos
   private partnerId: string | null = null;
+
+  private onlineStatus: PresenceStatus = {
+    isOnline: false,
+    lastSeen: null,
+  };
+
+  getCurrentStatus() {
+    return this.onlineStatus;
+  }
 
   // Threshold
   private readonly ONLINE_THRESHOLD_MS = 15000; // 15 segundos
@@ -96,22 +104,33 @@ class PresenceService {
 
   // ========== LISTENING (recibir) ==========
 
-  private startListening() {
+  private async startListening() {
     if (!this.partnerId) return;
 
-    if (this.checkInterval) {
-      clearInterval(this.checkInterval);
-    }
+    await this.checkPartnerStatus();
 
-    // console.log("👀 Iniciando listening de pareja");
+    const channel = supabase
+      .channel("partner-presence")
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "profiles",
+          filter: `id=eq.${this.partnerId}`,
+        },
+        (payload) => {
+          const lastSeen = new Date(payload.new.last_seen);
+          const isOnline =
+            Date.now() - lastSeen.getTime() < this.ONLINE_THRESHOLD_MS;
+          const status = { isOnline, lastSeen };
+          this.onlineStatus = status;
+          this.onStatusChangeCallback?.(status);
+        },
+      )
+      .subscribe();
 
-    // Check inmediato
-    this.checkPartnerStatus();
-
-    // Luego cada 10 segundos
-    this.checkInterval = setInterval(() => {
-      this.checkPartnerStatus();
-    }, this.checkFrequency);
+    return () => supabase.removeChannel(channel);
   }
 
   private async checkPartnerStatus() {
@@ -144,6 +163,7 @@ class PresenceService {
       */
 
       this.notifyStatusChange({ isOnline, lastSeen });
+      this.onlineStatus = { isOnline, lastSeen };
     } catch (err) {
       console.error("❌ Error en checkPartnerStatus:", err);
     }
@@ -170,31 +190,6 @@ class PresenceService {
   }
 
   // ========== PUBLIC API ==========
-
-  /**
-   * Obtiene estado actual de la pareja (sin esperar callback)
-   */
-  async getCurrentStatus(): Promise<PresenceStatus> {
-    if (!this.partnerId) {
-      return { isOnline: false, lastSeen: null };
-    }
-
-    const { data } = await supabase
-      .from("profiles")
-      .select("last_seen")
-      .eq("id", this.partnerId)
-      .single();
-
-    if (!data?.last_seen) {
-      return { isOnline: false, lastSeen: null };
-    }
-
-    const lastSeen = new Date(data.last_seen);
-    const diffMs = Date.now() - lastSeen.getTime();
-    const isOnline = diffMs < this.ONLINE_THRESHOLD_MS;
-
-    return { isOnline, lastSeen };
-  }
 
   /**
    * Detiene TODO (heartbeat + listening)

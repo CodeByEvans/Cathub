@@ -10,7 +10,15 @@ interface Note {
 }
 
 export function NotesSection() {
-  const [latestNote, setLatestNote] = useState<Note | null>(null);
+  const [latestNote, setLatestNote] = useState<Note | null>(
+    notesService.getCachedNote()
+      ? {
+          id: notesService.getCachedNote()!.id,
+          content: notesService.getCachedNote()!.content,
+          timestamp: new Date(notesService.getCachedNote()!.created_at),
+        }
+      : null,
+  );
 
   useEffect(() => {
     const fetchLastNote = async () => {

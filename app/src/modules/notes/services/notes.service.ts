@@ -6,6 +6,11 @@ import { audioService } from "@/services/audio.service";
 class NotesService {
   private connectionId: string | null = null;
   private myUserId: string | null = null;
+  private cachedNote: Note | null = null;
+
+  getCachedNote() {
+    return this.cachedNote;
+  }
 
   // Inicializa los datos necesarios, se llama solo al arrancar
   async initialize() {
@@ -36,7 +41,10 @@ class NotesService {
     if (error) throw error;
     if (!data) throw new Error("No hay notas disponibles");
 
-    return noteSchema.parse(data);
+    const note = noteSchema.parse(data);
+    this.cachedNote = note;
+
+    return note;
   }
 
   async sendNote(content: string) {
@@ -85,6 +93,7 @@ class NotesService {
 
           switch (payload.eventType) {
             case "INSERT":
+              this.cachedNote = note;
               audioService.play("incomingNote", { volume: 0.1 });
               callback([note], "INSERT", note.id);
               break;
