@@ -146,7 +146,7 @@ class PeerService {
     this.localStream = await navigator.mediaDevices.getUserMedia({
       video: !audioOnly,
       audio: this.selectedMicId
-        ? { deviceId: { exact: this.selectedMicId } }
+        ? { deviceId: { ideal: this.selectedMicId } }
         : true, // 👈 ahora sí usa el micro elegido
     });
 
@@ -172,7 +172,7 @@ class PeerService {
     this.localStream = await navigator.mediaDevices.getUserMedia({
       video: !audioOnly,
       audio: this.selectedMicId
-        ? { deviceId: { exact: this.selectedMicId } }
+        ? { deviceId: { ideal: this.selectedMicId } }
         : true,
     });
 
