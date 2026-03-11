@@ -18,12 +18,12 @@ import {
 
 import { cn } from "@/lib/utils";
 import { Button } from "@/globals/components/atoms/button";
-import { CathubLogo } from "@/globals/components/atoms/logo";
+import { CathubLogo } from "@/globals/components/atoms/logo(deprecated)";
 import { themeService } from "@/modules/settings/services/theme.service";
 import { windowService } from "../settings/services/window.service";
 import { COLOR_OPTIONS } from "../settings/constants/settings-navigation";
 import { ThemeColor } from "../settings/@types/settings.types";
-import { CathubLogoPrimary } from "@/globals/components/atoms/logo-primary";
+import CathubLogoStandard from "@/globals/components/atoms/logo-standard";
 
 type FeatureType =
   | "clock"
@@ -185,7 +185,7 @@ export function Introduction({ onComplete }: IntroductionProps) {
       behavior: <Monitor className="w-8 h-8" />,
       theme: <Palette className="w-8 h-8" />,
       colors: <Circle className="w-8 h-8" />,
-      final: CathubLogoPrimary({ size: "lg" }),
+      final: CathubLogoStandard({ size: "lg" }),
     };
     return icons[feature];
   };

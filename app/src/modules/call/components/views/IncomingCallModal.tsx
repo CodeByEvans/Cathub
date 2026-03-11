@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Phone, PhoneOff } from "lucide-react";
 
 import { cn } from "@/lib/utils";
-import { CathubLogo } from "@/globals/components/atoms/logo";
+import { CathubLogo } from "@/globals/components/atoms/logo(deprecated)";
 import { Button } from "@/globals/components/atoms/button";
 
 export type WidgetSize = "lg" | "md" | "sm";

@@ -53,7 +53,7 @@ export function ClockSection({
             className="w-6 h-6 rounded-full object-cover ring-2 ring-primary/30"
           />
         ) : (
-          <CathubLogo size="sm" className="w-6 h-6" />
+          <CathubLogo size="sm" />
         )}
         <span className="text-sm font-medium text-muted-foreground truncate max-w-[100px]">
           {partnerName}
