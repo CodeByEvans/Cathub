@@ -22,14 +22,14 @@ fn greet(name: &str) -> String {
 
 // Método para ocultar el dock (Sólo para macOS)
 #[tauri::command]
-fn set_dock_visibility(app: tauri::AppHandle, visible: bool) {
+fn set_dock_visibility(_app: tauri::AppHandle, visible: bool) {
     #[cfg(target_os = "macos")]
     {
         use tauri::ActivationPolicy;
         if visible {
-            let _ = app.set_activation_policy(ActivationPolicy::Regular);
+            let _ = _app.set_activation_policy(ActivationPolicy::Regular);
         } else {
-            let _ = app.set_activation_policy(ActivationPolicy::Accessory);
+            let _ = _app.set_activation_policy(ActivationPolicy::Accessory);
         }
     }
 }
@@ -62,7 +62,24 @@ async fn clamp_window(window: tauri::Window) {
 #[tauri::command]
 fn set_widget_behavior(window: tauri::Window) {
     #[cfg(target_os = "windows")]
-    IS_WIDGET_MODE.store(true, Ordering::SeqCst);
+    {
+        use windows_sys::Win32::UI::WindowsAndMessaging::{GetShellWindow, SetWindowLongPtrW};
+        
+        IS_WIDGET_MODE.store(true, Ordering::SeqCst);
+        
+        if let Ok(hwnd) = window.hwnd() {
+            unsafe {
+                // Obtener la ventana del shell (desktop)
+                let shell_window = GetShellWindow();
+                
+                if !shell_window.is_null() {
+                    // Hacer que nuestra ventana sea propiedad de la ventana del shell
+                    // GWL_HWNDPARENT = -8 en ambas versiones (32 y 64 bits)
+                    SetWindowLongPtrW(hwnd.0 as *mut _, -8, shell_window as isize);
+                }
+            }
+        }
+    }
 
     #[cfg(target_os = "macos")]
     {
@@ -83,7 +100,19 @@ fn set_widget_behavior(window: tauri::Window) {
 #[tauri::command]
 fn set_normal_behavior(window: tauri::Window) {
     #[cfg(target_os = "windows")]
-    IS_WIDGET_MODE.store(false, Ordering::SeqCst);
+    {
+        use windows_sys::Win32::UI::WindowsAndMessaging::{SetWindowLongPtrW, GetDesktopWindow};
+        
+        IS_WIDGET_MODE.store(false, Ordering::SeqCst);
+        
+        if let Ok(hwnd) = window.hwnd() {
+            unsafe {
+                // Restaurar como ventana normal (propiedad del desktop)
+                let desktop = GetDesktopWindow();
+                SetWindowLongPtrW(hwnd.0 as *mut _, -8, desktop as isize);
+            }
+        }
+    }
 
     #[cfg(target_os = "macos")]
     {
@@ -114,13 +143,15 @@ unsafe extern "system" fn subclass_proc(
         GetMonitorInfoW, MonitorFromWindow, MONITORINFO, MONITOR_DEFAULTTONEAREST,
     };
     use windows_sys::Win32::UI::Shell::DefSubclassProc;
-    use windows_sys::Win32::UI::WindowsAndMessaging::{WM_MOVING, WM_NCACTIVATE, WM_WINDOWPOSCHANGING, WINDOWPOS, SWP_HIDEWINDOW};
+    use windows_sys::Win32::UI::WindowsAndMessaging::{
+        WM_MOVING, WM_NCACTIVATE, WM_WINDOWPOSCHANGING, WINDOWPOS, SWP_HIDEWINDOW,
+    };
 
     if msg == WM_WINDOWPOSCHANGING && IS_WIDGET_MODE.load(Ordering::SeqCst) {
-    let pos = &mut *(lparam as *mut WINDOWPOS);
-    pos.flags &= !SWP_HIDEWINDOW;
-    return 0;
-}
+        let pos = &mut *(lparam as *mut WINDOWPOS);
+        pos.flags &= !SWP_HIDEWINDOW;
+        return 0;
+    }
 
     if msg == WM_NCACTIVATE {
         return DefSubclassProc(hwnd, msg, 1, lparam);
@@ -151,13 +182,12 @@ unsafe extern "system" fn subclass_proc(
         let width = rect.right - rect.left;
         let height = rect.bottom - rect.top;
 
-        // rcWork respeta la barra de tareas, a diferencia de rcMonitor
         rect.left = rect.left.max(mi.rcWork.left).min(mi.rcWork.right - width);
         rect.top = rect.top.max(mi.rcWork.top).min(mi.rcWork.bottom - height);
         rect.right = rect.left + width;
         rect.bottom = rect.top + height;
 
-        return 1; // TRUE → Windows aplica el RECT modificado
+        return 1;
     }
 
     DefSubclassProc(hwnd, msg, wparam, lparam)
@@ -208,7 +238,6 @@ pub fn run() {
 
                 let hwnd = window.hwnd().unwrap().0;
 
-                // Esquinas redondeadas
                 let preference: u32 = 2;
                 unsafe {
                     DwmSetWindowAttribute(
@@ -218,7 +247,6 @@ pub fn run() {
                         std::mem::size_of::<u32>() as u32,
                     );
 
-                    // ← Registrar el clamping nativo
                     SetWindowSubclass(hwnd, Some(subclass_proc), 1, 0);
                 }
             }
