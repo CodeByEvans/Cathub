@@ -12,6 +12,7 @@ import { useSettings } from "./hooks/useSettings";
 import { audioService } from "./services/audio.service";
 import { peerService } from "./services/peer.service";
 import { useAppInit } from "./hooks/useAppInit";
+import { OutgoingCallModal } from "./modules/call/components/views/OutgoingCallModal";
 
 function App() {
   const {
@@ -22,6 +23,8 @@ function App() {
     setIncomingCall,
     inCall,
     setInCall,
+    outgoingCall,
+    setOutgoingCall,
   } = useAppInit();
 
   const { showSettings, openSettings, closeSettings } = useSettings();
@@ -35,6 +38,22 @@ function App() {
           <div className="animate-spin h-12 w-12 border-4 border-current border-t-transparent rounded-full mx-auto mb-4" />
           <p>Cargando...</p>
         </div>
+      </div>
+    );
+  }
+
+  if (outgoingCall) {
+    return (
+      <div className="relative">
+        <OutgoingCallModal
+          calleeName={partnerName}
+          isVisible
+          onCancel={() => {
+            peerService.stopRequestCall();
+            setOutgoingCall(false);
+          }}
+        />
+        ;
       </div>
     );
   }
@@ -94,6 +113,11 @@ function App() {
           peerService.simulateInCall();
           setInCall(true);
           audioService.play("callStarted", { volume: 0.3 });
+        }}
+        onSimulateOutgoingCall={() => {
+          peerService.simulateOutgoingCall();
+          setOutgoingCall(true);
+          console.log("📞 Simulando llamada");
         }}
       />
     </>

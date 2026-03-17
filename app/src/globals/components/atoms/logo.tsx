@@ -1,7 +1,7 @@
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
 import CathubLogoAuth from "./logo-auth";
-import CathubLogoStandard from "./logo-standard";
+import CathubLogoWidget from "./logo-widget";
 
 interface CathubLogoPrimaryProps {
   size?: "sm" | "md" | "lg";
@@ -36,7 +36,7 @@ export function CathubLogo({
       {auth ? (
         <CathubLogoAuth width="100%" height="100%" />
       ) : (
-        <CathubLogoStandard width="100%" height="100%" />
+        <CathubLogoWidget width="100%" height="100%" />
       )}
     </motion.div>
   );

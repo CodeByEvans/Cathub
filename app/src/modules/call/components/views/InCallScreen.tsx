@@ -12,8 +12,10 @@ import { getCurrentWindow } from "@tauri-apps/api/window";
 import { LogicalSize } from "@tauri-apps/api/dpi";
 import { cn } from "@/lib/utils";
 import { Button } from "@/globals/components/atoms/button";
+import CathubLogoWidget from "@/globals/components/atoms/logo-widget";
 import { peerService } from "../../../../services/peer.service";
 import { ChatSection } from "@/modules/chat/ChatSection";
+import { windowService } from "@/modules/settings/services";
 
 interface CallScreenProps {
   partnerName: string;
@@ -36,25 +38,29 @@ export function InCallScreen({
   const [callDuration, setCallDuration] = useState(0);
   const [isMinimized, setIsMinimized] = useState(false);
 
+  const appWindow = getCurrentWindow();
+
   useEffect(() => {
-    const interval = setInterval(() => {
-      setCallDuration((prev) => prev + 1);
-    }, 1000);
+    const interval = setInterval(
+      () => setCallDuration((prev) => prev + 1),
+      1000,
+    );
     return () => clearInterval(interval);
   }, []);
 
   const resizeWindow = async (width: number, height: number) => {
-    const win = getCurrentWindow();
-    await win.setSize(new LogicalSize(width, height));
+    await appWindow.setSize(new LogicalSize(width, height));
   };
 
   const minimize = async () => {
     setIsMinimized(true);
+    appWindow.setAlwaysOnTop(true);
     await resizeWindow(MINI_SIZE.width, MINI_SIZE.height);
   };
 
   const restore = async () => {
     setIsMinimized(false);
+    await windowService.restoreBehavior();
     await resizeWindow(FULL_SIZE.width, FULL_SIZE.height);
   };
 
@@ -89,169 +95,245 @@ export function InCallScreen({
     return `${m}:${s.toString().padStart(2, "0")}`;
   };
 
-  const avatarInitial = partnerName.charAt(0).toUpperCase();
-
-  // --- Minimized bubble ---
+  // ── Minimized bubble ──────────────────────────────────────────
   if (isMinimized) {
     return (
-      <main
-        className="w-[280px] h-[60px] rounded-xl overflow-hidden flex items-center gap-3 px-4"
-        data-tauri-drag-region
-      >
-        <span className="absolute inset-0 rounded-xl bg-primary/10 animate-ping opacity-30 pointer-events-none" />
-        <div className="relative w-7 h-7 rounded-full bg-primary/20 flex items-center justify-center overflow-hidden shrink-0 border border-primary/30">
-          {partnerAvatar ? (
-            <img
-              src={partnerAvatar}
-              alt={partnerName}
-              className="w-full h-full object-cover"
-            />
-          ) : (
-            <span className="text-xs font-bold text-primary">
-              {avatarInitial}
-            </span>
-          )}
-          <span className="absolute bottom-0 right-0 w-1.5 h-1.5 bg-green-500 rounded-full border border-background" />
-        </div>
-        <div
-          className="flex flex-col items-start flex-1"
+      <>
+        <style>{`
+          @keyframes miniTailWag {
+            0%   { transform: rotate(-14deg); }
+            50%  { transform: rotate( 14deg); }
+            100% { transform: rotate(-14deg); }
+          }
+        `}</style>
+        <main
+          className="w-[280px] h-[60px] rounded-2xl overflow-hidden flex items-center gap-3 px-4 bg-background border border-border/50 shadow-xl relative"
           data-tauri-drag-region
         >
-          <span className="text-xs font-semibold text-foreground">
-            {partnerName}
-          </span>
-          <span className="text-[10px] text-primary font-mono tabular-nums">
-            {formatTime(callDuration)}
-          </span>
-        </div>
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={restore}
-          className="h-6 w-6 text-muted-foreground hover:text-foreground shrink-0"
-          title="Restaurar"
-        >
-          <Maximize2 className="w-3 h-3" />
-        </Button>
-      </main>
+          {/* Soft glow ping */}
+          <span className="absolute inset-0 rounded-2xl bg-primary/8 animate-ping opacity-20 pointer-events-none" />
+
+          {/* Avatar */}
+          <div className="relative shrink-0">
+            <div className="w-8 h-8 rounded-full bg-primary/10 ring-2 ring-primary/30 flex items-center justify-center overflow-hidden">
+              {partnerAvatar ? (
+                <img
+                  src={partnerAvatar}
+                  alt={partnerName}
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <CathubLogoWidget size="sm" className="w-5 h-5" />
+              )}
+            </div>
+            {/* tiny tail */}
+            <span
+              className="absolute -right-2 bottom-0.5 text-primary/50 text-xs select-none pointer-events-none"
+              style={{
+                transformOrigin: "left center",
+                animation: "miniTailWag 0.9s ease-in-out infinite",
+              }}
+            >
+              〜
+            </span>
+            {/* online dot */}
+            <span className="absolute bottom-0 right-0 w-2 h-2 bg-online rounded-full border border-background" />
+          </div>
+
+          {/* Info */}
+          <div
+            className="flex flex-col items-start flex-1 min-w-0"
+            data-tauri-drag-region
+          >
+            <span className="text-xs font-semibold text-white truncate">
+              {partnerName}
+            </span>
+            <span className="text-[10px] text-primary font-mono tabular-nums">
+              {formatTime(callDuration)}
+            </span>
+          </div>
+
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={restore}
+            className="h-6 w-6 text-muted-foreground hover:text-foreground shrink-0"
+            title="Restaurar"
+          >
+            <Maximize2 className="w-3 h-3" />
+          </Button>
+        </main>
+      </>
     );
   }
 
-  // --- Compact view ---
+  // ── Full view ─────────────────────────────────────────────────
   return (
-    <main
-      className="w-[700px] h-[200px] rounded-xl border border-border/50 shadow-xl overflow-hidden py-4 relative flex items-center"
-      data-tauri-drag-region
-    >
-      {settingsButton && (
-        <div className="absolute top-1 right-1 z-10">{settingsButton}</div>
-      )}
+    <>
+      <style>{`
+        @keyframes catGlow {
+          0%, 100% { opacity: 0.6; transform: scale(1);    }
+          50%       { opacity: 1;   transform: scale(1.04); }
+        }
+        @keyframes tailWag {
+          0%   { transform: rotate(-18deg); }
+          50%  { transform: rotate( 18deg); }
+          100% { transform: rotate(-18deg); }
+        }
+      `}</style>
 
-      {/* Left — avatar + name + timer */}
-      <div className="flex items-center gap-2.5 shrink-0 px-4">
-        <div className="relative">
-          <span className="absolute inset-0 rounded-full bg-primary/20 animate-ping opacity-60" />
-          <div className="relative w-14 h-14 rounded-full bg-primary/10 border-2 border-primary/30 flex items-center justify-center overflow-hidden">
-            {partnerAvatar ? (
-              <img
-                src={partnerAvatar}
-                alt={partnerName}
-                className="w-full h-full object-cover"
-              />
-            ) : (
-              <span className="text-2xl font-bold text-primary">
-                {avatarInitial}
-              </span>
-            )}
+      <main
+        className="w-[700px] h-[200px] rounded-2xl border border-border/50 shadow-xl overflow-hidden relative flex items-center bg-background"
+        data-tauri-drag-region
+      >
+        {settingsButton && (
+          <div className="absolute top-1 right-1 z-10">{settingsButton}</div>
+        )}
+
+        {/* Soft primary glow */}
+        <div
+          className="absolute inset-0 pointer-events-none"
+          style={{
+            background:
+              "radial-gradient(ellipse 60% 80% at 20% 50%, hsl(var(--primary) / 0.07) 0%, transparent 70%)",
+            animation: "catGlow 3s ease-in-out infinite",
+          }}
+        />
+
+        {/* ── LEFT: Avatar + name + timer ── */}
+        <div
+          className="flex items-center gap-4 shrink-0 px-7"
+          data-tauri-drag-region
+        >
+          <div className="relative flex items-center justify-center">
+            {/* Pulse ring */}
+            <div
+              className="absolute rounded-full border-2 border-primary/20"
+              style={{
+                width: "72px",
+                height: "72px",
+                animation: "catGlow 2s ease-in-out infinite",
+              }}
+            />
+
+            {/* Avatar */}
+            <div className="relative z-10 w-14 h-14 rounded-full bg-primary/10 ring-2 ring-primary/40 flex items-center justify-center overflow-hidden">
+              {partnerAvatar ? (
+                <img
+                  src={partnerAvatar}
+                  alt={partnerName}
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <CathubLogoWidget size="sm" className="w-8 h-8" />
+              )}
+            </div>
+
+            {/* Online dot */}
+            <span className="absolute bottom-0.5 right-0.5 z-20 w-3 h-3 bg-online rounded-full border-2 border-background" />
+
+            {/* Wagging tail */}
+            <span
+              className="absolute -right-3 bottom-1 text-primary/60 select-none pointer-events-none text-base"
+              style={{
+                transformOrigin: "left center",
+                animation: "tailWag 0.9s ease-in-out infinite",
+              }}
+            >
+              〜
+            </span>
           </div>
-          <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-green-500 rounded-full border-2 border-background" />
+
+          <div className="flex flex-col gap-0.5">
+            <p className="text-sm font-semibold text-white leading-none">
+              {partnerName}
+            </p>
+            <p className="text-[11px] font-mono tabular-nums text-primary font-semibold leading-none">
+              {formatTime(callDuration)}
+            </p>
+            <p className="text-[10px] text-muted-foreground/60 leading-none mt-0.5">
+              En llamada
+            </p>
+          </div>
         </div>
 
-        <div>
-          <p className="text-sm font-bold text-foreground leading-tight">
-            {partnerName}
-          </p>
-          <p className="text-xs font-mono tabular-nums text-primary font-semibold">
-            {formatTime(callDuration)}
-          </p>
-          <p className="text-[10px] text-muted-foreground leading-tight">
-            En llamada
-          </p>
+        {/* Divider */}
+        <div className="w-px self-stretch bg-border/40 mx-1" />
+
+        {/* ── CENTER: Chat ── */}
+        <div className="flex-1 flex flex-col h-full min-h-0 overflow-hidden px-2">
+          <ChatSection partnerName={partnerName} />
         </div>
-      </div>
 
-      {/* Divider */}
-      <div className="w-px self-stretch bg-border/40 mx-1" />
+        {/* Divider */}
+        <div className="w-px self-stretch bg-border/40 mx-1" />
 
-      {/* Center — status badges */}
-      <div className="flex-1 flex flex-col h-full min-h-0 overflow-hidden px-2">
-        <ChatSection partnerName={partnerName} />
-      </div>
+        {/* ── RIGHT: Controls ── */}
+        <div className="flex items-center gap-1.5 shrink-0 px-4">
+          {/* Mute */}
+          <Button
+            variant="outline"
+            size="icon"
+            className={cn(
+              "h-9 w-9 rounded-full border-2 transition-colors",
+              isMuted
+                ? "border-destructive/50 bg-destructive/10 text-destructive"
+                : "border-border hover:border-primary/40 text-muted-foreground",
+            )}
+            onClick={toggleMute}
+            title={isMuted ? "Desmutear" : "Mutear"}
+          >
+            {isMuted ? (
+              <MicOff className="w-4 h-4" />
+            ) : (
+              <Mic className="w-4 h-4" />
+            )}
+          </Button>
 
-      {/* Divider */}
-      <div className="w-px self-stretch bg-border/40 mx-1" />
+          {/* Deafen */}
+          <Button
+            variant="outline"
+            size="icon"
+            className={cn(
+              "h-9 w-9 rounded-full border-2 transition-colors",
+              isDeafened
+                ? "border-destructive/50 bg-destructive/10 text-destructive"
+                : "border-border hover:border-primary/40 text-muted-foreground",
+            )}
+            onClick={toggleDeafed}
+            title={isDeafened ? "Desensordecer" : "Ensordecer"}
+          >
+            {isDeafened ? (
+              <VolumeX className="w-4 h-4" />
+            ) : (
+              <Volume2 className="w-4 h-4" />
+            )}
+          </Button>
 
-      {/* Right — controls */}
-      <div className="flex items-center gap-1.5 shrink-0 px-3">
-        <Button
-          variant="outline"
-          size="icon"
-          className={cn(
-            "h-9 w-9 rounded-full border-2 transition-colors",
-            isMuted
-              ? "border-destructive/50 bg-destructive/10 text-destructive"
-              : "border-border hover:border-primary/40 text-muted-foreground",
-          )}
-          onClick={toggleMute}
-          title={isMuted ? "Desmutear" : "Mutear"}
-        >
-          {isMuted ? (
-            <MicOff className="w-4 h-4" />
-          ) : (
-            <Mic className="w-4 h-4" />
-          )}
-        </Button>
+          {/* Hang up */}
+          <Button
+            size="icon"
+            className="h-10 w-10 rounded-full bg-destructive hover:bg-destructive/90 text-destructive-foreground border-0 transition-all hover:scale-110 active:scale-95"
+            onClick={onEndCall}
+            title="Colgar"
+          >
+            <PhoneOff className="w-4 h-4" />
+          </Button>
 
-        <Button
-          variant="outline"
-          size="icon"
-          className={cn(
-            "h-9 w-9 rounded-full border-2 transition-colors",
-            isDeafened
-              ? "border-destructive/50 bg-destructive/10 text-destructive"
-              : "border-border hover:border-primary/40 text-muted-foreground",
-          )}
-          onClick={toggleDeafed}
-          title={isDeafened ? "Desensordecer" : "Ensordecer"}
-        >
-          {isDeafened ? (
-            <VolumeX className="w-4 h-4" />
-          ) : (
-            <Volume2 className="w-4 h-4" />
-          )}
-        </Button>
+          <div className="w-px self-stretch bg-border/40 mx-0.5" />
 
-        <Button
-          size="icon"
-          className="h-10 w-10 rounded-full bg-destructive hover:bg-destructive/90 text-destructive-foreground border-0"
-          onClick={onEndCall}
-          title="Colgar"
-        >
-          <PhoneOff className="w-4 h-4" />
-        </Button>
-
-        <div className="w-px self-stretch bg-border/40 mx-0.5" />
-
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-7 w-7 text-muted-foreground hover:text-foreground transition-colors"
-          onClick={minimize}
-          title="Minimizar"
-        >
-          <Minimize2 className="w-4 h-4" />
-        </Button>
-      </div>
-    </main>
+          {/* Minimize */}
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-7 w-7 text-muted-foreground hover:text-foreground transition-colors"
+            onClick={minimize}
+            title="Minimizar"
+          >
+            <Minimize2 className="w-4 h-4" />
+          </Button>
+        </div>
+      </main>
+    </>
   );
 }

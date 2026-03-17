@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Phone, PhoneOff } from "lucide-react";
+import { PhoneOff } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
@@ -9,30 +9,30 @@ import { PawTrail } from "../organisms/PawTrail";
 
 export type WidgetSize = "lg" | "md" | "sm";
 
-interface IncomingCallModalProps {
-  callerName: string;
-  callerAvatar?: string;
+interface OutgoingCallModalProps {
+  calleeName: string;
+  calleeAvatar?: string;
   isVisible: boolean;
-  onAccept: () => void;
-  onReject: () => void;
+  onCancel: () => void;
   size?: WidgetSize;
 }
 
-const TIMEOUT_SECONDS = 30;
+const TIMEOUT_SECONDS = 60;
 
-export function IncomingCallModal({
-  callerName,
-  callerAvatar,
+export function OutgoingCallModal({
+  calleeName,
+  calleeAvatar,
   isVisible,
-  onAccept,
-  onReject,
+  onCancel,
   size = "lg",
-}: IncomingCallModalProps) {
+}: OutgoingCallModalProps) {
   const [elapsed, setElapsed] = useState(0);
+  const [dotCount, setDotCount] = useState(1);
 
   useEffect(() => {
     if (!isVisible) {
       setElapsed(0);
+      setDotCount(1);
       return;
     }
     const t = setInterval(() => setElapsed((s) => s + 1), 1000);
@@ -40,12 +40,19 @@ export function IncomingCallModal({
   }, [isVisible]);
 
   useEffect(() => {
-    if (elapsed >= TIMEOUT_SECONDS && isVisible) onReject();
-  }, [elapsed, isVisible, onReject]);
+    if (!isVisible) return;
+    const d = setInterval(() => setDotCount((n) => (n % 3) + 1), 500);
+    return () => clearInterval(d);
+  }, [isVisible]);
+
+  useEffect(() => {
+    if (elapsed >= TIMEOUT_SECONDS && isVisible) onCancel();
+  }, [elapsed, isVisible, onCancel]);
 
   if (!isVisible) return null;
 
   const isSmall = size === "sm";
+  const dots = ".".repeat(dotCount);
   const progressPct = ((TIMEOUT_SECONDS - elapsed) / TIMEOUT_SECONDS) * 100;
 
   const wrapperClass = {
@@ -90,7 +97,7 @@ export function IncomingCallModal({
           }}
         />
 
-        {/* Timeout progress bar */}
+        {/* Timeout progress bar — primary color */}
         <div className="absolute bottom-0 left-0 right-0 h-[3px] bg-border/30 rounded-full">
           <div
             className="h-full rounded-full bg-primary/60 transition-all duration-1000 ease-linear"
@@ -104,7 +111,7 @@ export function IncomingCallModal({
             isSmall ? "px-4 gap-3" : "px-8 gap-6",
           )}
         >
-          {/* ── LEFT: Avatar + info ── */}
+          {/* ── LEFT: Avatar (no ears — logo is already a cat) + tail ── */}
           <div className="relative shrink-0 flex items-center justify-center">
             {/* Pulse ring */}
             {!isSmall && (
@@ -126,13 +133,14 @@ export function IncomingCallModal({
                 isSmall ? "w-10 h-10" : "w-14 h-14",
               )}
             >
-              {callerAvatar ? (
+              {calleeAvatar ? (
                 <img
-                  src={callerAvatar}
-                  alt={callerName}
+                  src={calleeAvatar}
+                  alt={calleeName}
                   className="w-full h-full rounded-full object-cover"
                 />
               ) : (
+                // Logo is already a cat — no ears needed on top
                 <CathubLogoWidget
                   size="sm"
                   className={isSmall ? "w-6 h-6" : "w-8 h-8"}
@@ -154,7 +162,7 @@ export function IncomingCallModal({
             )}
           </div>
 
-          {/* Name + status + timer */}
+          {/* ── Name + status ── */}
           <div
             className={cn(
               "flex flex-col shrink-0",
@@ -167,7 +175,7 @@ export function IncomingCallModal({
                 isSmall ? "text-xs" : "text-sm",
               )}
             >
-              {callerName}
+              {calleeName}
             </span>
             <span
               className={cn(
@@ -175,7 +183,7 @@ export function IncomingCallModal({
                 isSmall ? "text-[9px]" : "text-[11px]",
               )}
             >
-              Llamada entrante...
+              Llamando{dots}
             </span>
             <span
               className={cn(
@@ -195,58 +203,27 @@ export function IncomingCallModal({
             className={cn("flex-1", pawGap)}
           />
 
-          {/* ── RIGHT: Reject + Accept ── */}
-          <div
-            className={cn(
-              "flex shrink-0 items-center",
-              isSmall ? "gap-3" : "gap-4",
-            )}
-          >
-            {/* Reject */}
-            <div className="flex flex-col items-center gap-1">
-              <Button
-                onClick={onReject}
-                className={cn(
-                  "rounded-full p-0 shadow-md transition-all duration-200 hover:scale-110 active:scale-95",
-                  "bg-destructive hover:bg-destructive/90 text-destructive-foreground",
-                  isSmall ? "w-10 h-10" : "w-12 h-12",
-                )}
-              >
-                <PhoneOff className={isSmall ? "w-4 h-4" : "w-5 h-5"} />
-                <span className="sr-only">Rechazar llamada</span>
-              </Button>
-              <span
-                className={cn(
-                  "text-muted-foreground/70",
-                  isSmall ? "text-[8px]" : "text-[10px]",
-                )}
-              >
-                Rechazar
-              </span>
-            </div>
-
-            {/* Accept */}
-            <div className="flex flex-col items-center gap-1">
-              <Button
-                onClick={onAccept}
-                className={cn(
-                  "rounded-full p-0 shadow-md transition-all duration-200 hover:scale-110 active:scale-95",
-                  "bg-online hover:bg-online/90 text-call-button-foreground",
-                  isSmall ? "w-10 h-10" : "w-12 h-12",
-                )}
-              >
-                <Phone className={isSmall ? "w-4 h-4" : "w-5 h-5"} />
-                <span className="sr-only">Aceptar llamada</span>
-              </Button>
-              <span
-                className={cn(
-                  "text-muted-foreground/70",
-                  isSmall ? "text-[8px]" : "text-[10px]",
-                )}
-              >
-                Aceptar
-              </span>
-            </div>
+          {/* ── RIGHT: Cancel ── */}
+          <div className="flex flex-col items-center gap-1 shrink-0">
+            <Button
+              onClick={onCancel}
+              className={cn(
+                "rounded-full p-0 shadow-md transition-all duration-200 hover:scale-110 active:scale-95",
+                "bg-destructive hover:bg-destructive/90 text-destructive-foreground",
+                isSmall ? "w-10 h-10" : "w-12 h-12",
+              )}
+            >
+              <PhoneOff className={isSmall ? "w-4 h-4" : "w-5 h-5"} />
+              <span className="sr-only">Cancelar llamada</span>
+            </Button>
+            <span
+              className={cn(
+                "text-muted-foreground/70",
+                isSmall ? "text-[8px]" : "text-[10px]",
+              )}
+            >
+              Cancelar
+            </span>
           </div>
         </div>
       </div>

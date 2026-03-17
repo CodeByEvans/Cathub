@@ -8,9 +8,15 @@ interface WindowState {
   behavior: Behavior;
 }
 
-class WindowService {
+export class WindowService {
   private behavior: Behavior = "app";
-  private behaviors: Behavior[] = ["widget", "app", "floating"];
+  private readonly behaviors: Behavior[] = ["widget", "app", "floating"];
+
+  private async getWindow(): Promise<Window> {
+    const win = getCurrentWindow();
+    if (!win) throw new Error("No se pudo obtener la ventana actual");
+    return win;
+  }
 
   currentBehavior(): Behavior {
     return this.behavior;
@@ -18,22 +24,16 @@ class WindowService {
 
   async getBehavior(): Promise<WindowState> {
     try {
-      const storedBehavior = (await getValue("window_behavior")) as Behavior;
-
-      this.behavior =
-        storedBehavior && this.behaviors.includes(storedBehavior)
-          ? storedBehavior
-          : "app";
-
+      const stored = (await getValue("window_behavior")) as Behavior;
+      this.behavior = this.behaviors.includes(stored) ? stored : "app";
       console.log("Comportamiento de ventana actual:", this.behavior);
 
-      const mainWindow = Window.getCurrent();
-
-      await this.applyBehavior(mainWindow, this.behavior);
+      const win = await this.getWindow();
+      await this.applyBehavior(win, this.behavior);
 
       return { behavior: this.behavior };
-    } catch (error) {
-      console.error("Error al obtener el comportamiento de la ventana:", error);
+    } catch (err) {
+      console.error("Error al obtener comportamiento:", err);
       return { behavior: "app" };
     }
   }
@@ -44,68 +44,53 @@ class WindowService {
       return;
     }
 
-    try {
-      await setValue("window_behavior", behavior);
-      this.behavior = behavior;
+    this.behavior = behavior;
+    await setValue("window_behavior", behavior);
 
-      const mainWindow = Window.getCurrent();
-
-      if (!mainWindow) {
-        console.error("No se pudo obtener la ventana principal.");
-        return;
-      }
-
-      await this.applyBehavior(mainWindow, behavior);
-    } catch (error) {
-      console.error("Error al guardar el comportamiento de la ventana:", error);
-    }
+    const win = await this.getWindow();
+    await this.applyBehavior(win, behavior);
   }
 
-  private async applyBehavior(window: Window, behavior: Behavior) {
-    switch (behavior) {
-      case "widget":
-        await window.setAlwaysOnBottom(true);
-        await window.setSkipTaskbar(true);
-        await window.setMinimizable(false);
-        await invoke("set_dock_visibility", { visible: false });
-        await invoke("set_widget_behavior");
-        break;
-      case "floating":
-        await window.setAlwaysOnTop(true);
-        await window.setSkipTaskbar(false);
-        await window.setMinimizable(true);
-        await invoke("set_dock_visibility", { visible: true });
-        await invoke("set_normal_behavior");
-        break;
-      case "app":
-      default:
-        await window.setAlwaysOnTop(false);
-        await window.setAlwaysOnBottom(false);
-        await window.setSkipTaskbar(false);
-        await window.setMinimizable(true);
-        await invoke("set_dock_visibility", { visible: true });
-        await invoke("set_normal_behavior");
-        break;
-    }
+  private behaviorActions: Record<Behavior, (win: Window) => Promise<void>> = {
+    widget: async (win) => {
+      await win.setAlwaysOnBottom(true);
+      await win.setSkipTaskbar(true);
+      await win.setMinimizable(false);
+      await invoke("set_dock_visibility", { visible: false });
+      await invoke("set_widget_behavior");
+    },
+    floating: async (win) => {
+      await win.setAlwaysOnTop(true);
+      await win.setSkipTaskbar(false);
+      await win.setMinimizable(true);
+      await invoke("set_dock_visibility", { visible: true });
+      await invoke("set_floating_behavior");
+    },
+    app: async (win) => {
+      await win.setAlwaysOnTop(false);
+      await win.setAlwaysOnBottom(false);
+      await win.setSkipTaskbar(false);
+      await win.setMinimizable(true);
+      await invoke("set_dock_visibility", { visible: true });
+      await invoke("set_normal_behavior");
+    },
+  };
+
+  private async applyBehavior(win: Window, behavior: Behavior) {
+    const action = this.behaviorActions[behavior];
+    await action(win);
   }
 
   async bringToFront() {
-    const win = getCurrentWindow();
+    const win = await this.getWindow();
     await win.setAlwaysOnBottom(false);
     await win.show();
     await win.setFocus();
   }
 
   async restoreBehavior() {
-    const behavior = this.currentBehavior();
-    if (behavior === "widget") {
-      const win = getCurrentWindow();
-      await win.setAlwaysOnBottom(true);
-    } else if (behavior === "app") {
-      const win = getCurrentWindow();
-      await win.setAlwaysOnBottom(false);
-      await win.setAlwaysOnTop(false);
-    }
+    const win = await this.getWindow();
+    await this.applyBehavior(win, this.behavior);
   }
 }
 

@@ -23,7 +23,7 @@ import { themeService } from "@/modules/settings/services/theme.service";
 import { windowService } from "../settings/services/window.service";
 import { COLOR_OPTIONS } from "../settings/constants/settings-navigation";
 import { ThemeColor } from "../settings/@types/settings.types";
-import CathubLogoStandard from "@/globals/components/atoms/logo-standard";
+import CathubLogoStandard from "@/globals/components/atoms/logo-widget";
 
 type FeatureType =
   | "clock"

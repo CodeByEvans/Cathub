@@ -16,7 +16,7 @@ const PARPADO_DER = {
 };
 const MAX_OFFSET = 6;
 
-const CathubLogoStandard = (props: any) => {
+const CathubLogoWidget = (props: any) => {
   const svgRef = useRef<SVGSVGElement>(null);
   // Seguimiento del ratón
   const x = useMotionValue(0);
@@ -47,16 +47,32 @@ const CathubLogoStandard = (props: any) => {
       const ox = ((e.clientX - logoCX) / window.innerWidth) * MAX_OFFSET * 2;
       const oy = ((e.clientY - logoCY) / window.innerHeight) * MAX_OFFSET * 2;
 
-      x.set(ox);
+      x.set(ox < 0 ? ox * 4 : ox);
       y.set(oy > 0 ? oy * 2 : oy);
-      lowerX.set(ox / 2);
-      lowerY.set(oy / 2);
 
-      minimalX.set(ox / 2);
-      minimalY.set(oy / 2);
+      lowerX.set(ox < 0 ? (ox * 4) / 2 : ox / 2);
+      lowerY.set(oy > 0 ? (oy * 2) / 2 : oy / 2);
+
+      minimalX.set(ox < 0 ? (ox * 4) / 2 : ox / 2);
+      minimalY.set(oy > 0 ? (oy * 2) / 2 : oy / 2);
     };
     window.addEventListener("mousemove", handleMouseMove);
     return () => window.removeEventListener("mousemove", handleMouseMove);
+  }, []);
+
+  useEffect(() => {
+    const handleMouseOut = () => {
+      x.set(0);
+      y.set(0);
+      lowerX.set(0);
+      lowerY.set(0);
+      minimalX.set(0);
+      minimalY.set(0);
+    };
+    window.addEventListener("mouseout", handleMouseOut);
+    return () => {
+      window.removeEventListener("mouseout", handleMouseOut);
+    };
   }, []);
 
   // Parpadeo automático aleatorio
@@ -357,4 +373,4 @@ const CathubLogoStandard = (props: any) => {
   );
 };
 
-export default CathubLogoStandard;
+export default CathubLogoWidget;

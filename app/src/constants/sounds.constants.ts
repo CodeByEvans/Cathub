@@ -8,6 +8,7 @@ import muteSound from "@/assets/sounds/mute.wav";
 import unmuteSound from "@/assets/sounds/unmute.wav";
 import callStartedSound from "@/assets/sounds/call_started.wav";
 import callEndedSound from "@/assets/sounds/call_ended.wav";
+import outgoingCall from "@/assets/sounds/outgoing_call.wav";
 
 export const SOUNDS = {
   hover: hoverSound,
@@ -20,6 +21,7 @@ export const SOUNDS = {
   unmute: unmuteSound,
   callStarted: callStartedSound,
   callEnded: callEndedSound,
+  outgoingCall: outgoingCall,
 } as const;
 
 export type SoundKey = keyof typeof SOUNDS;

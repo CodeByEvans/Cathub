@@ -1,4 +1,4 @@
-import { getCurrentWindow, LogicalSize } from "@tauri-apps/api/window";
+import { getCurrentWindow } from "@tauri-apps/api/window";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
@@ -12,6 +12,7 @@ import { loginSchema, registerSchema } from "./schemas/authSchema";
 import { authService } from "./services/auth.service";
 import { handleAuthError } from "./helpers/authErrorHandler";
 import { hasValue, setValue } from "@/services/store.service";
+import { WINDOW_SIZES } from "@/constants/window.constants";
 
 type LoginForm = {
   email: string;
@@ -20,17 +21,13 @@ type LoginForm = {
   confirmPassword?: string;
 };
 
-const WINDOW_SIZES: Record<string, LogicalSize> = {
-  login: new LogicalSize(400, 600),
-  register: new LogicalSize(400, 700),
-  intro: new LogicalSize(700, 200),
-};
-
 export const LoginScreen = () => {
   const [introductionCompleted, setIntroductionCompleted] = useState<
     boolean | null
   >(null);
   const [mode, setMode] = useState<AuthMode>("login");
+
+  const appWindow = getCurrentWindow();
 
   const {
     register,
@@ -55,15 +52,22 @@ export const LoginScreen = () => {
   }, []);
 
   useEffect(() => {
-    if (introductionCompleted === true) {
-      getCurrentWindow().setSize(WINDOW_SIZES[mode]);
-    } else if (introductionCompleted === false) {
-      getCurrentWindow().setSize(WINDOW_SIZES.intro);
-    }
+    const resizeWindow = async () => {
+      if (introductionCompleted === false) {
+        await appWindow.setSize(WINDOW_SIZES.main);
+        return;
+      }
+
+      if (introductionCompleted === true) {
+        await appWindow.setSize(WINDOW_SIZES[mode]);
+      }
+    };
+
+    resizeWindow();
   }, [introductionCompleted, mode]);
 
   useEffect(() => {
-    reset();
+    reset({});
   }, [mode]);
 
   const completeIntroduction = () => {
@@ -92,16 +96,16 @@ export const LoginScreen = () => {
     try {
       await authService.login(data.email, data.password);
       toast.success("Inicio de sesion exitoso");
-      reset();
-      getCurrentWindow().setSize(WINDOW_SIZES.intro);
+      reset({});
+      await appWindow.setSize(WINDOW_SIZES.main);
     } catch (error) {
       handleAuthError(error);
     }
   };
 
-  const onSubmit = (data: LoginForm) => {
-    if (mode === "login") handleLogin(data);
-    else handleRegister(data);
+  const onSubmit = async (data: LoginForm) => {
+    if (mode === "login") await handleLogin(data);
+    else await handleRegister(data);
   };
 
   const toggleMode = () =>

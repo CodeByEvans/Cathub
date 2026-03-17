@@ -4,6 +4,8 @@ import { getValue, setValue } from "@/services/store.service";
 import { supabase } from "@/services/supabaseClient";
 import Peer, { DataConnection, MediaConnection } from "peerjs";
 import { audioService } from "@/services/audio.service";
+import { getCurrentWindow } from "@tauri-apps/api/window";
+import { WINDOW_SIZES } from "@/constants/window.constants";
 
 class PeerService {
   private peer: Peer | null = null;
@@ -19,14 +21,21 @@ class PeerService {
   private maxReconnectAttempts = 5;
 
   private incomingCall: boolean = false;
+  private outgoingCall: boolean = false;
   private inCall: boolean = false;
   private selectedMicId: string | null = null;
   private selectedSpeakerId: string | null = null;
 
   private remoteAudioElement: HTMLAudioElement | null = null;
 
+  private outgoingCallSoundTimer: ReturnType<typeof setTimeout> | null = null;
+
   public isIncomingCall(): boolean {
     return this.incomingCall;
+  }
+
+  public isOutgoingCall(): boolean {
+    return this.outgoingCall;
   }
 
   public isInCall(): boolean {
@@ -35,6 +44,7 @@ class PeerService {
 
   // Callbacks para el UI
   private onIncomingCallCallback: ((callerId: string) => void) | null = null;
+  private onOutgoingCallCallback: (() => void) | null = null;
   private onCallConnectedCallback: (() => void) | null = null;
   private onCallEndedCallback: (() => void) | null = null;
   private onRemoteStreamCallback: ((stream: MediaStream) => void) | null = null;
@@ -159,7 +169,35 @@ class PeerService {
     // Configurar listeners de la llamada
     this.setupCallListeners(call);
 
+    // Marcar llamada en curso
+    this.onOutgoingCallCallback?.();
+    this.outgoingCall = true;
+    audioService.play("callStarted", { volume: 0.3 });
+    this.outgoingCallSoundTimer = setTimeout(() => {
+      audioService.play("outgoingCall", { loop: true, volume: 0.4 });
+      this.outgoingCallSoundTimer = null;
+    }, 1500);
+
     return this.localStream;
+  }
+  async stopRequestCall() {
+    // Detener el stream local
+    this.localStream?.getTracks().forEach((t) => t.stop());
+    this.localStream = null;
+
+    // Cerrar llamada y canal de datos si existen
+    this.currentCall?.close();
+    this.currentCall = null;
+
+    this.currentDataConnection?.close();
+    this.currentDataConnection = null;
+
+    // Resetear flags
+    this.cleanup();
+
+    // Notificar UI
+    this.onCallEndedCallback?.();
+    audioService.play("callEnded", { volume: 0.3 });
   }
 
   // ✅ Aceptar llamada (el que recibe)
@@ -235,6 +273,7 @@ class PeerService {
   }
 
   private setupCallListeners(call: MediaConnection) {
+    const window = getCurrentWindow();
     call.on("stream", async (remoteStream) => {
       console.log("📹 Stream remoto recibido");
 
@@ -252,6 +291,7 @@ class PeerService {
 
       await this.remoteAudioElement.play();
 
+      audioService.stop("outgoingCall");
       this.onRemoteStreamCallback?.(remoteStream);
       this.onCallConnectedCallback?.();
       this.inCall = true;
@@ -260,7 +300,8 @@ class PeerService {
     call.on("close", () => {
       this.cleanup();
       this.onCallEndedCallback?.();
-      this.inCall = false;
+      window.setSize(WINDOW_SIZES.main);
+      windowService.restoreBehavior();
     });
 
     call.on("error", (err) => {
@@ -273,6 +314,14 @@ class PeerService {
   // Y en cleanup, limpiar también el audio
   private cleanup() {
     this.incomingCall = false;
+    this.outgoingCall = false;
+    this.inCall = false;
+
+    if (this.outgoingCallSoundTimer) {
+      clearTimeout(this.outgoingCallSoundTimer);
+      this.outgoingCallSoundTimer = null;
+    }
+    audioService.stop("outgoingCall");
 
     if (this.remoteAudioElement) {
       this.remoteAudioElement.srcObject = null;
@@ -384,6 +433,10 @@ class PeerService {
     this.onIncomingCallCallback = callback;
   }
 
+  onOutgoingCall(callback: () => void) {
+    this.onOutgoingCallCallback = callback;
+  }
+
   onCallConnected(callback: () => void) {
     this.onCallConnectedCallback = callback;
   }
@@ -434,6 +487,19 @@ class PeerService {
 
       this.inCall = true;
       this.onCallConnectedCallback?.();
+    }
+  }
+
+  async simulateOutgoingCall() {
+    if (import.meta.env.DEV) {
+      // 👈 solo en desarrollo
+      this.outgoingCall = true;
+      this.onOutgoingCallCallback?.();
+      audioService.play("callStarted", { volume: 0.3 });
+      this.outgoingCallSoundTimer = setTimeout(() => {
+        audioService.play("outgoingCall", { loop: true, volume: 0.4 });
+        this.outgoingCallSoundTimer = null;
+      }, 1500);
     }
   }
 

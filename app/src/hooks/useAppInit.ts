@@ -7,6 +7,7 @@ export const useAppInit = () => {
   const [partnerName, setPartnerName] = useState<string>("Amor");
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [incomingCall, setIncomingCall] = useState<boolean>(false);
+  const [outgoingCall, setOutgoingCall] = useState<boolean>(false);
   const [inCall, setInCall] = useState<boolean>(false);
 
   useEffect(() => {
@@ -19,6 +20,7 @@ export const useAppInit = () => {
         peerService.onIncomingCall(() => setIncomingCall(true));
         peerService.onCallConnected(() => setInCall(true));
         peerService.onCallEnded(() => setInCall(false));
+        peerService.onOutgoingCall(() => setOutgoingCall(true));
       } catch (error) {
         console.error("❌ Error inicializando app:", error);
         setUserLinked(false);
@@ -39,5 +41,7 @@ export const useAppInit = () => {
     setIncomingCall,
     inCall,
     setInCall,
+    outgoingCall,
+    setOutgoingCall,
   };
 };

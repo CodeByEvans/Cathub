@@ -12,6 +12,7 @@ interface MainViewProps {
   userLinked: boolean;
   onSimulateIncomingCall: () => void;
   onSimulateInCall: () => void;
+  onSimulateOutgoingCall: () => void;
 }
 
 export function MainView({
@@ -19,6 +20,7 @@ export function MainView({
   userLinked,
   onSimulateIncomingCall,
   onSimulateInCall,
+  onSimulateOutgoingCall,
 }: MainViewProps) {
   const [showSettings, setShowSettings] = React.useState(false);
 
@@ -54,6 +56,9 @@ export function MainView({
               Simular llamada entrante
             </Button>
             <Button onClick={onSimulateInCall}>Simular llamada</Button>
+            <Button onClick={onSimulateOutgoingCall}>
+              Simular llamada saliente
+            </Button>
           </div>
         )}
       </section>
