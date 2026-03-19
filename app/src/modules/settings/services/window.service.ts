@@ -83,7 +83,7 @@ export class WindowService {
 
   async bringToFront() {
     const win = await this.getWindow();
-    await win.setAlwaysOnBottom(false);
+    await win.setAlwaysOnTop(true);
     await win.show();
     await win.setFocus();
   }
