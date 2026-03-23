@@ -1,5 +1,4 @@
 import "./App.css";
-
 import { IncomingCallModal } from "./modules/call/components/views/IncomingCallModal";
 import { InCallScreen } from "./modules/call/components/views/InCallScreen";
 import { Button } from "./globals/components/atoms/button";
@@ -7,7 +6,6 @@ import { Settings } from "lucide-react";
 import { SettingsPage } from "./modules/settings/SettingsPage";
 import { useClampOnMouseUp } from "./hooks/useClampOnMouseUp";
 import { MainView } from "./MainView";
-
 import { useSettings } from "./hooks/useSettings";
 import { audioService } from "./services/audio.service";
 import { peerService } from "./services/peer.service";
@@ -15,20 +13,9 @@ import { useAppInit } from "./hooks/useAppInit";
 import { OutgoingCallModal } from "./modules/call/components/views/OutgoingCallModal";
 
 function App() {
-  const {
-    isLoading,
-    userLinked,
-    partnerName,
-    incomingCall,
-    setIncomingCall,
-    inCall,
-    setInCall,
-    outgoingCall,
-    setOutgoingCall,
-  } = useAppInit();
-
+  const { isLoading, userLinked, partnerName, callState, setCallState } =
+    useAppInit();
   const { showSettings, openSettings, closeSettings } = useSettings();
-
   useClampOnMouseUp(isLoading);
 
   if (isLoading) {
@@ -42,50 +29,14 @@ function App() {
     );
   }
 
-  if (outgoingCall) {
-    return (
-      <div className="relative">
-        <OutgoingCallModal
-          calleeName={partnerName}
-          isVisible
-          onCancel={() => {
-            peerService.stopRequestCall();
-            setOutgoingCall(false);
-          }}
-        />
-        ;
-      </div>
-    );
-  }
-
-  if (incomingCall) {
-    return (
-      <div className="relative">
-        <IncomingCallModal
-          callerName={partnerName}
-          isVisible={peerService.isIncomingCall()}
-          onAccept={() => {
-            peerService.acceptCall();
-            setIncomingCall(false);
-          }}
-          onReject={() => {
-            peerService.rejectCall();
-            setIncomingCall(false);
-          }}
-          size="lg"
-        />
-      </div>
-    );
-  }
-
-  if (inCall) {
+  if (callState === "inCall") {
     return (
       <>
         <InCallScreen
           partnerName={partnerName}
           onEndCall={() => {
             peerService.endCall();
-            setInCall(false);
+            setCallState("idle");
           }}
           settingsButton={
             <Button
@@ -103,6 +54,41 @@ function App() {
     );
   }
 
+  if (callState === "outgoing") {
+    return (
+      <OutgoingCallModal
+        calleeName={partnerName}
+        isVisible
+        onCancel={() => {
+          peerService.stopRequestCall();
+          setCallState("idle");
+        }}
+      />
+    );
+  }
+
+  if (callState === "incoming") {
+    return (
+      <IncomingCallModal
+        callerName={partnerName}
+        isVisible
+        onAccept={async () => {
+          try {
+            await peerService.acceptCall();
+          } catch (err) {
+            console.error("❌ Error aceptando llamada:", err);
+            setCallState("idle");
+          }
+        }}
+        onReject={() => {
+          peerService.rejectCall();
+          setCallState("idle");
+        }}
+        size="lg"
+      />
+    );
+  }
+
   return (
     <>
       <MainView
@@ -111,13 +97,12 @@ function App() {
         onSimulateIncomingCall={() => peerService.simulateIncomingCall()}
         onSimulateInCall={() => {
           peerService.simulateInCall();
-          setInCall(true);
+          setCallState("inCall");
           audioService.play("callStarted", { volume: 0.3 });
         }}
         onSimulateOutgoingCall={() => {
           peerService.simulateOutgoingCall();
-          setOutgoingCall(true);
-          console.log("📞 Simulando llamada");
+          setCallState("outgoing");
         }}
       />
     </>

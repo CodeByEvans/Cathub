@@ -7,110 +7,60 @@ interface PresenceStatus {
   lastSeen: Date | null;
 }
 
+type RealtimeStatus = "SUBSCRIBED" | "TIMED_OUT" | "CLOSED" | "CHANNEL_ERROR";
+
 class PresenceService {
-  // Para enviar (heartbeat)
-  private heartbeatInterval: NodeJS.Timeout | null = null;
-  private heartbeatFrequency = 5000; // 5 segundos
-  private currentUserId: string | null = null;
-
-  // Para recibir (checking)
-  private checkInterval: NodeJS.Timeout | null = null;
   private partnerId: string | null = null;
+  private channel: ReturnType<typeof supabase.channel> | null = null;
+  private onlineStatus: PresenceStatus = { isOnline: false, lastSeen: null };
+  private onStatusChangeCallback: ((status: PresenceStatus) => void) | null =
+    null;
+  private visibilityHandler: (() => void) | null = null;
+  private isReconnecting = false;
+  private stopped = false;
 
-  private onlineStatus: PresenceStatus = {
-    isOnline: false,
-    lastSeen: null,
-  };
+  private readonly ONLINE_THRESHOLD_MS = 15000;
+  private readonly RECONNECT_DELAY_MS = 3000;
 
   getCurrentStatus() {
     return this.onlineStatus;
   }
 
-  // Threshold
-  private readonly ONLINE_THRESHOLD_MS = 15000; // 15 segundos
+  onStatusChange(callback: (status: PresenceStatus) => void) {
+    this.onStatusChangeCallback = callback;
+  }
 
-  // Callbacks
-  private onStatusChangeCallback: ((status: PresenceStatus) => void) | null =
-    null;
+  // ========== INICIO ==========
 
-  /**
-   * Inicia TODO:
-   * - Envía heartbeat del usuario actual
-   * - Escucha heartbeat de la pareja
-   */
-  async start(userId: string) {
-    this.currentUserId = userId;
+  async start(_userId?: string) {
+    this.stopped = false;
     this.partnerId = await getValue("partner_id");
 
     if (!this.partnerId) {
-      console.warn("⚠️ No hay partner_id, solo enviando heartbeat propio");
-      this.startHeartbeat();
+      console.warn("⚠️ No hay partner_id, no hay nada que escuchar");
       return;
     }
 
-    // console.log("🚀 Iniciando presence service");
-    // console.log("   📤 Enviando heartbeat como:", userId);
-    // console.log("   📥 Escuchando heartbeat de:", this.partnerId);
-
-    // Iniciar ambos
-    this.startHeartbeat();
-    this.startListening();
+    await this.connect();
+    this.setupVisibilityListener();
   }
 
-  // ========== HEARTBEAT (enviar) ==========
+  // ========== CONEXIÓN ==========
 
-  private startHeartbeat() {
-    if (!this.currentUserId) return;
+  private async connect() {
+    if (this.stopped || !this.partnerId) return;
 
-    if (this.heartbeatInterval) {
-      clearInterval(this.heartbeatInterval);
+    // Limpiar canal previo si existe
+    if (this.channel) {
+      await supabase.removeChannel(this.channel);
+      this.channel = null;
     }
 
-    // console.log("💓 Iniciando heartbeat");
+    // Leer estado actual antes de suscribirse (cubre el hueco mientras estaba desconectado)
+    await this.fetchPartnerStatus();
 
-    // Enviar inmediatamente
-    this.sendHeartbeat();
-
-    // Luego cada 5 segundos
-    this.heartbeatInterval = setInterval(() => {
-      this.sendHeartbeat();
-    }, this.heartbeatFrequency);
-  }
-
-  private async sendHeartbeat() {
-    if (!this.currentUserId) return;
-
-    try {
-      const { error } = await supabase
-        .from("profiles")
-        .update({ last_seen: new Date().toISOString() })
-        .eq("id", this.currentUserId);
-
-      if (error) {
-        console.error("❌ Error en heartbeat:", error);
-      }
-    } catch (err) {
-      console.error("❌ Error enviando heartbeat:", err);
-    }
-  }
-
-  private stopHeartbeat() {
-    if (this.heartbeatInterval) {
-      clearInterval(this.heartbeatInterval);
-      this.heartbeatInterval = null;
-      // console.log("⏹️ Heartbeat detenido");
-    }
-  }
-
-  // ========== LISTENING (recibir) ==========
-
-  private async startListening() {
-    if (!this.partnerId) return;
-
-    await this.checkPartnerStatus();
-
-    const channel = supabase
-      .channel("partner-presence")
+    this.channel = supabase
+      .channel(`partner-presence:${this.partnerId}`)
       .on(
         "postgres_changes",
         {
@@ -120,20 +70,45 @@ class PresenceService {
           filter: `id=eq.${this.partnerId}`,
         },
         (payload) => {
+          if (!payload.new?.last_seen) return;
           const lastSeen = new Date(payload.new.last_seen);
           const isOnline =
             Date.now() - lastSeen.getTime() < this.ONLINE_THRESHOLD_MS;
-          const status = { isOnline, lastSeen };
-          this.onlineStatus = status;
-          this.onStatusChangeCallback?.(status);
+          this.updateStatus({ isOnline, lastSeen });
         },
       )
-      .subscribe();
+      .subscribe((status: RealtimeStatus) => {
+        if (status === "SUBSCRIBED") {
+          // Al (re)suscribirse con éxito, re-leer por si hubo cambios durante la reconexión
+          this.isReconnecting = false;
+          this.fetchPartnerStatus();
+        }
 
-    return () => supabase.removeChannel(channel);
+        if (
+          status === "TIMED_OUT" ||
+          status === "CLOSED" ||
+          status === "CHANNEL_ERROR"
+        ) {
+          console.warn(
+            `⚠️ Canal ${status}, reintentando en ${this.RECONNECT_DELAY_MS}ms...`,
+          );
+          this.scheduleReconnect();
+        }
+      });
   }
 
-  private async checkPartnerStatus() {
+  private scheduleReconnect() {
+    if (this.isReconnecting || this.stopped) return;
+    this.isReconnecting = true;
+
+    setTimeout(() => {
+      if (!this.stopped) this.connect();
+    }, this.RECONNECT_DELAY_MS);
+  }
+
+  // ========== FETCH PUNTUAL ==========
+
+  private async fetchPartnerStatus() {
     if (!this.partnerId) return;
 
     try {
@@ -149,56 +124,72 @@ class PresenceService {
       }
 
       if (!data?.last_seen) {
-        this.notifyStatusChange({ isOnline: false, lastSeen: null });
+        this.updateStatus({ isOnline: false, lastSeen: null });
         return;
       }
 
       const lastSeen = new Date(data.last_seen);
-      const diffMs = Date.now() - lastSeen.getTime();
-      const isOnline = diffMs < this.ONLINE_THRESHOLD_MS;
-
-      /*console.log(
-        `${isOnline ? "🟢" : "🔴"} Pareja ${isOnline ? "ONLINE" : "OFFLINE"} (${Math.floor(diffMs / 1000)}s)`,
-      );
-      */
-
-      this.notifyStatusChange({ isOnline, lastSeen });
-      this.onlineStatus = { isOnline, lastSeen };
+      const isOnline =
+        Date.now() - lastSeen.getTime() < this.ONLINE_THRESHOLD_MS;
+      this.updateStatus({ isOnline, lastSeen });
     } catch (err) {
-      console.error("❌ Error en checkPartnerStatus:", err);
+      console.error("❌ Error en fetchPartnerStatus:", err);
     }
   }
 
-  private stopListening() {
-    if (this.checkInterval) {
-      clearInterval(this.checkInterval);
-      this.checkInterval = null;
-      console.log("⏹️ Listening detenido");
+  // ========== VISIBILIDAD (web / RN) ==========
+
+  private setupVisibilityListener() {
+    // Web
+    if (typeof document !== "undefined") {
+      this.visibilityHandler = () => {
+        if (document.visibilityState === "visible") {
+          console.log("👁️ App visible, reconectando...");
+          this.connect();
+        }
+      };
+      document.addEventListener("visibilitychange", this.visibilityHandler);
+      return;
+    }
+
+    // React Native: llama manualmente a handleAppForeground() desde tu AppState listener
+    // AppState.addEventListener('change', state => {
+    //   if (state === 'active') presenceService.handleAppForeground();
+    // });
+  }
+
+  /** Llama esto desde AppState en React Native cuando la app vuelve al primer plano */
+  handleAppForeground() {
+    if (!this.stopped) {
+      console.log("📱 App en primer plano, reconectando...");
+      this.connect();
     }
   }
 
-  // ========== CALLBACKS ==========
+  // ========== HELPERS ==========
 
-  private notifyStatusChange(status: PresenceStatus) {
-    if (this.onStatusChangeCallback) {
-      this.onStatusChangeCallback(status);
-    }
+  private updateStatus(status: PresenceStatus) {
+    this.onlineStatus = status;
+    this.onStatusChangeCallback?.(status);
   }
 
-  onStatusChange(callback: (status: PresenceStatus) => void) {
-    this.onStatusChangeCallback = callback;
-  }
+  // ========== PARADA ==========
 
-  // ========== PUBLIC API ==========
-
-  /**
-   * Detiene TODO (heartbeat + listening)
-   */
-  stop() {
+  async stop() {
     console.log("🛑 Deteniendo presence service");
-    this.stopHeartbeat();
-    this.stopListening();
-    this.currentUserId = null;
+    this.stopped = true;
+    this.isReconnecting = false;
+
+    if (this.channel) {
+      await supabase.removeChannel(this.channel);
+      this.channel = null;
+    }
+
+    if (this.visibilityHandler && typeof document !== "undefined") {
+      document.removeEventListener("visibilitychange", this.visibilityHandler);
+      this.visibilityHandler = null;
+    }
+
     this.partnerId = null;
   }
 }

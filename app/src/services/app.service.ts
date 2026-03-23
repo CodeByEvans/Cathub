@@ -69,7 +69,7 @@ class AppService {
 
         await presenceService.start(currentUserId);
         await peerService.initialize();
-        await notesService.getLastPartnerNote().catch(() => {});
+        await notesService.getLastPartnerNotes(5).catch(() => {});
 
         return {
           isLinked: true,
@@ -106,7 +106,7 @@ class AppService {
 
       await presenceService.start(currentUserId);
       await peerService.initialize();
-      await notesService.getLastPartnerNote().catch(() => {});
+      await notesService.getLastPartnerNotes(5).catch(() => {});
 
       return {
         isLinked: true,

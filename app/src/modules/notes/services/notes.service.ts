@@ -26,25 +26,22 @@ class NotesService {
     }
   }
 
-  async getLastPartnerNote(): Promise<Note> {
+  async getLastPartnerNotes(limit = 5): Promise<Note[]> {
     await this.initialize();
-
     const { data, error } = await supabase
       .from("notes")
       .select("*")
       .eq("connection_id", this.connectionId)
       .neq("author_id", this.myUserId)
       .order("created_at", { ascending: false })
-      .limit(1)
-      .single();
+      .limit(limit);
 
     if (error) throw error;
-    if (!data) throw new Error("No hay notas disponibles");
+    if (!data || data.length === 0) throw new Error("No hay notas disponibles");
 
-    const note = noteSchema.parse(data);
-    this.cachedNote = note;
-
-    return note;
+    const notes = data.map((n) => noteSchema.parse(n));
+    this.cachedNote = notes[0]; // sigue cacheando la más reciente
+    return notes; // vienen desc: [más nueva ... más vieja]
   }
 
   async sendNote(content: string) {

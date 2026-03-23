@@ -2,13 +2,14 @@ import { peerService } from "@/services/peer.service";
 import { appService } from "@/services/app.service";
 import { useEffect, useState } from "react";
 
+// useAppInit.ts
+type CallState = "idle" | "incoming" | "outgoing" | "inCall";
+
 export const useAppInit = () => {
   const [userLinked, setUserLinked] = useState<boolean>(true);
   const [partnerName, setPartnerName] = useState<string>("Amor");
   const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [incomingCall, setIncomingCall] = useState<boolean>(false);
-  const [outgoingCall, setOutgoingCall] = useState<boolean>(false);
-  const [inCall, setInCall] = useState<boolean>(false);
+  const [callState, setCallState] = useState<CallState>("idle");
 
   useEffect(() => {
     const init = async () => {
@@ -17,10 +18,10 @@ export const useAppInit = () => {
         setUserLinked(state.isLinked);
         setPartnerName(state.partnerName);
 
-        peerService.onIncomingCall(() => setIncomingCall(true));
-        peerService.onCallConnected(() => setInCall(true));
-        peerService.onCallEnded(() => setInCall(false));
-        peerService.onOutgoingCall(() => setOutgoingCall(true));
+        peerService.onIncomingCall(() => setCallState("incoming"));
+        peerService.onOutgoingCall(() => setCallState("outgoing"));
+        peerService.onCallConnected(() => setCallState("inCall")); // limpia outgoing automáticamente
+        peerService.onCallEnded(() => setCallState("idle"));
       } catch (error) {
         console.error("❌ Error inicializando app:", error);
         setUserLinked(false);
@@ -28,7 +29,6 @@ export const useAppInit = () => {
         setIsLoading(false);
       }
     };
-
     init();
     return () => peerService.destroy();
   }, []);
@@ -37,11 +37,7 @@ export const useAppInit = () => {
     isLoading,
     userLinked,
     partnerName,
-    incomingCall,
-    setIncomingCall,
-    inCall,
-    setInCall,
-    outgoingCall,
-    setOutgoingCall,
+    callState,
+    setCallState,
   };
 };
