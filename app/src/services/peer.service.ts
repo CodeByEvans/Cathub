@@ -106,9 +106,15 @@ class PeerService {
       this.peer.on("connection", (conn) => {
         this.currentDataConnection = conn;
         conn.on("open", () => console.log("📡 Canal de datos recibido"));
-        conn.on("data", (data) =>
-          this.onChatMessageReceivedCallback?.(data as string),
-        );
+        conn.on("data", (data) => {
+          if (data === "__HANGUP__") {
+            // El otro lado colgó — limpiar y notificar UI
+            this.cleanup();
+            this.onCallEndedCallback?.();
+            return;
+          }
+          this.onChatMessageReceivedCallback?.(data as string);
+        });
       });
 
       this.peer.on("open", () => {
@@ -148,9 +154,14 @@ class PeerService {
     const dataConn = this.peer.connect(this.partnerId);
     this.currentDataConnection = dataConn;
     dataConn.on("open", () => console.log("📡 Canal de datos abierto"));
-    dataConn.on("data", (data) =>
-      this.onChatMessageReceivedCallback?.(data as string),
-    );
+    dataConn.on("data", (data) => {
+      if (data === "__HANGUP__") {
+        this.cleanup();
+        this.onCallEndedCallback?.();
+        return;
+      }
+      this.onChatMessageReceivedCallback?.(data as string);
+    });
 
     // Obtener permisos de cámara/micrófono
     this.localStream = await navigator.mediaDevices.getUserMedia({
@@ -181,21 +192,19 @@ class PeerService {
     return this.localStream;
   }
   async stopRequestCall() {
-    // Detener el stream local
+    if (this.currentDataConnection?.open) {
+      this.currentDataConnection.send("__HANGUP__");
+      await new Promise((resolve) => setTimeout(resolve, 100));
+    }
+
     this.localStream?.getTracks().forEach((t) => t.stop());
     this.localStream = null;
-
-    // Cerrar llamada y canal de datos si existen
     this.currentCall?.close();
     this.currentCall = null;
-
     this.currentDataConnection?.close();
     this.currentDataConnection = null;
 
-    // Resetear flags
     this.cleanup();
-
-    // Notificar UI
     this.onCallEndedCallback?.();
     audioService.play("callEnded", { volume: 0.3 });
   }
@@ -248,6 +257,13 @@ class PeerService {
 
   // ✅ Colgar llamada
   async endCall() {
+    // Avisar al otro lado antes de cerrar
+    if (this.currentDataConnection?.open) {
+      this.currentDataConnection.send("__HANGUP__");
+    }
+    // Pequeño delay para que el mensaje llegue antes de cerrar la conexión
+    await new Promise((resolve) => setTimeout(resolve, 100));
+
     this.cleanup();
     this.inCall = false;
     audioService.play("callEnded", { volume: 0.3 });

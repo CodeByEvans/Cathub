@@ -69,10 +69,9 @@ const foldInner: React.CSSProperties = {
 };
 
 export function NotesSection() {
-  const [notes, setNotes] = useState<Note[]>(() => {
-    const cached = notesService.getCachedNote();
-    return cached ? [toNote(cached)] : [];
-  });
+  const [notes, setNotes] = useState<Note[]>(() =>
+    notesService.getCachedNotes().map(toNote),
+  );
   const [historyOpen, setHistoryOpen] = useState(false);
   const [expandedNote, setExpandedNote] = useState<Note | null>(null);
 
@@ -143,7 +142,6 @@ export function NotesSection() {
             className="absolute top-2 right-2 flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] text-muted-foreground hover:text-foreground hover:bg-black/5 transition-all"
           >
             <ScrollTextIcon size={11} />
-            <span>{previousNotes.length}</span>
           </button>
         )}
       </div>

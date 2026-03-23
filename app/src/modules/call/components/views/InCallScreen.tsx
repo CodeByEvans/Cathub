@@ -1,4 +1,4 @@
-import { useState, useEffect, ReactNode } from "react";
+import { useState, useEffect, ReactNode, useRef } from "react";
 import {
   Mic,
   MicOff,
@@ -16,6 +16,8 @@ import CathubLogoWidget from "@/globals/components/atoms/logo-widget";
 import { peerService } from "../../../../services/peer.service";
 import { ChatSection } from "@/modules/chat/ChatSection";
 import { windowService } from "@/modules/settings/services";
+import { useChat } from "@/hooks/useChat";
+import { AnimatePresence, motion } from "framer-motion";
 
 interface CallScreenProps {
   partnerName: string;
@@ -37,8 +39,33 @@ export function InCallScreen({
   const [isDeafened, setIsDeafened] = useState(false);
   const [callDuration, setCallDuration] = useState(0);
   const [isMinimized, setIsMinimized] = useState(false);
-
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [unreadFromIndex, setUnreadFromIndex] = useState<number | undefined>(
+    undefined,
+  );
   const appWindow = getCurrentWindow();
+
+  const { messages, sendChatMessage } = useChat();
+
+  const isMinimizedRef = useRef(isMinimized);
+  isMinimizedRef.current = isMinimized;
+
+  const prevMessagesLengthRef = useRef(messages.length);
+
+  useEffect(() => {
+    const newLength = messages.length;
+    const prevLength = prevMessagesLengthRef.current;
+
+    if (newLength > prevLength && isMinimizedRef.current) {
+      // Primera vez que llegan mensajes minimizado — fija el separador
+      if (unreadCount === 0) {
+        setUnreadFromIndex(prevLength);
+      }
+      setUnreadCount((c) => c + (newLength - prevLength));
+    }
+
+    prevMessagesLengthRef.current = newLength;
+  }, [messages]);
 
   useEffect(() => {
     const interval = setInterval(
@@ -60,6 +87,8 @@ export function InCallScreen({
 
   const restore = async () => {
     setIsMinimized(false);
+    setUnreadCount(0);
+    setUnreadFromIndex(undefined);
     await windowService.restoreBehavior();
     await resizeWindow(FULL_SIZE.width, FULL_SIZE.height);
   };
@@ -153,15 +182,36 @@ export function InCallScreen({
             </span>
           </div>
 
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={restore}
-            className="h-6 w-6 text-muted-foreground hover:text-foreground shrink-0"
-            title="Restaurar"
-          >
-            <Maximize2 className="w-3 h-3" />
-          </Button>
+          <div className="flex items-center gap-1.5 shrink-0">
+            <AnimatePresence>
+              {unreadCount > 0 && (
+                <motion.div
+                  initial={{ scale: 0, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  exit={{ scale: 0, opacity: 0 }}
+                  className="flex items-center gap-1 px-2 py-0.5 rounded-full"
+                  style={{
+                    background: "var(--primary)",
+                    boxShadow:
+                      "0 0 0 2px color-mix(in oklch, var(--primary) 30%, transparent)",
+                  }}
+                >
+                  <span className="text-[10px] font-bold text-white leading-none">
+                    {unreadCount}
+                  </span>
+                </motion.div>
+              )}
+            </AnimatePresence>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={restore}
+              className="h-6 w-6 text-muted-foreground hover:text-foreground"
+              title="Restaurar"
+            >
+              <Maximize2 className="w-3 h-3" />
+            </Button>
+          </div>
         </main>
       </>
     );
@@ -262,7 +312,12 @@ export function InCallScreen({
 
         {/* ── CENTER: Chat ── */}
         <div className="flex-1 flex flex-col h-full min-h-0 overflow-hidden px-2">
-          <ChatSection partnerName={partnerName} />
+          <ChatSection
+            messages={messages}
+            sendChatMessage={sendChatMessage}
+            partnerName={partnerName}
+            unreadFromIndex={unreadFromIndex}
+          />
         </div>
 
         {/* Divider */}

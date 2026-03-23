@@ -13,21 +13,9 @@ import { useAppInit } from "./hooks/useAppInit";
 import { OutgoingCallModal } from "./modules/call/components/views/OutgoingCallModal";
 
 function App() {
-  const { isLoading, userLinked, partnerName, callState, setCallState } =
-    useAppInit();
+  const { userLinked, partnerName, callState, setCallState } = useAppInit();
   const { showSettings, openSettings, closeSettings } = useSettings();
-  useClampOnMouseUp(isLoading);
-
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-screen bg-background text-foreground rounded-xl">
-        <div className="text-center">
-          <div className="animate-spin h-12 w-12 border-4 border-current border-t-transparent rounded-full mx-auto mb-4" />
-          <p>Cargando...</p>
-        </div>
-      </div>
-    );
-  }
+  useClampOnMouseUp();
 
   if (callState === "inCall") {
     return (

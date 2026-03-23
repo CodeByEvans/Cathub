@@ -1,6 +1,7 @@
 import { peerService } from "@/services/peer.service";
 import { appService } from "@/services/app.service";
 import { useEffect, useState } from "react";
+import { getCurrentWindow } from "@tauri-apps/api/window";
 
 // useAppInit.ts
 type CallState = "idle" | "incoming" | "outgoing" | "inCall";
@@ -8,7 +9,7 @@ type CallState = "idle" | "incoming" | "outgoing" | "inCall";
 export const useAppInit = () => {
   const [userLinked, setUserLinked] = useState<boolean>(true);
   const [partnerName, setPartnerName] = useState<string>("Amor");
-  const [isLoading, setIsLoading] = useState<boolean>(true);
+
   const [callState, setCallState] = useState<CallState>("idle");
 
   useEffect(() => {
@@ -26,7 +27,7 @@ export const useAppInit = () => {
         console.error("❌ Error inicializando app:", error);
         setUserLinked(false);
       } finally {
-        setIsLoading(false);
+        await getCurrentWindow().show();
       }
     };
     init();
@@ -34,7 +35,6 @@ export const useAppInit = () => {
   }, []);
 
   return {
-    isLoading,
     userLinked,
     partnerName,
     callState,

@@ -1,10 +1,8 @@
 import { useEffect } from "react";
 import { invoke } from "@tauri-apps/api/core";
 
-export function useClampOnMouseUp(isLoading: boolean) {
+export function useClampOnMouseUp() {
   useEffect(() => {
-    if (isLoading) return;
-
     const handleMouseUp = () => {
       invoke("clamp_window")
         .then(() => console.log("✅ Ventana ajustada"))
@@ -15,5 +13,5 @@ export function useClampOnMouseUp(isLoading: boolean) {
     return () => {
       document.removeEventListener("mouseup", handleMouseUp);
     };
-  }, [isLoading]);
+  }, []);
 }

@@ -22,7 +22,7 @@ export function ChatMessage({ message, partnerName }: ChatMessageProps) {
           className={`px-3 py-1.5 rounded-2xl text-sm leading-relaxed break-words ${
             isMe
               ? "bg-primary text-primary-foreground rounded-br-sm"
-              : "bg-muted text-foreground rounded-bl-sm"
+              : "bg-muted text-primary-foreground rounded-bl-sm"
           }`}
         >
           {message.message}

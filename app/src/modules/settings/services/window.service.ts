@@ -22,6 +22,12 @@ export class WindowService {
     return this.behavior;
   }
 
+  async show() {
+    const win = await this.getWindow();
+    await win.show();
+    await this.bringToFront();
+  }
+
   async getBehavior(): Promise<WindowState> {
     try {
       const stored = (await getValue("window_behavior")) as Behavior;
@@ -64,7 +70,6 @@ export class WindowService {
       await win.setSkipTaskbar(false);
       await win.setMinimizable(true);
       await invoke("set_dock_visibility", { visible: true });
-      await invoke("set_floating_behavior");
     },
     app: async (win) => {
       await win.setAlwaysOnTop(false);

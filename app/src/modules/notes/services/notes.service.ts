@@ -6,19 +6,17 @@ import { audioService } from "@/services/audio.service";
 class NotesService {
   private connectionId: string | null = null;
   private myUserId: string | null = null;
-  private cachedNote: Note | null = null;
+  private cachedNotes: Note[] = [];
 
-  getCachedNote() {
-    return this.cachedNote;
+  getCachedNotes(): Note[] {
+    return this.cachedNotes;
   }
 
-  // Inicializa los datos necesarios, se llama solo al arrancar
   async initialize() {
     if (!this.connectionId) {
       this.connectionId = (await getValue("connection_id")) as string | null;
       if (!this.connectionId) throw new Error("No hay conexión establecida");
     }
-
     if (!this.myUserId) {
       const user = (await supabase.auth.getUser()).data.user;
       if (!user) throw new Error("Usuario no autenticado");
@@ -40,13 +38,12 @@ class NotesService {
     if (!data || data.length === 0) throw new Error("No hay notas disponibles");
 
     const notes = data.map((n) => noteSchema.parse(n));
-    this.cachedNote = notes[0]; // sigue cacheando la más reciente
-    return notes; // vienen desc: [más nueva ... más vieja]
+    this.cachedNotes = notes;
+    return notes;
   }
 
   async sendNote(content: string) {
     await this.initialize();
-
     const { data, error } = await supabase
       .from("notes")
       .insert({
@@ -59,7 +56,6 @@ class NotesService {
 
     if (error) throw error;
     if (!data) throw new Error("No se pudo enviar la nota");
-
     return noteSchema.parse(data);
   }
 
@@ -81,16 +77,13 @@ class NotesService {
           filter: `connection_id=eq.${this.connectionId}`,
         },
         async (payload) => {
-          await this.initialize(); // asegura que myUserId esté cargado
-
+          await this.initialize();
           const note = noteSchema.parse(payload.new || payload.old);
-
-          // solo notas del otro usuario
           if (note.author_id === this.myUserId) return;
 
           switch (payload.eventType) {
             case "INSERT":
-              this.cachedNote = note;
+              this.cachedNotes = [note, ...this.cachedNotes].slice(0, 5);
               audioService.play("incomingNote", { volume: 0.1 });
               callback([note], "INSERT", note.id);
               break;
