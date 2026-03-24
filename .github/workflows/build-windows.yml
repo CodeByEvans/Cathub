@@ -14,12 +14,6 @@ jobs:
         working-directory: app      # ✅ todos los comandos corren dentro de /app
 
     steps:
-      - name: Clean Previous Builds
-        run: |
-          if (Test-Path "src-tauri/target") {
-            Remove-Item -Recurse -Force "src-tauri/target"
-          }
-
       - name: Checkout repo
         uses: actions/checkout@v4
 
