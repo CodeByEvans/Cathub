@@ -14,6 +14,12 @@ jobs:
         working-directory: app      # ✅ todos los comandos corren dentro de /app
 
     steps:
+      - name: Clean Previous Builds
+        run: |
+          if (Test-Path "src-tauri/target") {
+            Remove-Item -Recurse -Force "src-tauri/target"
+          }
+
       - name: Checkout repo
         uses: actions/checkout@v4
 
@@ -32,8 +38,11 @@ jobs:
         with:
           workspaces: './app/src-tauri -> target'
 
-      - name: Install frontend dependencies
+      - name: Install App dependencies
         run: npm install
+
+      - name: Build App
+        run: npm run tauri-build
 
       - name: Build Tauri app
         uses: tauri-apps/tauri-action@v0
