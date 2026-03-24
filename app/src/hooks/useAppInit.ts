@@ -7,6 +7,7 @@ import { getCurrentWindow } from "@tauri-apps/api/window";
 type CallState = "idle" | "incoming" | "outgoing" | "inCall";
 
 export const useAppInit = () => {
+  const [isLoading, setIsLoading] = useState<boolean>(true);
   const [userLinked, setUserLinked] = useState<boolean>(true);
   const [partnerName, setPartnerName] = useState<string>("Amor");
 
@@ -27,6 +28,7 @@ export const useAppInit = () => {
         console.error("❌ Error inicializando app:", error);
         setUserLinked(false);
       } finally {
+        setIsLoading(false);
         await getCurrentWindow().show();
       }
     };
@@ -35,6 +37,7 @@ export const useAppInit = () => {
   }, []);
 
   return {
+    isLoading,
     userLinked,
     partnerName,
     callState,

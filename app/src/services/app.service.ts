@@ -66,10 +66,12 @@ class AppService {
 
       if (isValid) {
         // console.log("✅ Conexión en caché válida");
-
-        await presenceService.start(currentUserId);
-        await peerService.initialize();
-        await notesService.getLastPartnerNotes(5).catch(() => {});
+        console.log(cachedConnectionId);
+        await Promise.all([
+          presenceService.start(currentUserId),
+          peerService.initialize(),
+          notesService.initialize(cachedConnectionId, currentUserId),
+        ]);
 
         return {
           isLinked: true,
@@ -104,9 +106,11 @@ class AppService {
         await setValue("partner_id", partnerId);
       }
 
-      await presenceService.start(currentUserId);
-      await peerService.initialize();
-      await notesService.getLastPartnerNotes(5).catch(() => {});
+      await Promise.all([
+        presenceService.start(currentUserId),
+        peerService.initialize(),
+        notesService.initialize(connection.id, currentUserId),
+      ]);
 
       return {
         isLinked: true,

@@ -1,4 +1,3 @@
-import { getValue } from "@/services/store.service";
 import { supabase } from "../../../services/supabaseClient";
 import { Note, Notes, noteSchema } from "../@types/notes.types";
 import { audioService } from "@/services/audio.service";
@@ -12,20 +11,13 @@ class NotesService {
     return this.cachedNotes;
   }
 
-  async initialize() {
-    if (!this.connectionId) {
-      this.connectionId = (await getValue("connection_id")) as string | null;
-      if (!this.connectionId) throw new Error("No hay conexión establecida");
-    }
-    if (!this.myUserId) {
-      const user = (await supabase.auth.getUser()).data.user;
-      if (!user) throw new Error("Usuario no autenticado");
-      this.myUserId = user.id;
-    }
+  // notesService
+  async initialize(connectionId: string, userId: string) {
+    this.connectionId = connectionId;
+    this.myUserId = userId;
   }
 
   async getLastPartnerNotes(limit = 5): Promise<Note[]> {
-    await this.initialize();
     const { data, error } = await supabase
       .from("notes")
       .select("*")
@@ -43,7 +35,6 @@ class NotesService {
   }
 
   async sendNote(content: string) {
-    await this.initialize();
     const { data, error } = await supabase
       .from("notes")
       .insert({
@@ -77,7 +68,6 @@ class NotesService {
           filter: `connection_id=eq.${this.connectionId}`,
         },
         async (payload) => {
-          await this.initialize();
           const note = noteSchema.parse(payload.new || payload.old);
           if (note.author_id === this.myUserId) return;
 
