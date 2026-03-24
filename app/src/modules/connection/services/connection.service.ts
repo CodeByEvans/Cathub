@@ -102,6 +102,7 @@ class ConnectionService {
       return {
         id: data.id,
         partnerName: partnerData.username,
+        partnerId,
       };
     } catch (err) {
       console.error("Error getting connection:", err);

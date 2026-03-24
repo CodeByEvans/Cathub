@@ -1,4 +1,3 @@
-// src/services/call.service.ts
 import { windowService } from "@/modules/settings/services";
 import { getValue, setValue } from "@/services/store.service";
 import { supabase } from "@/services/supabaseClient";
@@ -240,6 +239,11 @@ class PeerService {
   // ✅ Rechazar llamada
   rejectCall() {
     this.incomingCall = false;
+    if (this.currentDataConnection?.open) {
+      this.currentDataConnection.send("__HANGUP__");
+      this.currentDataConnection.close();
+      this.currentDataConnection = null;
+    }
     if (this.currentCall) {
       this.currentCall.close();
       this.currentCall = null;
@@ -337,7 +341,7 @@ class PeerService {
       clearTimeout(this.outgoingCallSoundTimer);
       this.outgoingCallSoundTimer = null;
     }
-    audioService.stop("outgoingCall");
+    audioService.stopAll();
 
     if (this.remoteAudioElement) {
       this.remoteAudioElement.srcObject = null;

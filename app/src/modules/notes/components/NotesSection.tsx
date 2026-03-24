@@ -120,7 +120,7 @@ export function NotesSection() {
 
         {latestNote ? (
           <>
-            <p className="m-0 px-5 text-center leading-relaxed text-2xl">
+            <p className="m-0 px-5 text-center leading-relaxed text-2xl glass:text-white">
               {latestNote.content}
             </p>
             <span className="absolute bottom-1.5 left-2.5 text-[11px] text-muted-foreground">
@@ -227,7 +227,6 @@ export function NotesSection() {
                         style={{
                           fontFamily: "'Caveat', cursive",
                           fontSize: "1.3rem",
-                          color: "white",
                           wordBreak: "break-word",
                         }}
                       >
@@ -248,11 +247,10 @@ export function NotesSection() {
                     {/* Header */}
                     <div className="flex items-center justify-between px-4 pt-3 pb-2 shrink-0">
                       <span
-                        className="font-medium"
+                        className="font-medium glass:text-white"
                         style={{
                           fontFamily: "'Caveat', cursive",
                           fontSize: "1.1rem",
-                          color: "white",
                         }}
                       >
                         Notas anteriores
@@ -298,10 +296,7 @@ export function NotesSection() {
                                 "transparent transparent var(--note-border, #e8dcc8) transparent",
                             }}
                           />
-                          <p
-                            className="m-0 text-lg leading-snug pr-12 line-clamp-2"
-                            style={{ color: "white" }}
-                          >
+                          <p className="m-0 text-lg leading-snug pr-12 line-clamp-2 glass:text-white">
                             {note.content}
                           </p>
                           <span

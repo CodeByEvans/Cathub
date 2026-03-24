@@ -68,7 +68,11 @@ class AppService {
         // console.log("✅ Conexión en caché válida");
         console.log(cachedConnectionId);
         await Promise.all([
-          presenceService.start(currentUserId),
+          presenceService.start(
+            currentUserId,
+            cachedPartnerId,
+            cachedConnectionId,
+          ),
           peerService.initialize(),
           notesService.initialize(cachedConnectionId, currentUserId),
         ]);
@@ -96,18 +100,14 @@ class AppService {
 
       await setValue("connection_id", connection.id);
       await setValue("partner_name", connection.partnerName);
-
-      const partnerId = await this.getPartnerIdFromConnection(
-        connection.id,
-        currentUserId,
-      );
-
-      if (partnerId) {
-        await setValue("partner_id", partnerId);
-      }
+      await setValue("partner_id", connection.partnerId);
 
       await Promise.all([
-        presenceService.start(currentUserId),
+        presenceService.start(
+          currentUserId,
+          connection.partnerId,
+          connection.id,
+        ),
         peerService.initialize(),
         notesService.initialize(connection.id, currentUserId),
       ]);
@@ -115,7 +115,7 @@ class AppService {
       return {
         isLinked: true,
         partnerName: connection.partnerName,
-        partnerId: partnerId,
+        partnerId: connection.partnerId,
         connectionId: connection.id,
         theme,
       };
@@ -161,28 +161,6 @@ class AppService {
     } catch (error) {
       console.error("Error validando conexión:", error);
       return false;
-    }
-  }
-
-  private async getPartnerIdFromConnection(
-    connectionId: string,
-    currentUserId: string,
-  ): Promise<string | null> {
-    try {
-      const { data, error } = await supabase
-        .from("connections")
-        .select("user_a, user_b")
-        .eq("id", connectionId)
-        .single();
-
-      if (error || !data) {
-        return null;
-      }
-
-      return data.user_a === currentUserId ? data.user_b : data.user_a;
-    } catch (error) {
-      console.error("Error obteniendo partner_id:", error);
-      return null;
     }
   }
 
