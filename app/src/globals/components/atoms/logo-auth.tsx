@@ -14,7 +14,7 @@ const PARPADO_DER = {
   rx: 20.353317,
   ry: 22.546801,
 };
-const MAX_OFFSET = 6;
+const MAX_OFFSET = 4;
 
 const CathubLogoAuth = (props: any) => {
   const svgRef = useRef<SVGSVGElement>(null);

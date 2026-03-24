@@ -14,7 +14,7 @@ const PARPADO_DER = {
   rx: 20.353317,
   ry: 22.546801,
 };
-const MAX_OFFSET = 6;
+const MAX_OFFSET = 2;
 
 const CathubLogoWidget = (props: any) => {
   const svgRef = useRef<SVGSVGElement>(null);
@@ -47,13 +47,13 @@ const CathubLogoWidget = (props: any) => {
       const ox = ((e.clientX - logoCX) / window.innerWidth) * MAX_OFFSET * 2;
       const oy = ((e.clientY - logoCY) / window.innerHeight) * MAX_OFFSET * 2;
 
-      x.set(ox < 0 ? ox * 4 : ox);
+      x.set(ox < 0 ? ox * 6 : ox);
       y.set(oy > 0 ? oy * 2 : oy);
 
-      lowerX.set(ox < 0 ? (ox * 4) / 2 : ox / 2);
+      lowerX.set(ox < 0 ? (ox * 6) / 2 : ox / 2);
       lowerY.set(oy > 0 ? (oy * 2) / 2 : oy / 2);
 
-      minimalX.set(ox < 0 ? (ox * 4) / 2 : ox / 2);
+      minimalX.set(ox < 0 ? (ox * 6) / 2 : ox / 2);
       minimalY.set(oy > 0 ? (oy * 2) / 2 : oy / 2);
     };
     window.addEventListener("mousemove", handleMouseMove);
