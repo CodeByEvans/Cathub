@@ -1,5 +1,3 @@
-import Peer from "peerjs";
-
 export interface ICallActions {
   startCall(audioOnly: boolean): Promise<MediaStream>;
   endCall(): Promise<void>;
