@@ -51,13 +51,33 @@ export function MainView({
         <CallSection />
 
         {import.meta.env.DEV && (
-          <div className="flex flex-col gap-2">
-            <Button onClick={onSimulateIncomingCall}>
-              Simular llamada entrante
+          <div className="absolute bottom-2 left-2 z-50 flex gap-1">
+            <Button
+              size="icon"
+              variant="ghost"
+              className="w-5 h-5 text-[10px] opacity-30 hover:opacity-100 transition-opacity"
+              onClick={onSimulateIncomingCall}
+              title="Simular entrante"
+            >
+              📞
             </Button>
-            <Button onClick={onSimulateInCall}>Simular llamada</Button>
-            <Button onClick={onSimulateOutgoingCall}>
-              Simular llamada saliente
+            <Button
+              size="icon"
+              variant="ghost"
+              className="w-5 h-5 text-[10px] opacity-30 hover:opacity-100 transition-opacity"
+              onClick={onSimulateInCall}
+              title="Simular en llamada"
+            >
+              🎙
+            </Button>
+            <Button
+              size="icon"
+              variant="ghost"
+              className="w-5 h-5 text-[10px] opacity-30 hover:opacity-100 transition-opacity"
+              onClick={onSimulateOutgoingCall}
+              title="Simular saliente"
+            >
+              📲
             </Button>
           </div>
         )}

@@ -1,14 +1,15 @@
-// hooks/useChat.ts
-import { peerService } from "@/services/peer.service";
 import { useEffect, useState } from "react";
 import { Message } from "@/modules/chat/@types/chat.types";
 import { audioService } from "@/services/audio.service";
+import { useCall } from "@/modules/call/context/CallContext";
 
 export const useChat = () => {
   const [messages, setMessages] = useState<Message[]>([]);
 
+  const { onChatMessage, calls } = useCall();
+
   useEffect(() => {
-    peerService.onChatMessageReceived((message) => {
+    onChatMessage((message) => {
       setMessages((prev) => [
         ...prev,
         { sender: "partner", message, timestamp: Date.now() },
@@ -16,12 +17,16 @@ export const useChat = () => {
       audioService.play("incomingNote", { volume: 0.1 });
     });
 
-    return () => peerService.onChatMessageReceived(() => {}); // limpia el callback al desmontar
+    return () =>
+      onChatMessage(() => {
+        {
+        }
+      }); // limpia el callback al desmontar
   }, []);
 
   const sendChatMessage = async (message: string) => {
     try {
-      await peerService.sendChatMessage(message);
+      await calls.sendChatMessage(message);
       setMessages((prev) => [
         ...prev,
         { sender: "me", message, timestamp: Date.now() },

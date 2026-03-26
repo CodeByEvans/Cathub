@@ -2,8 +2,8 @@ import React, { useEffect, useState } from "react";
 import { Mic, Volume2 } from "lucide-react";
 import { CardLayout } from "../components/organisms/CardLayout";
 import { OptionCard } from "../components/molecules/OptionCard";
-import { peerService } from "@/services/peer.service";
 import { getValue } from "@/services/store.service";
+import { useCall } from "@/modules/call/context/CallContext";
 
 export const AudioSettingsView: React.FC = () => {
   const [microphones, setMicrophones] = useState<MediaDeviceInfo[]>([]);
@@ -11,9 +11,11 @@ export const AudioSettingsView: React.FC = () => {
   const [selectedMic, setSelectedMic] = useState<string>("");
   const [selectedSpeaker, setSelectedSpeaker] = useState<string>("");
 
+  const { devices } = useCall();
+
   useEffect(() => {
     const load = async () => {
-      const { microphones, speakers } = await peerService.getAudioDevices();
+      const { microphones, speakers } = await devices.getDevices();
       setMicrophones(microphones);
       setSpeakers(speakers);
 
@@ -24,19 +26,19 @@ export const AudioSettingsView: React.FC = () => {
       if (savedMic === null || savedSpeaker === null) return;
       setSelectedMic(savedMic);
       setSelectedSpeaker(savedSpeaker);
-      peerService.setAudioDevices(savedMic, savedSpeaker);
+      devices.setDevices(savedMic, savedSpeaker);
     };
     load();
   }, []);
 
   const handleMicChange = (deviceId: string) => {
     setSelectedMic(deviceId);
-    peerService.setAudioDevices(deviceId, selectedSpeaker);
+    devices.setDevices(deviceId, selectedSpeaker);
   };
 
   const handleSpeakerChange = (deviceId: string) => {
     setSelectedSpeaker(deviceId);
-    peerService.setAudioDevices(selectedMic, deviceId);
+    devices.setDevices(selectedMic, deviceId);
   };
 
   return (

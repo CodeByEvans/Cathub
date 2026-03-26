@@ -6,7 +6,7 @@ import { getValue, setValue, deleteValue } from "./store.service";
 import { themeService } from "@/modules/settings/services/theme.service";
 import { ThemeType } from "@/modules/settings/@types/settings.types";
 import { audioService } from "./audio.service";
-import { peerService } from "@/services/peer.service";
+
 import { notesService } from "@/modules/notes/services/notes.service";
 
 export interface AppState {
@@ -73,7 +73,6 @@ class AppService {
             cachedPartnerId,
             cachedConnectionId,
           ),
-          peerService.initialize(),
           notesService.initialize(cachedConnectionId, currentUserId),
         ]);
 
@@ -108,7 +107,6 @@ class AppService {
           connection.partnerId,
           connection.id,
         ),
-        peerService.initialize(),
         notesService.initialize(connection.id, currentUserId),
       ]);
 
@@ -180,7 +178,6 @@ class AppService {
 
     presenceService.stop();
 
-    await peerService.destroy();
     console.log("✅ App limpiada completamente");
   }
 }

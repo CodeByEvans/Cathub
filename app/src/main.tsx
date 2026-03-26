@@ -11,6 +11,7 @@ import { initAutostart } from "./services/autostart.service";
 import { AuthGuard } from "./modules/auth/AuthGuard";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { presenceService } from "./services/presence.service";
+import { AppProviders } from "./providers/AppProdivers";
 
 async function bootstrap() {
   await initAutostart();
@@ -32,7 +33,7 @@ async function bootstrap() {
 
   // 2️⃣ Ahora renderiza React
   ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
-    <React.StrictMode>
+    <>
       <DeepLinkListener />
       <Toaster
         duration={3000}
@@ -45,9 +46,11 @@ async function bootstrap() {
         }}
       />
       <AuthGuard>
-        <App />
+        <AppProviders>
+          <App />
+        </AppProviders>
       </AuthGuard>
-    </React.StrictMode>,
+    </>,
   );
 }
 

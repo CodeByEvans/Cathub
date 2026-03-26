@@ -1,9 +1,10 @@
 import { cn } from "@/lib/utils";
 import { Phone } from "lucide-react";
 import { Button } from "@/globals/components/atoms/button";
-import { peerService } from "../../../../services/peer.service";
+import { useCall } from "../../context/CallContext";
 
 export const CallButton = ({ isOnline }: { isOnline: boolean }) => {
+  const { calls } = useCall();
   return (
     <div className="flex flex-col items-center justify-center">
       <Button
@@ -16,7 +17,7 @@ export const CallButton = ({ isOnline }: { isOnline: boolean }) => {
           backgroundColor: "var(--call-button)",
           color: "var(--call-button-foreground)",
         }}
-        onClick={() => peerService.startCall(true)}
+        onClick={() => calls.startCall(true)}
       >
         <Phone className="w-6 h-6" />
       </Button>

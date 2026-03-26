@@ -7,15 +7,14 @@ import { SettingsPage } from "./modules/settings/SettingsPage";
 import { useClampOnMouseUp } from "./hooks/useClampOnMouseUp";
 import { MainView } from "./MainView";
 import { useSettings } from "./hooks/useSettings";
-import { audioService } from "./services/audio.service";
-import { peerService } from "./services/peer.service";
 import { useAppInit } from "./hooks/useAppInit";
 import { OutgoingCallModal } from "./modules/call/components/views/OutgoingCallModal";
+import { useCall } from "./modules/call/context/CallContext";
 
 function App() {
-  const { userLinked, partnerName, callState, setCallState, isLoading } =
-    useAppInit();
+  const { userLinked, partnerName, isLoading } = useAppInit();
   const { showSettings, openSettings, closeSettings } = useSettings();
+  const { calls, callState } = useCall();
 
   useClampOnMouseUp();
 
@@ -36,8 +35,7 @@ function App() {
         <InCallScreen
           partnerName={partnerName}
           onEndCall={() => {
-            peerService.endCall();
-            setCallState("idle");
+            calls.endCall();
           }}
           settingsButton={
             <Button
@@ -61,8 +59,7 @@ function App() {
         calleeName={partnerName}
         isVisible
         onCancel={() => {
-          peerService.stopRequestCall();
-          setCallState("idle");
+          calls.cancelCall();
         }}
       />
     );
@@ -73,17 +70,11 @@ function App() {
       <IncomingCallModal
         callerName={partnerName}
         isVisible
-        onAccept={async () => {
-          try {
-            await peerService.acceptCall();
-          } catch (err) {
-            console.error("❌ Error aceptando llamada:", err);
-            setCallState("idle");
-          }
+        onAccept={() => {
+          calls.acceptCall(true);
         }}
         onReject={() => {
-          peerService.rejectCall();
-          setCallState("idle");
+          calls.rejectCall();
         }}
         size="lg"
       />
@@ -95,16 +86,9 @@ function App() {
       <MainView
         partnerName={partnerName}
         userLinked={userLinked}
-        onSimulateIncomingCall={() => peerService.simulateIncomingCall()}
-        onSimulateInCall={() => {
-          peerService.simulateInCall();
-          setCallState("inCall");
-          audioService.play("callStarted", { volume: 0.3 });
-        }}
-        onSimulateOutgoingCall={() => {
-          peerService.simulateOutgoingCall();
-          setCallState("outgoing");
-        }}
+        onSimulateIncomingCall={() => calls.simulateIncomingCall?.()}
+        onSimulateInCall={() => calls.simulateInCall?.()}
+        onSimulateOutgoingCall={() => calls.simulateOutgoingCall?.()}
       />
     </>
   );

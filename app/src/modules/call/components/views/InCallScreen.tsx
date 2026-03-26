@@ -13,7 +13,7 @@ import { LogicalSize } from "@tauri-apps/api/dpi";
 import { cn } from "@/lib/utils";
 import { Button } from "@/globals/components/atoms/button";
 import CathubLogoWidget from "@/globals/components/atoms/logo-widget";
-import { peerService } from "../../../../services/peer.service";
+
 import { ChatSection } from "@/modules/chat/ChatSection";
 import { windowService } from "@/modules/settings/services";
 import { useChat } from "@/hooks/useChat";
@@ -97,22 +97,19 @@ export function InCallScreen({
     if (isDeafened) {
       setIsDeafened(false);
       setIsMuted(false);
-      peerService.toggleDeaf();
       return;
     }
     setIsMuted((prev) => !prev);
-    peerService.toggleMute();
   };
 
   const toggleDeafed = () => {
     if (isMuted && !isDeafened) {
       setIsDeafened(true);
-      peerService.toggleDeaf();
+
       return;
     }
     setIsMuted((prev) => !prev);
     setIsDeafened((prev) => !prev);
-    peerService.toggleDeaf();
   };
 
   const formatTime = (seconds: number) => {
