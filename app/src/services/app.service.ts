@@ -1,6 +1,6 @@
 import { supabase } from "./supabaseClient";
 import { connectionService } from "@/modules/connection/services/connection.service";
-import { presenceService } from "./presence.service"; // ← Importar
+
 import { getValue, setValue, deleteValue } from "./store.service";
 import { themeService } from "@/modules/settings/services/theme.service";
 import { ThemeType } from "@/modules/settings/@types/settings.types";
@@ -65,13 +65,7 @@ class AppService {
 
       if (isValid) {
         // console.log("✅ Conexión en caché válida");
-        console.log(cachedConnectionId);
         await Promise.all([
-          presenceService.start(
-            currentUserId,
-            cachedPartnerId,
-            cachedConnectionId,
-          ),
           notesService.initialize(cachedConnectionId, currentUserId),
         ]);
 
@@ -101,11 +95,6 @@ class AppService {
       await setValue("partner_id", connection.partnerId);
 
       await Promise.all([
-        presenceService.start(
-          currentUserId,
-          connection.partnerId,
-          connection.id,
-        ),
         notesService.initialize(connection.id, currentUserId),
       ]);
 
@@ -174,8 +163,6 @@ class AppService {
     await deleteValue("partner_id");
     await deleteValue("partner_name");
     await deleteValue("user_id");
-
-    presenceService.stop();
 
     console.log("✅ App limpiada completamente");
   }

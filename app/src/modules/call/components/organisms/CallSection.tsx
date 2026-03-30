@@ -1,24 +1,12 @@
 import { cn } from "@/lib/utils";
-import { useEffect, useState } from "react";
-import { presenceService } from "@/services/presence.service";
+
 import { CallButton } from "../molecules/CallButton";
 import ReactTimeAgo from "react-time-ago";
 import "react-time-ago/locale/es";
+import { usePresence } from "@/modules/presence/context/PresenceContext";
 
 export function CallSection() {
-  const [isOnline, setIsOnline] = useState(false);
-  const [lastConnection, setLastConnection] = useState<Date | null>(null);
-
-  useEffect(() => {
-    const status = presenceService.getCurrentStatus();
-    setIsOnline(status.isOnline);
-    setLastConnection(status.lastSeen);
-
-    presenceService.onStatusChange((status) => {
-      setIsOnline(status.isOnline);
-      setLastConnection(status.lastSeen);
-    });
-  }, []);
+  const { isOnline, lastSeen } = usePresence();
 
   return (
     <div className="flex flex-col items-center justify-center gap-2 px-4 h-full min-w-[140px]">
@@ -38,9 +26,9 @@ export function CallSection() {
         </div>
 
         {/* ← formatLastConnection eliminado, ReactTimeAgo lo gestiona todo */}
-        {!isOnline && lastConnection && (
+        {!isOnline && lastSeen && (
           <ReactTimeAgo
-            date={lastConnection}
+            date={lastSeen}
             locale="es"
             className="text-[10px] text-muted-foreground"
           />

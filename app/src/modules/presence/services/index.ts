@@ -9,6 +9,7 @@ import { IPresenceRepository } from "./interfaces/IPresenceRepository";
 import { PresenceChannelManager } from "./PresenceChannelManager";
 import { IRealtimeProvider } from "./interfaces/IRealtimeProvider";
 import { RealtimeChannel } from "@supabase/supabase-js";
+import { HeartbeatManager } from "./HeartbeatManager";
 
 const authProvider: IAuthProvider = {
   getUserId: async () => {
@@ -76,14 +77,20 @@ export async function createPresenceService() {
     realtimeProvider,
     events,
   );
-  const presence = new PresenceManager(events, lastSeen, presenceChannel);
 
-  await presence.start();
+  const heartBeat = new HeartbeatManager(lastSeen);
+  const presence = new PresenceManager(
+    events,
+    lastSeen,
+    presenceChannel,
+    heartBeat,
+  );
 
   return {
     events,
     lastSeen,
     presenceChannel,
     presence,
+    heartBeat,
   };
 }

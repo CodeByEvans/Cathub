@@ -48,8 +48,6 @@ export async function createPeerService() {
     (call) => calls.handleIncomingCall(call),
   );
 
-  await connection.connect();
-
   return {
     events,
     devices,

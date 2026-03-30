@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useContext, useEffect, useRef, useState } from "react";
 import { createPeerService } from "../services/peer";
 import { ICallActions } from "../interfaces/ICallActions";
 import { IDeviceActions } from "../interfaces/IDeviceActions";
@@ -18,62 +18,65 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
   const [callState, setCallState] = useState<CallState>("idle");
-  const [peerModule, setPeerModule] = useState<Awaited<
+  const [isReady, setIsReady] = useState(false);
+  const moduleRef = useRef<Awaited<
     ReturnType<typeof createPeerService>
   > | null>(null);
 
   useEffect(() => {
-    createPeerService().then((module) => {
-      module.events.onIncomingCall(() => setCallState("incoming"));
-      module.events.onOutgoingCall(() => setCallState("outgoing"));
-      module.events.onCallConnected(() => setCallState("inCall"));
-      module.events.onCallEnded(() => setCallState("idle"));
-      setPeerModule(module);
+    createPeerService().then((service) => {
+      moduleRef.current = service;
+      service.events.onIncomingCall(() => setCallState("incoming"));
+      service.events.onOutgoingCall(() => setCallState("outgoing"));
+      service.events.onCallConnected(() => setCallState("inCall"));
+      service.events.onCallEnded(() => setCallState("idle"));
+      setIsReady(true);
     });
 
-    return () => peerModule?.connection.destroy();
+    return () => moduleRef.current?.connection.destroy();
   }, []);
 
-  if (!peerModule) return null;
+  if (!isReady || !moduleRef.current) return null;
 
+  const module = moduleRef.current;
   const callActions: ICallActions = {
     startCall: (audioOnly = true) =>
-      peerModule.calls.startCall(
-        peerModule.connection.getPeer(),
-        peerModule.partnerId,
+      module.calls.startCall(
+        module.connection.getPeer(),
+        module.partnerId,
         audioOnly,
-        peerModule.devices.getMicConstraints(),
-        peerModule.devices.speakerId,
+        module.devices.getMicConstraints(),
+        module.devices.speakerId,
       ),
     acceptCall: (audioOnly = true) =>
-      peerModule.calls.acceptCall(
+      module.calls.acceptCall(
         audioOnly,
-        peerModule.devices.getMicConstraints(),
-        peerModule.devices.speakerId,
+        module.devices.getMicConstraints(),
+        module.devices.speakerId,
       ),
-    endCall: () => peerModule.calls.endCall(),
-    rejectCall: () => peerModule.calls.rejectCall(),
-    cancelCall: () => peerModule.calls.cancelCall(),
-    toggleMute: () => peerModule.calls.toggleMute(),
-    toggleDeaf: () => peerModule.calls.toggleDeaf(),
-    toggleVideo: () => peerModule.calls.toggleVideo(),
-    sendChatMessage: (msg) => peerModule.calls.sendChatMessage(msg),
-    simulateIncomingCall: () => peerModule.calls.simulateIncomingCall(),
-    simulateInCall: () => peerModule.calls.simulateInCall(),
-    simulateOutgoingCall: () => peerModule.calls.simulateOutgoingCall(),
+    endCall: () => module.calls.endCall(),
+    rejectCall: () => module.calls.rejectCall(),
+    cancelCall: () => module.calls.cancelCall(),
+    toggleMute: () => module.calls.toggleMute(),
+    toggleDeaf: () => module.calls.toggleDeaf(),
+    toggleVideo: () => module.calls.toggleVideo(),
+    sendChatMessage: (msg) => module.calls.sendChatMessage(msg),
+    simulateIncomingCall: () => module.calls.simulateIncomingCall(),
+    simulateInCall: () => module.calls.simulateInCall(),
+    simulateOutgoingCall: () => module.calls.simulateOutgoingCall(),
   };
 
   // los callbacks van aquí
-  peerModule.events.onIncomingCall(() => setCallState("incoming"));
+  moduleRef.current?.events.onIncomingCall(() => setCallState("incoming"));
 
   return (
     <CallContext.Provider
       value={{
         callState,
         calls: callActions,
-        devices: peerModule.devices,
-        partnerId: peerModule.partnerId,
-        onChatMessage: (cb) => peerModule.events.onChatMessage(cb),
+        devices: module.devices,
+        partnerId: module.partnerId,
+        onChatMessage: (cb) => module.events.onChatMessage(cb),
       }}
     >
       {children}
