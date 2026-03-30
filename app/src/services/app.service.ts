@@ -1,6 +1,5 @@
 import { supabase } from "./supabaseClient";
 import { connectionService } from "@/modules/connection/services/connection.service";
-
 import { presenceService } from "./presence.service"; // ← Importar
 import { getValue, setValue, deleteValue } from "./store.service";
 import { themeService } from "@/modules/settings/services/theme.service";

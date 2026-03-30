@@ -1,4 +1,4 @@
-import { IStorageProvider } from "./interfaces/IStorageProvider";
+import { IStorageProvider } from "../../../../interfaces/IStorageProvider";
 
 export class DeviceManager {
   private selectedMicId: string | null = null;

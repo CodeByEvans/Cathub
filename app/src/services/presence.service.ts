@@ -122,7 +122,7 @@ class PresenceService {
 
       const lastSeen = new Date(data.last_seen);
       this.updateStatus({
-        isOnline: this.onlineStatus.isOnline, // no cambiar online hasta que llegue el sync
+        isOnline: this.onlineStatus.isOnline,
         lastSeen,
       });
     } catch (err) {

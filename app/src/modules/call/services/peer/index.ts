@@ -3,8 +3,8 @@ import { getValue, setValue } from "@/services/store.service";
 import { audioService } from "@/services/audio.service";
 import { windowService } from "@/modules/settings/services";
 
-import { IAuthProvider } from "./interfaces/IAuthProvider";
-import { IStorageProvider } from "./interfaces/IStorageProvider";
+import { IAuthProvider } from "@/interfaces/IAuthProvider";
+import { IStorageProvider } from "@/interfaces/IStorageProvider";
 
 import { CallEventBus } from "./CallEventBus";
 import { DeviceManager } from "./DeviceManager";
