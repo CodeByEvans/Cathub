@@ -1,5 +1,5 @@
 import { RealtimeChannel } from "@supabase/supabase-js";
-import { IRealtimeProvider } from "./interfaces/IRealtimeProvider";
+import { IRealtimeProvider } from "@/interfaces/IRealtimeProvider";
 import { PresenceEventBus } from "./PresenceEventBus";
 
 type RealtimeStatus = "SUBSCRIBED" | "TIMED_OUT" | "CLOSED" | "CHANNEL_ERROR";

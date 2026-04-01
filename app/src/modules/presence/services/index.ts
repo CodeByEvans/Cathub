@@ -1,33 +1,14 @@
-import { IAuthProvider } from "@/interfaces/IAuthProvider";
-import { IStorageProvider } from "@/interfaces/IStorageProvider";
-import { getValue, setValue } from "@/services/store.service";
 import { supabase } from "@/services/supabaseClient";
 import { PresenceEventBus } from "./PresenceEventBus";
 import { PresenceManager } from "./PresenceManager";
 import { LastSeenManager } from "./LastSeenManager";
 import { IPresenceRepository } from "./interfaces/IPresenceRepository";
 import { PresenceChannelManager } from "./PresenceChannelManager";
-import { IRealtimeProvider } from "./interfaces/IRealtimeProvider";
+import { IRealtimeProvider } from "../../../interfaces/IRealtimeProvider";
 import { RealtimeChannel } from "@supabase/supabase-js";
 import { HeartbeatManager } from "./HeartbeatManager";
-
-const authProvider: IAuthProvider = {
-  getUserId: async () => {
-    const { data } = await supabase.auth.getUser();
-    if (!data.user?.id) throw new Error("No user");
-    return data.user.id;
-  },
-};
-
-const storageProvider: IStorageProvider = {
-  get: async (key) => {
-    const v = await getValue(key);
-    return typeof v === "string" ? v : null;
-  },
-  set: async (key: string, value: string): Promise<void> => {
-    await setValue(key, value);
-  },
-};
+import { storageProvider } from "@/shared/infrastructure/storage.provider";
+import { authProvider } from "@/shared/infrastructure/auth.provider";
 
 const presenceRepository: IPresenceRepository = {
   getPartnerLastSeen: async (partnerId) => {
