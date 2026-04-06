@@ -6,11 +6,11 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/globals/components/atoms/button";
 import CathubLogoWidget from "@/globals/components/atoms/logo-widget";
 import { PawTrail } from "../organisms/PawTrail";
+import { useConnection } from "@/modules/connection/contexts/ConnectionContext";
 
 export type WidgetSize = "lg" | "md" | "sm";
 
 interface OutgoingCallModalProps {
-  calleeName: string;
   calleeAvatar?: string;
   isVisible: boolean;
   onCancel: () => void;
@@ -20,7 +20,6 @@ interface OutgoingCallModalProps {
 const TIMEOUT_SECONDS = 60;
 
 export function OutgoingCallModal({
-  calleeName,
   calleeAvatar,
   isVisible,
   onCancel,
@@ -28,6 +27,8 @@ export function OutgoingCallModal({
 }: OutgoingCallModalProps) {
   const [elapsed, setElapsed] = useState(0);
   const [dotCount, setDotCount] = useState(1);
+
+  const { partnerName } = useConnection();
 
   useEffect(() => {
     if (!isVisible) {
@@ -136,7 +137,7 @@ export function OutgoingCallModal({
               {calleeAvatar ? (
                 <img
                   src={calleeAvatar}
-                  alt={calleeName}
+                  alt={`Avatar de ${partnerName}`}
                   className="w-full h-full rounded-full object-cover"
                 />
               ) : (
@@ -175,7 +176,7 @@ export function OutgoingCallModal({
                 isSmall ? "text-xs" : "text-sm",
               )}
             >
-              {calleeName}
+              {partnerName}
             </span>
             <span
               className={cn(

@@ -18,9 +18,9 @@ import { ChatSection } from "@/modules/chat/ChatSection";
 import { windowService } from "@/modules/settings/services";
 import { useChat } from "@/hooks/useChat";
 import { AnimatePresence, motion } from "framer-motion";
+import { useConnection } from "@/modules/connection/contexts/ConnectionContext";
 
 interface CallScreenProps {
-  partnerName: string;
   partnerAvatar?: string;
   onEndCall?: () => void;
   settingsButton?: ReactNode;
@@ -30,7 +30,6 @@ const FULL_SIZE = { width: 700, height: 200 };
 const MINI_SIZE = { width: 280, height: 60 };
 
 export function InCallScreen({
-  partnerName = "Pareja",
   partnerAvatar,
   onEndCall,
   settingsButton,
@@ -46,6 +45,8 @@ export function InCallScreen({
   const appWindow = getCurrentWindow();
 
   const { messages, sendChatMessage } = useChat();
+
+  const { partnerName } = useConnection();
 
   const isMinimizedRef = useRef(isMinimized);
   isMinimizedRef.current = isMinimized;
