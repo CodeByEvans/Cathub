@@ -53,7 +53,7 @@ export const authService = {
   async logout() {
     try {
       // Limpiar todo antes de logout
-      await appService.cleanup();
+      await appService.clearCache();
 
       // Hacer logout en Supabase
       const { error } = await supabase.auth.signOut();
