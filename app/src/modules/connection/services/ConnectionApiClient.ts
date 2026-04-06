@@ -1,10 +1,11 @@
+import { IStorageProvider } from "@/interfaces/IStorageProvider";
 import { connection } from "../types/connection";
 
 export class ConnectionApiClient {
   constructor(
-    private readonly userId: string,
     private readonly acesssToken: string,
     private readonly apiUrl: string,
+    private readonly storage: IStorageProvider,
   ) {}
 
   async generateConnectionRequestLink(): Promise<string | null> {
@@ -15,10 +16,11 @@ export class ConnectionApiClient {
           "Content-Type": "application/json",
           Authorization: `Bearer ${this.acesssToken}`,
         },
-        body: JSON.stringify({ sender_id: this.userId }),
       });
       const data = await response.json();
-      return data.invitation;
+      const link = `${this.apiUrl}/accept-connection/${data.id}`;
+      await this.storage.set("connection_request_link", link);
+      return link;
     } catch (err) {
       console.error("Error generating link:", err);
       return null;
@@ -49,21 +51,18 @@ export class ConnectionApiClient {
 
   async getConnectionRequestLink(): Promise<string | null> {
     try {
-      const response = await fetch(
-        `${this.apiUrl}/get_connection_request?user_id=${this.userId}`,
-        {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${this.acesssToken}`,
-          },
+      const response = await fetch(`${this.apiUrl}/get_connection_request`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${this.acesssToken}`,
         },
-      );
+      });
 
       const data = await response.json();
       const connectionId = data.id;
       return connectionId
-        ? `${this.apiUrl}/create_connection?request_id=${connectionId}`
+        ? `${this.apiUrl}/accept-connection/${connectionId}`
         : null;
     } catch (err) {
       console.error("Error getting connection request:", err);

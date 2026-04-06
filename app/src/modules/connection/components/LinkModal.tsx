@@ -1,48 +1,19 @@
 import { Input } from "@/globals/components/atoms/input";
 
-import React, { useEffect } from "react";
+import React from "react";
 
-import { toast } from "sonner";
-
-import { load } from "@tauri-apps/plugin-store";
-import { connectionService } from "../services/connection.service";
+import { useConnection } from "../contexts/ConnectionContext";
 
 export const LinkModal: React.FC = () => {
-  const [invitationLink, setInvitationLink] = React.useState("");
+  const { connectionRequestLink } = useConnection();
 
-  useEffect(() => {
-    const init = async () => {
-      try {
-        // Primero revisamos si ya tenemos un enlace generado en el store
-        const store = await load("store.json");
-        let link = await store.get<string>("connection_link_request_link");
-        // Si no hay enlace en el store, intentamos obtener uno desde el backend o generarlo
-        if (!link) {
-          link =
-            (await connectionService.getConnectionRequestLink()) ||
-            (await connectionService.generateLink());
-          // Si obtenemos un enlace, lo guardamos en el store para futuras referencias
-          if (link) {
-            await store.set("connection_link_request_link", link);
-            await store.save();
-            setInvitationLink(link);
-          }
-        } else {
-          setInvitationLink(link);
-        }
-      } catch (error) {
-        console.error(error);
-        toast.error("Error al generar el enlace de conexión");
-      }
-    };
-    init();
-  }, []);
+  if (!connectionRequestLink) return null;
 
-  const shareLink = (link: string) => {
+  const shareLink = () => {
     navigator.share({
       title: "Nuestro enlace de Cathub",
       text: "Aquí está mi enlace de conexión:",
-      url: link,
+      url: connectionRequestLink,
     });
   };
 
@@ -62,9 +33,13 @@ export const LinkModal: React.FC = () => {
         {/* Cajoncito con el enlace y botón de copiar */}
 
         <div className="flex items-center mb-4">
-          <Input value={invitationLink} readOnly className="flex-1 mr-2" />
+          <Input
+            value={connectionRequestLink}
+            readOnly
+            className="flex-1 mr-2"
+          />
           <button
-            onClick={() => shareLink(invitationLink)}
+            onClick={() => shareLink()}
             className="bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700 transition"
           >
             Compartir

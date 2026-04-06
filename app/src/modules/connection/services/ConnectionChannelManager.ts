@@ -2,18 +2,17 @@ import { RealtimeChannel } from "@supabase/supabase-js";
 import { ConnectionEventBus } from "./ConnectionEventBus";
 import { IRealtimeProvider } from "@/interfaces/IRealtimeProvider";
 
-class ConnectionChannelManager {
+export class ConnectionChannelManager {
   private channel: RealtimeChannel | null = null;
 
   constructor(
     private readonly userId: string,
-    private readonly connectionId: string,
     private readonly realtime: IRealtimeProvider,
     private readonly events: ConnectionEventBus,
   ) {}
 
   async connect() {
-    this.channel = this.realtime.createChannel(this.connectionId);
+    this.channel = this.realtime.createChannel(this.userId);
 
     this.channel.on(
       "postgres_changes",
@@ -25,6 +24,17 @@ class ConnectionChannelManager {
           newConnection.user_b === this.userId
         ) {
           this.events.emitConnectionAccepted(newConnection);
+        }
+      },
+    );
+
+    this.channel.on(
+      "postgres_changes",
+      { event: "DELETE", schema: "public", table: "connections" },
+      (payload) => {
+        const deleted = payload.old;
+        if (deleted.user_a === this.userId || deleted.user_b === this.userId) {
+          this.events.emitConnectionRevoked();
         }
       },
     );
