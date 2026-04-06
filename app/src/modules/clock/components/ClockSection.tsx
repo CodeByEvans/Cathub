@@ -1,16 +1,15 @@
 import { CathubLogo } from "@/globals/components/atoms/logo";
+import { useConnection } from "@/modules/connection/contexts/ConnectionContext";
 import { useState, useEffect } from "react";
 
 interface ClockSectionProps {
-  partnerName: string;
   partnerAvatar?: string;
 }
 
-export function ClockSection({
-  partnerName,
-  partnerAvatar,
-}: ClockSectionProps) {
+export function ClockSection({ partnerAvatar }: ClockSectionProps) {
   const [time, setTime] = useState(new Date());
+
+  const { partnerName } = useConnection();
 
   useEffect(() => {
     const timer = setInterval(() => setTime(new Date()), 1000);
