@@ -4,11 +4,10 @@ import { PresenceManager } from "./PresenceManager";
 import { LastSeenManager } from "./LastSeenManager";
 import { IPresenceRepository } from "./interfaces/IPresenceRepository";
 import { PresenceChannelManager } from "./PresenceChannelManager";
-import { IRealtimeProvider } from "../../../interfaces/IRealtimeProvider";
-import { RealtimeChannel } from "@supabase/supabase-js";
 import { HeartbeatManager } from "./HeartbeatManager";
 import { storageProvider } from "@/shared/infrastructure/storage.provider";
 import { authProvider } from "@/shared/infrastructure/auth.provider";
+import { realtimeProvider } from "@/shared/infrastructure/realtime.provider";
 
 const presenceRepository: IPresenceRepository = {
   getPartnerLastSeen: async (partnerId) => {
@@ -28,16 +27,6 @@ const presenceRepository: IPresenceRepository = {
       .from("profiles")
       .update({ last_seen: new Date().toISOString() })
       .eq("id", userId);
-  },
-};
-
-const realtimeProvider: IRealtimeProvider = {
-  createChannel: (channelId: string) => {
-    const channel = supabase.channel(channelId);
-    return channel;
-  },
-  removeChannel: async (channel: RealtimeChannel) => {
-    await supabase.removeChannel(channel);
   },
 };
 
