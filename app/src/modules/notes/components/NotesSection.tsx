@@ -1,22 +1,13 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { Note as NoteType } from "../@types/notes.types";
-import { notesService } from "../services/notes.service";
 import { NoteInput } from "./NoteInput";
 import { ScrollTextIcon, XIcon, ArrowLeftIcon } from "lucide-react";
+import { useNotes } from "../context/NotesContext";
 
 interface Note {
   id: number;
   content: string;
   timestamp: Date;
-}
-
-function toNote(raw: NoteType): Note {
-  return {
-    id: raw.id,
-    content: raw.content,
-    timestamp: new Date(raw.created_at),
-  };
 }
 
 function formatNoteTime(date: Date): string {
@@ -69,41 +60,12 @@ const foldInner: React.CSSProperties = {
 };
 
 export function NotesSection() {
-  const [notes, setNotes] = useState<Note[]>(() =>
-    notesService.getCachedNotes().map(toNote),
-  );
+  const { notes } = useNotes();
   const [historyOpen, setHistoryOpen] = useState(false);
   const [expandedNote, setExpandedNote] = useState<Note | null>(null);
 
   const latestNote = notes[0] ?? null;
   const previousNotes = notes.slice(1);
-
-  useEffect(() => {
-    const fetchNotes = async () => {
-      try {
-        const data = await notesService.getLastPartnerNotes(5);
-        setNotes(data.map(toNote));
-      } catch {
-        console.log("No hay notas disponibles aún");
-      }
-    };
-
-    fetchNotes();
-
-    const unsubscribe = notesService.subscribeChannel((incoming, type) => {
-      if (type === "INSERT" && incoming.length > 0) {
-        const newNote = toNote(incoming[0]);
-        setNotes((prev) => {
-          const exists = prev.some((n) => n.id === newNote.id);
-          if (exists) return prev;
-          return [newNote, ...prev].slice(0, 5);
-        });
-      }
-    });
-
-    return () => unsubscribe();
-  }, []);
-
   return (
     <div className="relative flex flex-col h-full flex-1 min-w-0 px-2 gap-1 overflow-hidden">
       {/* ── Nota principal ── */}

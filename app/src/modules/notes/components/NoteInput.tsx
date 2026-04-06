@@ -1,43 +1,29 @@
 import React from "react";
-import { notesService } from "../services/notes.service";
 import { Input } from "@/globals/components/atoms/input";
 import { Button } from "@/globals/components/atoms/button";
 import { Send } from "lucide-react";
 import { toast } from "sonner";
-import { audioService } from "@/services/audio.service";
-import { SoundKey } from "@/constants/sounds.constants";
+import { useNotes } from "../context/NotesContext";
 
 export const NoteInput = () => {
+  const { sendNote } = useNotes();
   const [note, setNote] = React.useState("");
-  const play = (key: SoundKey) => audioService.play(key, { volume: 0.1 });
 
-  const lastSentRef = React.useRef<number>(0);
-  const COOLDOWN_MS = 4000; // 4 segundos entre notas
-
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    const now = Date.now();
-    if (now - lastSentRef.current < COOLDOWN_MS) {
-      toast.warning("Espera un momento antes de enviar otra nota", {
-        id: "note-cooldown",
-      });
-      play("error");
-      return;
-    }
-
     try {
-      lastSentRef.current = now;
-      notesService.sendNote(note);
-      toast("Nota enviada con exito", {
+      await sendNote(note); // <- await para capturar errores
+      toast("Nota enviada con éxito", {
         id: "note-success",
         description: note,
       });
-      play("send");
       setNote("");
     } catch (error) {
       console.error(error);
-      toast.error("Error al enviar la nota 😭");
+      toast.error(
+        error instanceof Error ? error.message : "Error al enviar la nota",
+      );
     }
   };
   return (

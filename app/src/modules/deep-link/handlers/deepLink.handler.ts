@@ -1,15 +1,15 @@
-// handlers/deepLink.handler.ts
-
-import { connectionService } from "@/modules/connection/services/connection.service";
+import { useConnection } from "@/modules/connection/contexts/ConnectionContext";
 
 export const handleDeepLink = async (urlStr: string) => {
+  const { createConnection } = useConnection();
+
   const url = new URL(urlStr);
 
   if (url.host === "accept-connection") {
     const requestId = url.pathname.split("/")[1];
 
     if (requestId) {
-      await connectionService.createConnection(requestId);
+      await createConnection(requestId);
       return true;
     }
   }
