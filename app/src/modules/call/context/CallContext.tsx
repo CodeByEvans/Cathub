@@ -66,9 +66,6 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({
     simulateOutgoingCall: () => module.calls.simulateOutgoingCall(),
   };
 
-  // los callbacks van aquí
-  moduleRef.current?.events.onIncomingCall(() => setCallState("incoming"));
-
   return (
     <CallContext.Provider
       value={{

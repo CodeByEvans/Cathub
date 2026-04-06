@@ -2,8 +2,9 @@ import { DataConnection, MediaConnection } from "peerjs";
 import Peer from "peerjs";
 import { CallEventBus } from "./CallEventBus";
 import { StreamManager } from "./StreamManager";
-import { IAudioService } from "./interfaces/IAudioService";
+
 import { IWindowService } from "./interfaces/IWindowService";
+import { IAudioService } from "@/shared/interfaces/IAudioService";
 
 export class CallManager {
   private currentCall: MediaConnection | null = null;
