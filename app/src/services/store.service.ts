@@ -1,4 +1,3 @@
-// services/store.service.ts
 import { load, Store } from "@tauri-apps/plugin-store";
 
 let store: Store | null = null;
@@ -15,7 +14,6 @@ export async function setValue(key: string, value: any): Promise<string> {
     await storeInstance.save();
     return value;
   } catch (error) {
-    // ✅ Paréntesis NORMALES, no backticks
     console.error(`Error guardando clave ${key} en store:`, error);
     throw new Error(`No se pudo guardar la clave ${key}`);
   }
