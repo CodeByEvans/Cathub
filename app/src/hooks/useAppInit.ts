@@ -4,18 +4,13 @@ import { getCurrentWindow } from "@tauri-apps/api/window";
 
 export const useAppInit = () => {
   const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [userLinked, setUserLinked] = useState<boolean>(true);
-  const [partnerName, setPartnerName] = useState<string>("Amor");
 
   useEffect(() => {
     const init = async () => {
       try {
-        const state = await appService.initialize();
-        setUserLinked(state.isLinked);
-        setPartnerName(state.partnerName);
+        await appService.initialize();
       } catch (error) {
         console.error("❌ Error inicializando app:", error);
-        setUserLinked(false);
       } finally {
         setIsLoading(false);
         await getCurrentWindow().show();
@@ -24,5 +19,5 @@ export const useAppInit = () => {
     init();
   }, []);
 
-  return { isLoading, userLinked, partnerName };
+  return { isLoading };
 };

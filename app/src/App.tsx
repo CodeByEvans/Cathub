@@ -12,7 +12,7 @@ import { OutgoingCallModal } from "./modules/call/components/views/OutgoingCallM
 import { useCall } from "./modules/call/context/CallContext";
 
 function App() {
-  const { userLinked, partnerName, isLoading } = useAppInit();
+  const { isLoading } = useAppInit();
   const { showSettings, openSettings, closeSettings } = useSettings();
   const { calls, callState } = useCall();
 
@@ -33,7 +33,6 @@ function App() {
     return (
       <>
         <InCallScreen
-          partnerName={partnerName}
           onEndCall={() => {
             calls.endCall();
           }}
@@ -56,7 +55,6 @@ function App() {
   if (callState === "outgoing") {
     return (
       <OutgoingCallModal
-        calleeName={partnerName}
         isVisible
         onCancel={() => {
           calls.cancelCall();
@@ -68,7 +66,6 @@ function App() {
   if (callState === "incoming") {
     return (
       <IncomingCallModal
-        callerName={partnerName}
         isVisible
         onAccept={() => {
           calls.acceptCall(true);
@@ -84,8 +81,6 @@ function App() {
   return (
     <>
       <MainView
-        partnerName={partnerName}
-        userLinked={userLinked}
         onSimulateIncomingCall={() => calls.simulateIncomingCall?.()}
         onSimulateInCall={() => calls.simulateInCall?.()}
         onSimulateOutgoingCall={() => calls.simulateOutgoingCall?.()}

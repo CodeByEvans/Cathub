@@ -6,22 +6,20 @@ import { Settings } from "lucide-react";
 import { SettingsPage } from "./modules/settings/SettingsPage";
 import LinkModal from "./modules/connection/components/LinkModal";
 import React from "react";
+import { useConnection } from "./modules/connection/contexts/ConnectionContext";
 
 interface MainViewProps {
-  partnerName: string;
-  userLinked: boolean;
   onSimulateIncomingCall: () => void;
   onSimulateInCall: () => void;
   onSimulateOutgoingCall: () => void;
 }
 
 export function MainView({
-  partnerName,
-  userLinked,
   onSimulateIncomingCall,
   onSimulateInCall,
   onSimulateOutgoingCall,
 }: MainViewProps) {
+  const { isLinked } = useConnection();
   const [showSettings, setShowSettings] = React.useState(false);
 
   return (
@@ -43,10 +41,10 @@ export function MainView({
         onClose={() => setShowSettings(false)}
       />
 
-      {!userLinked && <LinkModal />}
+      {!isLinked && <LinkModal />}
 
       <section className="flex h-full divide-x divide-border/30">
-        <ClockSection partnerName={partnerName} />
+        <ClockSection />
         <NotesSection />
         <CallSection />
 
