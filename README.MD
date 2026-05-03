@@ -10,7 +10,7 @@
 - Desarrollo activo ✅
 - Aplicación de escritorio (Tauri) 🖥
 - Versión Web para manejo de conexiones y endpoints 🔗
-- Monorepo: App y Web en un solo repositorio 📦
+- Monorepo: App y Web en un solo repositorio 📦.
 
 ---
 
