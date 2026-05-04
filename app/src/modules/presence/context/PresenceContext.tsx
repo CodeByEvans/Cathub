@@ -21,9 +21,8 @@ export const PresenceProvider: React.FC<{ children: React.ReactNode }> = ({
     const init = async () => {
       module = await createPresenceService();
 
-      module.events.onStatusChange(({ isOnline, lastSeen }) => {
+      module.events.onPartnerStatusChange((isOnline) => {
         setIsOnline(isOnline);
-        setLastSeen(lastSeen);
       });
 
       module.events.onLastSeen((lastSeen) => {
