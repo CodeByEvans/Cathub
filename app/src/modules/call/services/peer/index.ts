@@ -25,7 +25,7 @@ export async function createPeerService() {
     userId,
     (conn) => calls.handleDataConnection(conn),
     (call) => calls.handleIncomingCall(call),
-    (type, message) => calls.handleCallError(message),
+    (message) => calls.handleCallError(message),
   );
 
   await connection.connect();
