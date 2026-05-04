@@ -7,6 +7,7 @@ export class CallEventBus {
   private onCallEndedCb: Cb | null = null;
   private onRemoteStreamCb: Cb<MediaStream> | null = null;
   private onChatMessageCb: Cb<string> | null = null;
+  private onErrorMessageCb: Cb<string> | null = null;
 
   // Registro
   onIncomingCall(cb: Cb<string>) {
@@ -27,6 +28,9 @@ export class CallEventBus {
   onChatMessage(cb: Cb<string>) {
     this.onChatMessageCb = cb;
   }
+  onErrorMessage(cb: Cb<string>) {
+    this.onErrorMessageCb = cb;
+  }
 
   // Emisión
   emitIncomingCall(callerId: string) {
@@ -46,5 +50,8 @@ export class CallEventBus {
   }
   emitChatMessage(msg: string) {
     this.onChatMessageCb?.(msg);
+  }
+  emitErrorMessage(msg: string) {
+    this.onErrorMessageCb?.(msg);
   }
 }

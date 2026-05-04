@@ -11,6 +11,7 @@ export class PeerConnectionManager {
     private readonly userId: string,
     private readonly onConnection: (conn: DataConnection) => void,
     private readonly onCall: (conn: MediaConnection) => void,
+    private readonly onError: (type: string, message: string) => void,
   ) {}
 
   async connect() {
@@ -45,7 +46,11 @@ export class PeerConnectionManager {
       this.peer.on("connection", this.onConnection);
       this.peer.on("call", this.onCall);
       this.peer.on("error", (err) => {
-        if (err.type === "unavailable-id") this.handleReconnect();
+        if (err.type === "unavailable-id") {
+          this.handleReconnect();
+          return;
+        }
+        this.onError(err.type, err.message);
       });
     } finally {
       this.initializing = false;

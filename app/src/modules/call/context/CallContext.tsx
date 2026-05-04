@@ -10,6 +10,7 @@ type CallContextType = {
   calls: ICallActions;
   devices: IDeviceActions;
   onChatMessage: (cb: (message: string) => void) => void;
+  errorMessage: string | null;
 };
 
 const CallContext = createContext<CallContextType | null>(null);
@@ -17,6 +18,7 @@ const CallContext = createContext<CallContextType | null>(null);
 export const CallProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [callState, setCallState] = useState<CallState>("idle");
   const [isReady, setIsReady] = useState(false);
   const moduleRef = useRef<Awaited<
@@ -30,6 +32,10 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({
       service.events.onOutgoingCall(() => setCallState("outgoing"));
       service.events.onCallConnected(() => setCallState("inCall"));
       service.events.onCallEnded(() => setCallState("idle"));
+      service.events.onErrorMessage((msg) => {
+        setErrorMessage(msg);
+        setCallState("idle");
+      });
       setIsReady(true);
     });
 
@@ -74,6 +80,7 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({
         devices: module.devices,
         partnerId: module.partnerId,
         onChatMessage: (cb) => module.events.onChatMessage(cb),
+        errorMessage,
       }}
     >
       {children}
