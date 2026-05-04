@@ -52,27 +52,34 @@ export class CallManager {
     micConstraints: MediaTrackConstraints | boolean,
     speakerId: string | null,
   ) {
-    const dataConn = peer.connect(partnerId);
-    this.currentDataConnection = dataConn;
-    dataConn.on("data", (data) => this.handleDataMessage(data as string));
+    try {
+      const dataConn = peer.connect(partnerId);
+      this.currentDataConnection = dataConn;
+      dataConn.on("data", (data) => this.handleDataMessage(data as string));
 
-    const localStream = await this.streams.getLocalStream(
-      audioOnly,
-      micConstraints,
-    );
-    const call = peer.call(partnerId, localStream);
-    this.currentCall = call;
-    this.setupCallListeners(call, speakerId);
+      const localStream = await this.streams.getLocalStream(
+        audioOnly,
+        micConstraints,
+      );
+      const call = peer.call(partnerId, localStream);
+      this.currentCall = call;
+      this.setupCallListeners(call, speakerId);
 
-    this._isOutgoingCall = true;
-    this.events.emitOutgoingCall();
-    this.audio.play("callStarted", { volume: 0.3, loop: true });
-    this.outgoingCallSoundTimer = setTimeout(() => {
-      this.audio.play("outgoingCall", { loop: true, volume: 0.4 });
-      this.outgoingCallSoundTimer = null;
-    }, 1500);
+      this._isOutgoingCall = true;
+      this.events.emitOutgoingCall();
+      this.audio.play("callStarted", { volume: 0.3 });
+      this.outgoingCallSoundTimer = setTimeout(() => {
+        this.audio.play("outgoingCall", { loop: true, volume: 0.4 });
+        this.outgoingCallSoundTimer = null;
+      }, 1500);
 
-    return localStream;
+      return localStream;
+    } catch (error) {
+      const errorMsg =
+        error instanceof Error ? error.message : "Error al iniciar la llamada";
+      this.events.emitErrorMessage(errorMsg);
+      throw new Error(`No se pudo iniciar la llamada: ${errorMsg}`);
+    }
   }
 
   async acceptCall(
@@ -155,6 +162,13 @@ export class CallManager {
   }
   toggleVideo() {
     return this.streams.toggleVideo();
+  }
+
+  handleCallError(message: string) {
+    this.audio.play("callEnded", { volume: 0.3 });
+    this.cleanup();
+    this.events.emitCallEnded();
+    this.events.emitErrorMessage(message);
   }
 
   private setupCallListeners(call: MediaConnection, speakerId: string | null) {
