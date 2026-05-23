@@ -1,12 +1,13 @@
 export type ThemeType = "light" | "dark" | "glass";
 
-export type ThemeColor = "red" | "blue" | "yellow" | "purple" | "pink";
+export type ThemeColor = string;
 
 export type ViewType =
   | "main"
   | "app-settings"
   | "theme-settings"
   | "color-settings"
+  | "personalize"
   | "window-settings"
   | "audio-settings"
   | "edit-profile"

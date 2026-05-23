@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ThemeColor, ThemeType, ViewType } from "./@types/settings.types";
+import { ThemeType, ViewType } from "./@types/settings.types";
 import { X } from "lucide-react";
 
 import { BehaviorType } from "@/@types/window.types";
@@ -11,6 +11,7 @@ import {
   WindowSettingsView,
   EditProfileView,
   ColorSettingsView,
+  PersonalizeView,
 } from "./views";
 import { themeService, windowService } from "./services";
 import React from "react";
@@ -19,14 +20,15 @@ import { AudioSettingsView } from "./views/AudioSettingsView";
 export interface SettingsProps {
   isOpen: boolean;
   onClose: () => void;
+  onOpenColorPicker?: () => void;
 }
 
-export const SettingsPage: React.FC<SettingsProps> = ({ isOpen, onClose }) => {
+export const SettingsPage: React.FC<SettingsProps> = ({ isOpen, onClose, onOpenColorPicker }) => {
   const [currentView, setCurrentView] = useState<ViewType>("main");
   const [selectedTheme, setSelectedTheme] = useState<ThemeType>(
     themeService.currentTheme(),
   );
-  const [selectedColor, setSelectedColor] = useState<ThemeColor>(
+  const [selectedColor, setSelectedColor] = useState(
     themeService.currentThemeColor(),
   );
   const [behavior, setBehavior] = useState<BehaviorType>(
@@ -72,7 +74,19 @@ export const SettingsPage: React.FC<SettingsProps> = ({ isOpen, onClose }) => {
         )}
 
         {currentView === "app-settings" && (
-          <AppSettingsView setCurrentView={goToView} />
+          <AppSettingsView
+            setCurrentView={goToView}
+            onOpenColorPicker={onOpenColorPicker ?? (() => {})}
+          />
+        )}
+
+        {currentView === "personalize" && (
+          <PersonalizeView
+            selectedTheme={selectedTheme}
+            selectedColor={selectedColor}
+            setSelectedColor={setSelectedColor}
+            setSelectedTheme={setSelectedTheme}
+          />
         )}
 
         {currentView === "theme-settings" && (

@@ -21,9 +21,8 @@ import { Button } from "@/globals/components/atoms/button";
 
 import { themeService } from "@/modules/settings/services/theme.service";
 import { windowService } from "../settings/services/window.service";
-import { COLOR_OPTIONS } from "../settings/constants/settings-navigation";
-import { ThemeColor } from "../settings/@types/settings.types";
 import { CathubLogo } from "@/globals/components/atoms/logo";
+import { HexColorPicker } from "react-colorful";
 
 type FeatureType =
   | "clock"
@@ -54,7 +53,7 @@ export function Introduction({ onComplete }: IntroductionProps) {
   const [selectedBehavior, setSelectedBehavior] = useState<BehaviorType | null>(
     null,
   );
-  const [selectedColor, setSelectedColor] = useState<ThemeColor>(
+  const [selectedColor, setSelectedColor] = useState(
     themeService.currentThemeColor(),
   );
   const [isAnimating, setIsAnimating] = useState(false);
@@ -162,7 +161,7 @@ export function Introduction({ onComplete }: IntroductionProps) {
     setSelectedTheme(theme);
   };
 
-  const handleColorChange = (color: ThemeColor) => {
+  const handleColorChange = (color: string) => {
     themeService.setColor(color);
     setSelectedColor(color);
   };
@@ -315,22 +314,11 @@ export function Introduction({ onComplete }: IntroductionProps) {
     }
     if (feature === "colors") {
       return (
-        <div className="flex gap-2">
-          {COLOR_OPTIONS.map(({ value, icon }) => (
-            <button
-              key={value}
-              onClick={() => handleColorChange(value)}
-              className={cn(
-                "w-8 h-8 rounded-full flex items-center justify-center transition-all duration-300 border-2 pt-1",
-                selectedColor === value
-                  ? "border-primary ring-2 ring-primary/30 scale-110"
-                  : "border-transparent hover:border-primary/50 hover:scale-105",
-              )}
-            >
-              {icon}
-            </button>
-          ))}
-        </div>
+        <HexColorPicker
+          color={selectedColor}
+          onChange={handleColorChange}
+          className="!w-36 !h-36"
+        />
       );
     }
 

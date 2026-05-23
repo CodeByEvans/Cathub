@@ -4,3 +4,4 @@ export { ThemeSettingsView } from "./ThemeSettingsView";
 export { WindowSettingsView } from "./WindowSettingsView";
 export { EditProfileView } from "./EditProfileView";
 export { ColorSettingsView } from "./ColorSettingsView";
+export { PersonalizeView } from "./PersonalizeView";

@@ -1,6 +1,5 @@
 import {
   AppWindow,
-  Circle,
   Gem,
   Layers,
   Layout,
@@ -17,7 +16,6 @@ import {
   SettingsButtonProps,
   OptionCardProps,
   ThemeType,
-  ThemeColor,
 } from "../@types/settings.types";
 import { BehaviorType } from "@/@types/window.types";
 
@@ -52,14 +50,9 @@ export const MAIN_SETTINGS: SettingsButtonProps[] = [
 
 export const APP_SETTINGS: SettingsButtonProps[] = [
   {
-    icon: <Sun className="w-6 h-6  mb-1" />,
-    text: "Modo de tema",
-    action: "theme-settings",
-  },
-  {
     icon: <Palette className="w-6 h-6  mb-1" />,
-    text: "Color del tema",
-    action: "theme-color-settings",
+    text: "Personalizar app",
+    action: "personalize",
   },
   {
     icon: <AppWindow className="w-6 h-6  mb-1" />,
@@ -89,68 +82,7 @@ export const THEME_OPTIONS: OptionCardProps<ThemeType>[] = [
   },
 ];
 
-export const COLOR_OPTIONS: OptionCardProps<ThemeColor>[] = [
-  {
-    value: "red",
-    icon: (
-      <Circle
-        className="w-6 h-6 mb-1"
-        fill="oklch(52.278% 0.20363 28.124)"
-        stroke="none"
-      />
-    ),
-    title: "Rojo",
-    description: "Clásico",
-  },
-  {
-    value: "blue",
-    icon: (
-      <Circle
-        className="w-6 h-6 mb-1"
-        fill="oklch(65.979% 0.13352 238.59)"
-        stroke="none"
-      />
-    ),
-    title: "Azul",
-    description: "Fresco",
-  },
-  {
-    value: "yellow",
-    icon: (
-      <Circle
-        className="w-6 h-6 mb-1"
-        fill="oklch(0.9 0.12 100)"
-        stroke="none"
-      />
-    ),
-    title: "Amarillo",
-    description: "Brillante",
-  },
-  {
-    value: "purple",
-    icon: (
-      <Circle
-        className="w-6 h-6 mb-1"
-        fill="oklch(0.6 0.12 280)"
-        stroke="none"
-      />
-    ),
-    title: "Morado",
-    description: "Elegante",
-  },
-  {
-    value: "pink",
-    icon: (
-      <Circle
-        className="w-6 h-6 mb-1"
-        fill="oklch(0.75 0.12 320)"
-        stroke="none"
-      />
-    ),
-    title: "Rosa",
-    description: "Vibrante",
-  },
-];
+
 
 export const WINDOW_BEHAVIOR_OPTIONS: OptionCardProps<BehaviorType>[] = [
   {

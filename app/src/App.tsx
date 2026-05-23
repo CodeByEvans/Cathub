@@ -1,4 +1,5 @@
 import "./App.css";
+import { useState } from "react";
 import { IncomingCallModal } from "./modules/call/components/views/IncomingCallModal";
 import { InCallScreen } from "./modules/call/components/views/InCallScreen";
 import { Button } from "./globals/components/atoms/button";
@@ -10,13 +11,28 @@ import { useSettings } from "./hooks/useSettings";
 import { useAppInit } from "./hooks/useAppInit";
 import { OutgoingCallModal } from "./modules/call/components/views/OutgoingCallModal";
 import { useCall } from "./modules/call/context/CallContext";
+import { getCurrentWindow, LogicalSize } from "@tauri-apps/api/window";
+
+const MAIN_SIZE = new LogicalSize(700, 200);
+const EXPANDED_SIZE = new LogicalSize(940, 200);
 
 function App() {
   const { isLoading } = useAppInit();
   const { showSettings, openSettings, closeSettings } = useSettings();
   const { calls, callState } = useCall();
+  const [showColorPicker, setShowColorPicker] = useState(false);
 
   useClampOnMouseUp();
+
+  const openColorPicker = () => {
+    setShowColorPicker(true);
+    getCurrentWindow().setSize(EXPANDED_SIZE);
+  };
+
+  const closeColorPicker = () => {
+    setShowColorPicker(false);
+    getCurrentWindow().setSize(MAIN_SIZE);
+  };
 
   if (isLoading) {
     return (
@@ -84,6 +100,9 @@ function App() {
         onSimulateIncomingCall={() => calls.simulateIncomingCall?.()}
         onSimulateInCall={() => calls.simulateInCall?.()}
         onSimulateOutgoingCall={() => calls.simulateOutgoingCall?.()}
+        showColorPicker={showColorPicker}
+        onOpenColorPicker={openColorPicker}
+        onCloseColorPicker={closeColorPicker}
       />
     </>
   );
