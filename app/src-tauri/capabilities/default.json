@@ -12,6 +12,9 @@
     "store:allow-load",
     "core:window:default",
     "core:window:allow-start-dragging",
+    "core:window:allow-set-resizable",
+    "core:window:allow-set-min-size",
+    "core:window:allow-set-max-size",
     "deep-link:default",
     "deep-link:allow-get-current",
     "deep-link:allow-register"

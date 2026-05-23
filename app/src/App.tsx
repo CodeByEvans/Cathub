@@ -1,5 +1,5 @@
 import "./App.css";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { IncomingCallModal } from "./modules/call/components/views/IncomingCallModal";
 import { InCallScreen } from "./modules/call/components/views/InCallScreen";
 import { Button } from "./globals/components/atoms/button";
@@ -12,15 +12,39 @@ import { useAppInit } from "./hooks/useAppInit";
 import { OutgoingCallModal } from "./modules/call/components/views/OutgoingCallModal";
 import { useCall } from "./modules/call/context/CallContext";
 import { getCurrentWindow, LogicalSize } from "@tauri-apps/api/window";
+import { invoke } from "@tauri-apps/api/core";
+import { getValue, setValue } from "@/services/store.service";
 
 const MAIN_SIZE = new LogicalSize(700, 200);
 const EXPANDED_SIZE = new LogicalSize(940, 200);
+const DEFAULT_COMPACT = { width: 420, height: 200 };
+
+async function loadCompactSize(): Promise<{ width: number; height: number }> {
+  try {
+    const saved = await getValue("compactWindowSize");
+    if (saved && typeof saved === "object") {
+      const s = saved as Record<string, unknown>;
+      if (typeof s.width === "number" && typeof s.height === "number") {
+        return { width: s.width, height: s.height };
+      }
+    }
+  } catch {}
+  return DEFAULT_COMPACT;
+}
+
+async function saveCompactSize(width: number, height: number) {
+  try {
+    await setValue("compactWindowSize", { width, height });
+  } catch {}
+}
 
 function App() {
   const { isLoading } = useAppInit();
   const { showSettings, openSettings, closeSettings } = useSettings();
   const { calls, callState } = useCall();
   const [showColorPicker, setShowColorPicker] = useState(false);
+  const [isCompact, setIsCompact] = useState(false);
+  const compactSizeRef = useRef(DEFAULT_COMPACT);
 
   useClampOnMouseUp();
 
@@ -31,8 +55,57 @@ function App() {
 
   const closeColorPicker = () => {
     setShowColorPicker(false);
-    getCurrentWindow().setSize(MAIN_SIZE);
+    getCurrentWindow().setSize(isCompact ? new LogicalSize(compactSizeRef.current.width, compactSizeRef.current.height) : MAIN_SIZE);
   };
+
+  const toggleCompact = async () => {
+    if (showColorPicker) {
+      closeColorPicker();
+    }
+    const next = !isCompact;
+    setIsCompact(next);
+
+    const win = getCurrentWindow();
+    if (next) {
+      const saved = await loadCompactSize();
+      compactSizeRef.current = saved;
+      await invoke("set_window_resizable", { resizable: true });
+      await invoke("set_window_min_size", { width: 280, height: 120 });
+      await invoke("set_window_max_size", { width: 700, height: 400 });
+      await win.setSize(new LogicalSize(saved.width, saved.height));
+    } else {
+      await invoke("set_window_min_size", { width: 0, height: 0 });
+      await invoke("set_window_max_size", { width: 5000, height: 5000 });
+      await invoke("set_window_resizable", { resizable: false });
+      await win.setSize(MAIN_SIZE);
+    }
+  };
+
+  useEffect(() => {
+    if (!isCompact) return;
+
+    let debounceTimer: ReturnType<typeof setTimeout>;
+    const handleResize = async () => {
+      if (debounceTimer) clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(async () => {
+        try {
+          const win = getCurrentWindow();
+          const size = await win.outerSize();
+          const logicalSize = size.toLogical(await win.scaleFactor());
+          compactSizeRef.current = { width: Math.round(logicalSize.width), height: Math.round(logicalSize.height) };
+          await saveCompactSize(logicalSize.width, logicalSize.height);
+        } catch {}
+      }, 500);
+    };
+
+    const win = getCurrentWindow();
+    const unlisten = win.onResized(handleResize);
+
+    return () => {
+      unlisten.then((fn) => fn());
+      if (debounceTimer) clearTimeout(debounceTimer);
+    };
+  }, [isCompact]);
 
   if (isLoading) {
     return (
@@ -103,6 +176,8 @@ function App() {
         showColorPicker={showColorPicker}
         onOpenColorPicker={openColorPicker}
         onCloseColorPicker={closeColorPicker}
+        isCompact={isCompact}
+        onToggleCompact={toggleCompact}
       />
     </>
   );

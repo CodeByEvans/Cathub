@@ -14,9 +14,9 @@ export const CardSettingsTemplate = <T,>({
   selectedValue,
 }: CardSettingsTemplateProps<T>) => {
   return (
-    <div className="h-full flex flex-col items-center ">
+    <div className="h-full flex flex-col items-center">
       <CardLayout>
-        {cards.map((card) => (
+        {cards.map((card, i) => (
           <OptionCard<T>
             key={String(card.value)}
             icon={card.icon}
@@ -25,6 +25,7 @@ export const CardSettingsTemplate = <T,>({
             value={card.value}
             isActive={selectedValue === card.value}
             onClick={(value) => onAction(value)}
+            index={i}
           />
         ))}
       </CardLayout>

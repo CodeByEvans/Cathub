@@ -1,7 +1,7 @@
 import ReactDOM from "react-dom/client";
 import App from "./App";
 
-import { Toaster } from "./components/ui/sonner";
+import { ToastProvider } from "./components/ui/sonner";
 import DeepLinkListener from "./modules/deep-link/DeepLinkListener";
 import { themeService } from "@/modules/settings/services/theme.service";
 import { platform } from "@tauri-apps/plugin-os";
@@ -28,19 +28,11 @@ async function bootstrap() {
   ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
     <>
       <DeepLinkListener />
-      <Toaster
-        duration={3000}
-        toastOptions={{
-          classNames: {
-            title: "!text-primary",
-            description: "!text-muted-foreground",
-            toast: "!backdrop-blur-md !bg-popover/80",
-          },
-        }}
-      />
       <AuthGuard>
         <AppProviders>
-          <App />
+          <ToastProvider>
+            <App />
+          </ToastProvider>
         </AppProviders>
       </AuthGuard>
     </>,

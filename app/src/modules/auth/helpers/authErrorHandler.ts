@@ -1,4 +1,4 @@
-import { toast } from "sonner";
+import { toast } from "@/components/ui/sonner";
 
 export const handleAuthError = (error: unknown) => {
   if (!(error instanceof Error)) {

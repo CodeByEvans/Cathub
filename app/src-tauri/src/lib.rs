@@ -129,6 +129,39 @@ fn set_normal_behavior(window: tauri::Window) {
     }
 }
 
+#[tauri::command]
+fn set_window_resizable(window: tauri::Window, resizable: bool) {
+    #[cfg(target_os = "macos")]
+    {
+        use cocoa::appkit::{NSWindow, NSWindowStyleMask};
+        use objc::runtime::Object;
+
+        let ns_window = window.ns_window().unwrap() as *mut Object;
+        unsafe {
+            let mask = NSWindow::styleMask(ns_window);
+            if resizable {
+                NSWindow::setStyleMask_(ns_window, mask | NSWindowStyleMask::NSResizableWindowMask);
+            } else {
+                NSWindow::setStyleMask_(ns_window, mask & !NSWindowStyleMask::NSResizableWindowMask);
+            }
+        }
+    }
+    #[cfg(not(target_os = "macos"))]
+    {
+        let _ = window.set_resizable(resizable);
+    }
+}
+
+#[tauri::command]
+fn set_window_min_size(window: tauri::Window, width: f64, height: f64) {
+    let _ = window.set_min_size(Some(tauri::Size::Logical(tauri::LogicalSize { width, height })));
+}
+
+#[tauri::command]
+fn set_window_max_size(window: tauri::Window, width: f64, height: f64) {
+    let _ = window.set_max_size(Some(tauri::Size::Logical(tauri::LogicalSize { width, height })));
+}
+
 #[cfg(target_os = "windows")]
 unsafe extern "system" fn subclass_proc(
     hwnd: windows_sys::Win32::Foundation::HWND,
@@ -289,7 +322,7 @@ pub fn run() {
             Ok(())
         })
         .plugin(tauri_plugin_opener::init())
-        .invoke_handler(tauri::generate_handler![greet, clamp_window, set_dock_visibility, set_widget_behavior, set_normal_behavior])
+        .invoke_handler(tauri::generate_handler![greet, clamp_window, set_dock_visibility, set_widget_behavior, set_normal_behavior, set_window_resizable, set_window_min_size, set_window_max_size])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

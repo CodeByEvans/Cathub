@@ -1,45 +1,91 @@
 import { SoundKey, SOUNDS } from "@/constants/sounds.constants";
 
 class AudioService {
-  private ctx = new AudioContext();
+  private ctx: AudioContext | null = null;
   private buffers: Record<string, AudioBuffer> = {};
   private playing: Record<string, AudioBufferSourceNode> = {};
+  private initPromise: Promise<void> | null = null;
+
+  private createContext(): AudioContext {
+    this.ctx = new AudioContext();
+
+    this.ctx.addEventListener("statechange", () => {
+      if (this.ctx?.state === "suspended") {
+        this.ctx.resume().catch(() => {});
+      }
+    });
+
+    return this.ctx;
+  }
+
+  private getCtx(): AudioContext {
+    if (!this.ctx || this.ctx.state === "closed") {
+      this.createContext();
+    }
+    return this.ctx!;
+  }
 
   async init() {
+    if (this.initPromise) return this.initPromise;
+    this.initPromise = this.loadAll();
+    return this.initPromise;
+  }
+
+  private async loadAll() {
+    const ctx = this.getCtx();
     await Promise.all(
-      Object.entries(SOUNDS).map(([key, sound]) => this.load(key, sound)),
+      Object.entries(SOUNDS).map(([key, sound]) => this.load(key, sound, ctx)),
     );
   }
 
-  async load(key: string, url: string) {
-    if (this.buffers[key]) return;
-    const buf = await fetch(url).then((r) => r.arrayBuffer());
-    this.buffers[key] = await this.ctx.decodeAudioData(buf);
+  private async load(key: string, url: string, ctx: AudioContext) {
+    try {
+      const buf = await fetch(url).then((r) => r.arrayBuffer());
+      this.buffers[key] = await ctx.decodeAudioData(buf);
+    } catch {
+      console.warn(`Failed to load sound: ${key}`);
+    }
+  }
+
+  async reload() {
+    this.buffers = {};
+    await this.loadAll();
   }
 
   play(key: SoundKey, { volume = 0.1, loop = false } = {}) {
     if (this.playing[key]) return;
+
     const buffer = this.buffers[key];
     if (!buffer) return;
 
-    if (this.ctx.state === "suspended") this.ctx.resume();
+    const ctx = this.getCtx();
 
-    const source = this.ctx.createBufferSource();
-    const gain = this.ctx.createGain();
-    source.buffer = buffer;
-    source.loop = loop;
-    gain.gain.value = volume;
+    if (ctx.state === "suspended") {
+      ctx.resume().catch(() => {});
+    }
 
-    source.connect(gain).connect(this.ctx.destination);
-    source.start(0);
+    try {
+      const source = ctx.createBufferSource();
+      const gain = ctx.createGain();
+      source.buffer = buffer;
+      source.loop = loop;
+      gain.gain.value = volume;
 
-    if (loop) {
-      this.playing[key] = source;
+      source.connect(gain).connect(ctx.destination);
+      source.start(0);
+
+      if (loop) {
+        this.playing[key] = source;
+      }
+    } catch {
+      this.reload();
     }
   }
 
   stop(key: SoundKey) {
-    this.playing[key]?.stop();
+    try {
+      this.playing[key]?.stop();
+    } catch {}
     delete this.playing[key];
   }
 

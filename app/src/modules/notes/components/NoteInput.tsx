@@ -2,7 +2,7 @@ import React from "react";
 import { Input } from "@/globals/components/atoms/input";
 import { Button } from "@/globals/components/atoms/button";
 import { Send } from "lucide-react";
-import { toast } from "sonner";
+import { toast } from "@/components/ui/sonner";
 import { useNotes } from "../context/NotesContext";
 
 export const NoteInput = () => {

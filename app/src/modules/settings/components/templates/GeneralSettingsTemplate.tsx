@@ -13,10 +13,11 @@ export const GeneralSettingsTemplate: React.FC<SettingsTemplateProps> = ({
 }) => {
   return (
     <ButtonLayout>
-      {buttons.map((button) => (
+      {buttons.map((button, i) => (
         <SettingsButton
           key={button.action}
           {...button}
+          index={i}
           onClickAction={() => onAction(button.action)}
         />
       ))}

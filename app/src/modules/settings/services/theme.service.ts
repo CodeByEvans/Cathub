@@ -1,4 +1,4 @@
-import { toast } from "sonner";
+import { toast } from "@/components/ui/sonner";
 import { getValue, setValue } from "@/services/store.service";
 import { ThemeColor, ThemeType } from "../@types/settings.types";
 

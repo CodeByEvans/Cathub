@@ -6,6 +6,7 @@ export class PeerConnectionManager {
   private initializing: boolean = false;
   private reconnectAttempts: number = 0;
   private maxReconnectAttempts: number = 5;
+  private heartbeatInterval: ReturnType<typeof setInterval> | null = null;
 
   constructor(
     private readonly userId: string,
@@ -42,7 +43,22 @@ export class PeerConnectionManager {
       this.peer.on("open", () => {
         this.ready = true;
         this.reconnectAttempts = 0;
+        this.startHeartbeat();
       });
+      // El evento 'disconnected' se dispara cuando la conexión se pierde temporalmente (ej. por problemas de red), pero el objeto Peer sigue existiendo y puede reconectarse automáticamente.
+      this.peer.on("disconnected", () => {
+        this.ready = false;
+        this.stopHeartbeat();
+        this.peer?.reconnect();
+      });
+      // El evento 'close' se dispara cuando la conexión se cierra definitivamente (ej. por destroy), no por desconexión temporal
+      this.peer.on("close", () => {
+        console.log("[Peer] Closed — reconnecting from scratch");
+        this.ready = false;
+        this.stopHeartbeat();
+        this.handleReconnect();
+      });
+
       this.peer.on("connection", this.onConnection);
       this.peer.on("call", this.onCall);
       this.peer.on("error", (err) => {
@@ -50,10 +66,34 @@ export class PeerConnectionManager {
           this.handleReconnect();
           return;
         }
+
+        if (this.ready) {
+          this.ready = false;
+          this.peer?.reconnect();
+        }
         this.onError(err.type, err.message);
       });
     } finally {
       this.initializing = false;
+    }
+  }
+
+  private startHeartbeat() {
+    this.stopHeartbeat();
+    this.heartbeatInterval = setInterval(() => {
+      // Si está conectado pero el servidor no responde, forzar reconexión
+      if (this.peer && !this.peer.destroyed && this.peer.disconnected) {
+        console.log("[Peer] Heartbeat detected disconnect — reconnecting");
+        this.ready = false;
+        this.peer.reconnect();
+      }
+    }, 25000); // cada 25s
+  }
+
+  private stopHeartbeat() {
+    if (this.heartbeatInterval) {
+      clearInterval(this.heartbeatInterval);
+      this.heartbeatInterval = null;
     }
   }
 

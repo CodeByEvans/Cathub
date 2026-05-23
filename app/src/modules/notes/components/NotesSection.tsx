@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { NoteInput } from "./NoteInput";
+import { NoteComposer } from "./NoteComposer";
 import { ScrollTextIcon, XIcon, ArrowLeftIcon } from "lucide-react";
 import { useNotes } from "../context/NotesContext";
 
@@ -59,7 +59,7 @@ const foldInner: React.CSSProperties = {
   borderColor: "transparent transparent var(--note-fold, #f5ede0) transparent",
 };
 
-export function NotesSection() {
+export function NotesSection({ isCompact = false }: { isCompact?: boolean }) {
   const { notes } = useNotes();
   const [historyOpen, setHistoryOpen] = useState(false);
   const [expandedNote, setExpandedNote] = useState<Note | null>(null);
@@ -67,10 +67,11 @@ export function NotesSection() {
   const latestNote = notes[0] ?? null;
   const previousNotes = notes.slice(1);
   return (
-    <div className="relative flex flex-col h-full flex-1 min-w-0 px-2 gap-1 overflow-hidden">
+    <div className={`relative flex flex-col h-full flex-1 min-w-0 ${isCompact ? "px-0" : "px-2"} gap-1 overflow-hidden`} data-tauri-drag-region>
       {/* ── Nota principal ── */}
       <div
         className="relative flex flex-1 items-center justify-center overflow-hidden rounded-md border shadow-sm pb-2"
+        data-tauri-drag-region
         style={{
           ...paperStyle,
           boxShadow:
@@ -108,7 +109,7 @@ export function NotesSection() {
         )}
       </div>
 
-      <NoteInput />
+      {!isCompact && <NoteComposer />}
 
       {/* ── Drawer historial ── */}
       <AnimatePresence>

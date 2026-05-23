@@ -9,6 +9,6 @@ export const ButtonLayout: React.FC<ButtonLayoutProps> = ({
   className,
 }) => (
   <div className="h-full flex items-center p-4">
-    <div className={`flex gap-4 flex-1 ${className}`}>{children}</div>
+    <div className={`flex gap-3 flex-1 ${className}`}>{children}</div>
   </div>
 );

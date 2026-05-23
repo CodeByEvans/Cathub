@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { getCurrent, onOpenUrl } from "@tauri-apps/plugin-deep-link";
-import { toast } from "sonner";
+import { toast } from "@/components/ui/sonner";
 import { handleDeepLink } from "./handlers/deepLink.handler";
 
 const DeepLinkListener = () => {

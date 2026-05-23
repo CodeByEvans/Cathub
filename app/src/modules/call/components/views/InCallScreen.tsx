@@ -11,7 +11,6 @@ import {
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { LogicalSize } from "@tauri-apps/api/dpi";
 import { cn } from "@/lib/utils";
-import { Button } from "@/globals/components/atoms/button";
 import CathubLogoWidget from "@/globals/components/atoms/logo-widget";
 
 import { ChatSection } from "@/modules/chat/ChatSection";
@@ -45,7 +44,6 @@ export function InCallScreen({
   const appWindow = getCurrentWindow();
 
   const { messages, sendChatMessage } = useChat();
-
   const { partnerName } = useConnection();
 
   const isMinimizedRef = useRef(isMinimized);
@@ -58,7 +56,6 @@ export function InCallScreen({
     const prevLength = prevMessagesLengthRef.current;
 
     if (newLength > prevLength && isMinimizedRef.current) {
-      // Primera vez que llegan mensajes minimizado — fija el separador
       if (unreadCount === 0) {
         setUnreadFromIndex(prevLength);
       }
@@ -106,7 +103,6 @@ export function InCallScreen({
   const toggleDeafed = () => {
     if (isMuted && !isDeafened) {
       setIsDeafened(true);
-
       return;
     }
     setIsMuted((prev) => !prev);
@@ -122,7 +118,6 @@ export function InCallScreen({
     return `${m}:${s.toString().padStart(2, "0")}`;
   };
 
-  // ── Minimized bubble ──────────────────────────────────────────
   if (isMinimized) {
     return (
       <>
@@ -134,13 +129,11 @@ export function InCallScreen({
           }
         `}</style>
         <main
-          className="w-[280px] h-[60px] rounded-2xl overflow-hidden flex items-center gap-3 px-4 bg-background border border-border/50 shadow-xl relative"
+          className="w-[280px] h-[60px] rounded-2xl overflow-hidden flex items-center gap-3 px-4 bg-background/80 backdrop-blur-md border border-border/50 shadow-xl relative"
           data-tauri-drag-region
         >
-          {/* Soft glow ping */}
           <span className="absolute inset-0 rounded-2xl bg-primary/8 animate-ping opacity-20 pointer-events-none" />
 
-          {/* Avatar */}
           <div className="relative shrink-0">
             <div className="w-8 h-8 rounded-full bg-primary/10 ring-2 ring-primary/30 flex items-center justify-center overflow-hidden">
               {partnerAvatar ? (
@@ -153,7 +146,6 @@ export function InCallScreen({
                 <CathubLogoWidget size="sm" className="w-5 h-5" />
               )}
             </div>
-            {/* tiny tail */}
             <span
               className="absolute -right-2 bottom-0.5 text-primary/50 text-xs select-none pointer-events-none"
               style={{
@@ -163,11 +155,9 @@ export function InCallScreen({
             >
               〜
             </span>
-            {/* online dot */}
             <span className="absolute bottom-0 right-0 w-2 h-2 bg-online rounded-full border border-background" />
           </div>
 
-          {/* Info */}
           <div
             className="flex flex-col items-start flex-1 min-w-0"
             data-tauri-drag-region
@@ -200,22 +190,21 @@ export function InCallScreen({
                 </motion.div>
               )}
             </AnimatePresence>
-            <Button
-              variant="ghost"
-              size="icon"
+            <motion.button
+              whileHover={{ scale: 1.08 }}
+              whileTap={{ scale: 0.92 }}
               onClick={restore}
-              className="h-6 w-6 text-muted-foreground hover:text-foreground"
+              className="h-6 w-6 rounded-full flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-white/5 transition-colors"
               title="Restaurar"
             >
               <Maximize2 className="w-3 h-3" />
-            </Button>
+            </motion.button>
           </div>
         </main>
       </>
     );
   }
 
-  // ── Full view ─────────────────────────────────────────────────
   return (
     <>
       <style>{`
@@ -231,30 +220,27 @@ export function InCallScreen({
       `}</style>
 
       <main
-        className="w-[700px] h-[200px] rounded-2xl border border-border/50 shadow-xl overflow-hidden relative flex items-center bg-background"
+        className="w-[700px] h-[200px] rounded-2xl border border-border/40 shadow-xl overflow-hidden relative flex items-center bg-background/70 backdrop-blur-xl"
         data-tauri-drag-region
       >
         {settingsButton && (
           <div className="absolute top-1 right-1 z-10">{settingsButton}</div>
         )}
 
-        {/* Soft primary glow */}
         <div
           className="absolute inset-0 pointer-events-none"
           style={{
             background:
-              "radial-gradient(ellipse 60% 80% at 20% 50%, hsl(var(--primary) / 0.07) 0%, transparent 70%)",
+              "radial-gradient(ellipse 60% 80% at 20% 50%, hsl(var(--primary) / 0.08) 0%, transparent 70%)",
             animation: "catGlow 3s ease-in-out infinite",
           }}
         />
 
-        {/* ── LEFT: Avatar + name + timer ── */}
         <div
           className="flex items-center gap-4 shrink-0 px-7"
           data-tauri-drag-region
         >
           <div className="relative flex items-center justify-center">
-            {/* Pulse ring */}
             <div
               className="absolute rounded-full border-2 border-primary/20"
               style={{
@@ -264,8 +250,7 @@ export function InCallScreen({
               }}
             />
 
-            {/* Avatar */}
-            <div className="relative z-10 w-14 h-14 rounded-full bg-primary/10 ring-2 ring-primary/40 flex items-center justify-center overflow-hidden">
+            <div className="relative z-10 w-14 h-14 rounded-full bg-primary/10 ring-2 ring-primary/40 flex items-center justify-center overflow-hidden shadow-lg">
               {partnerAvatar ? (
                 <img
                   src={partnerAvatar}
@@ -277,10 +262,8 @@ export function InCallScreen({
               )}
             </div>
 
-            {/* Online dot */}
             <span className="absolute bottom-0.5 right-0.5 z-20 w-3 h-3 bg-online rounded-full border-2 border-background" />
 
-            {/* Wagging tail */}
             <span
               className="absolute -right-3 bottom-1 text-primary/60 select-none pointer-events-none text-base"
               style={{
@@ -292,7 +275,12 @@ export function InCallScreen({
             </span>
           </div>
 
-          <div className="flex flex-col gap-0.5">
+          <motion.div
+            className="flex flex-col gap-0.5"
+            initial={{ opacity: 0, x: -8 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.1 }}
+          >
             <p className="text-sm font-semibold text-white leading-none">
               {partnerName}
             </p>
@@ -302,13 +290,11 @@ export function InCallScreen({
             <p className="text-[10px] text-muted-foreground/60 leading-none mt-0.5">
               En llamada
             </p>
-          </div>
+          </motion.div>
         </div>
 
-        {/* Divider */}
-        <div className="w-px self-stretch bg-border/40 mx-1" />
+        <div className="w-px self-stretch bg-border/30 mx-1" />
 
-        {/* ── CENTER: Chat ── */}
         <div className="flex-1 flex flex-col h-full min-h-0 overflow-hidden px-2">
           <ChatSection
             messages={messages}
@@ -318,74 +304,66 @@ export function InCallScreen({
           />
         </div>
 
-        {/* Divider */}
-        <div className="w-px self-stretch bg-border/40 mx-1" />
+        <div className="w-px self-stretch bg-border/30 mx-1" />
 
-        {/* ── RIGHT: Controls ── */}
-        <div className="flex items-center gap-1.5 shrink-0 px-4">
-          {/* Mute */}
-          <Button
-            variant="outline"
-            size="icon"
-            className={cn(
-              "h-9 w-9 rounded-full border-2 transition-colors",
-              isMuted
-                ? "border-destructive/50 bg-destructive/10 text-destructive"
-                : "border-border hover:border-primary/40 text-muted-foreground",
-            )}
+        <motion.div
+          className="flex items-center gap-1.5 shrink-0 px-4"
+          initial={{ opacity: 0, x: 8 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ delay: 0.15 }}
+        >
+          <motion.button
+            whileHover={{ scale: 1.08 }}
+            whileTap={{ scale: 0.92 }}
             onClick={toggleMute}
             title={isMuted ? "Desmutear" : "Mutear"}
-          >
-            {isMuted ? (
-              <MicOff className="w-4 h-4" />
-            ) : (
-              <Mic className="w-4 h-4" />
-            )}
-          </Button>
-
-          {/* Deafen */}
-          <Button
-            variant="outline"
-            size="icon"
             className={cn(
-              "h-9 w-9 rounded-full border-2 transition-colors",
-              isDeafened
+              "h-9 w-9 rounded-full border-2 flex items-center justify-center transition-colors",
+              isMuted
                 ? "border-destructive/50 bg-destructive/10 text-destructive"
-                : "border-border hover:border-primary/40 text-muted-foreground",
+                : "border-border/50 bg-white/5 hover:border-primary/40 hover:bg-primary/5 text-muted-foreground hover:text-foreground",
             )}
+          >
+            {isMuted ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
+          </motion.button>
+
+          <motion.button
+            whileHover={{ scale: 1.08 }}
+            whileTap={{ scale: 0.92 }}
             onClick={toggleDeafed}
             title={isDeafened ? "Desensordecer" : "Ensordecer"}
-          >
-            {isDeafened ? (
-              <VolumeX className="w-4 h-4" />
-            ) : (
-              <Volume2 className="w-4 h-4" />
+            className={cn(
+              "h-9 w-9 rounded-full border-2 flex items-center justify-center transition-colors",
+              isDeafened
+                ? "border-destructive/50 bg-destructive/10 text-destructive"
+                : "border-border/50 bg-white/5 hover:border-primary/40 hover:bg-primary/5 text-muted-foreground hover:text-foreground",
             )}
-          </Button>
+          >
+            {isDeafened ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
+          </motion.button>
 
-          {/* Hang up */}
-          <Button
-            size="icon"
-            className="h-10 w-10 rounded-full bg-destructive hover:bg-destructive/90 text-destructive-foreground border-0 transition-all hover:scale-110 active:scale-95"
+          <motion.button
+            whileHover={{ scale: 1.12 }}
+            whileTap={{ scale: 0.9 }}
             onClick={onEndCall}
             title="Colgar"
+            className="h-10 w-10 rounded-full bg-destructive hover:bg-destructive/80 text-destructive-foreground flex items-center justify-center shadow-lg shadow-destructive/25 transition-all"
           >
             <PhoneOff className="w-4 h-4" />
-          </Button>
+          </motion.button>
 
-          <div className="w-px self-stretch bg-border/40 mx-0.5" />
+          <div className="w-px self-stretch bg-border/30 mx-0.5" />
 
-          {/* Minimize */}
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-7 w-7 text-muted-foreground hover:text-foreground transition-colors"
+          <motion.button
+            whileHover={{ scale: 1.08 }}
+            whileTap={{ scale: 0.92 }}
             onClick={minimize}
             title="Minimizar"
+            className="h-7 w-7 rounded-full flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-white/5 transition-colors"
           >
             <Minimize2 className="w-4 h-4" />
-          </Button>
-        </div>
+          </motion.button>
+        </motion.div>
       </main>
     </>
   );

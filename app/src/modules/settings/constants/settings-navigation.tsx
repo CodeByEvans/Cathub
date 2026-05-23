@@ -22,7 +22,7 @@ import { BehaviorType } from "@/@types/window.types";
 export const MAIN_SETTINGS: SettingsButtonProps[] = [
   {
     icon: <Layout className="w-6 h-6  mb-1" />,
-    text: "Configurar app",
+    text: "App",
     action: "app-settings",
   },
   {

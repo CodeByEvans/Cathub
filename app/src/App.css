@@ -49,6 +49,9 @@
   --hangup-foreground: oklch(1 0 0);
   --online: oklch(0.58 0.15 160);
   --offline: oklch(0.55 0.02 240);
+
+  --note-text: oklch(0.25 0.02 70);
+  --note-muted: oklch(0.55 0.02 70);
 }
 
 /* Dark theme - Blue-gray dark mode */
@@ -138,7 +141,7 @@
   --note-bg: rgba(255, 249, 240, 0.15);
   --note-border: rgba(232, 220, 200, 0.3);
   --note-fold: rgba(245, 237, 224, 0.2);
-  --note-text: inherit;
+  --note-text: oklch(1 0 0);
   --note-muted: rgba(176, 160, 144, 0.8);
 }
 

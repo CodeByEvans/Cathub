@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ThemeType, ViewType } from "./@types/settings.types";
 import { X } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 
 import { BehaviorType } from "@/@types/window.types";
 import { BackButton } from "./components/molecules/BackButton";
@@ -36,6 +37,10 @@ export const SettingsPage: React.FC<SettingsProps> = ({ isOpen, onClose, onOpenC
   );
   const historyRef = React.useRef<ViewType[]>([]);
 
+  useEffect(() => {
+    if (isOpen) setCurrentView("main");
+  }, [isOpen]);
+
   const goToView = (view: ViewType) => {
     historyRef.current.push(currentView);
     setCurrentView(view);
@@ -58,8 +63,6 @@ export const SettingsPage: React.FC<SettingsProps> = ({ isOpen, onClose, onOpenC
       <div className="absolute inset-0 bg-black/50 backdrop-blur-sm z-40 animate-in fade-in duration-200 rounded-xl" />
       {/* Panel - Full widget overlay */}
       <div className="absolute inset-0 bg-card/10 dark:bg-card/30 backdrop-blur-md z-50 animate-in fade-in duration-300 rounded-xl overflow-hidden">
-        {/* Main Menu */}
-        {/* Close button */}
         <button
           onClick={handleClose}
           className="absolute top-2 right-2 z-50 p-1.5 rounded-lg hover:bg-muted/80 transition-colors"
@@ -69,49 +72,60 @@ export const SettingsPage: React.FC<SettingsProps> = ({ isOpen, onClose, onOpenC
 
         {currentView !== "main" && <BackButton onClickAction={goBack} />}
 
-        {currentView === "main" && (
-          <MainSettingsView setCurrentView={goToView} />
-        )}
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={currentView}
+            className="h-full"
+            initial={{ opacity: 0, x: 10 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -10 }}
+            transition={{ duration: 0.15 }}
+          >
+            {currentView === "main" && (
+              <MainSettingsView setCurrentView={goToView} />
+            )}
 
-        {currentView === "app-settings" && (
-          <AppSettingsView
-            setCurrentView={goToView}
-            onOpenColorPicker={onOpenColorPicker ?? (() => {})}
-          />
-        )}
+            {currentView === "app-settings" && (
+              <AppSettingsView
+                setCurrentView={goToView}
+                onOpenColorPicker={onOpenColorPicker ?? (() => {})}
+              />
+            )}
 
-        {currentView === "personalize" && (
-          <PersonalizeView
-            selectedTheme={selectedTheme}
-            selectedColor={selectedColor}
-            setSelectedColor={setSelectedColor}
-            setSelectedTheme={setSelectedTheme}
-          />
-        )}
+            {currentView === "personalize" && (
+              <PersonalizeView
+                selectedTheme={selectedTheme}
+                selectedColor={selectedColor}
+                setSelectedColor={setSelectedColor}
+                setSelectedTheme={setSelectedTheme}
+              />
+            )}
 
-        {currentView === "theme-settings" && (
-          <ThemeSettingsView
-            selectedTheme={selectedTheme}
-            setSelectedTheme={setSelectedTheme}
-          />
-        )}
+            {currentView === "theme-settings" && (
+              <ThemeSettingsView
+                selectedTheme={selectedTheme}
+                setSelectedTheme={setSelectedTheme}
+              />
+            )}
 
-        {currentView === "window-settings" && (
-          <WindowSettingsView
-            selectedBehavior={behavior}
-            onBehaviorChange={setBehavior}
-          />
-        )}
+            {currentView === "window-settings" && (
+              <WindowSettingsView
+                selectedBehavior={behavior}
+                onBehaviorChange={setBehavior}
+              />
+            )}
 
-        {currentView === "edit-profile" && <EditProfileView />}
+            {currentView === "edit-profile" && <EditProfileView />}
 
-        {currentView === "color-settings" && (
-          <ColorSettingsView
-            selectedColor={selectedColor}
-            setSelectedColor={setSelectedColor}
-          />
-        )}
-        {currentView === "audio-settings" && <AudioSettingsView />}
+            {currentView === "color-settings" && (
+              <ColorSettingsView
+                selectedColor={selectedColor}
+                setSelectedColor={setSelectedColor}
+              />
+            )}
+            {currentView === "audio-settings" && <AudioSettingsView />}
+          </motion.div>
+        </AnimatePresence>
       </div>
     </>
   );
