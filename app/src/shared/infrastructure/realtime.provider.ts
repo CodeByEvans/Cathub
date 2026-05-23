@@ -3,8 +3,8 @@ import { supabase } from "@/services/supabaseClient";
 import { RealtimeChannel } from "@supabase/supabase-js";
 
 export const realtimeProvider: IRealtimeProvider = {
-  createChannel: (channelId: string) => {
-    const channel = supabase.channel(channelId);
+  createChannel: (channelId: string, config?: { presence?: { key: string } }) => {
+    const channel = supabase.channel(channelId, { config: config as any });
     return channel;
   },
   removeChannel: async (channel: RealtimeChannel) => {

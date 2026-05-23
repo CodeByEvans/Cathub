@@ -19,7 +19,9 @@ export class PresenceChannelManager {
   ) {}
 
   async connect() {
-    const channel = this.realtime.createChannel(this.connectionId);
+    const channel = this.realtime.createChannel(this.connectionId, {
+      presence: { key: this.userId },
+    });
     this.channel = channel;
     channel.on("presence", { event: "sync" }, () => {
       const state = channel.presenceState();
