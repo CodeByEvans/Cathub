@@ -11,12 +11,13 @@ import {
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { LogicalSize } from "@tauri-apps/api/dpi";
 import { cn } from "@/lib/utils";
-import CathubLogoWidget from "@/globals/components/atoms/logo-widget";
+import CathubLogoWidget from "@/shared/components/atoms/logo-widget";
 
 import { ChatSection } from "@/modules/chat/ChatSection";
 import { windowService } from "@/modules/settings/services";
 import { useChat } from "@/hooks/useChat";
-import { AnimatePresence, motion } from "framer-motion";
+import { useCall } from "@/modules/call/context/CallContext";
+import { AnimatePresence, MotionConfig, motion } from "framer-motion";
 import { useConnection } from "@/modules/connection/contexts/ConnectionContext";
 
 interface CallScreenProps {
@@ -33,6 +34,7 @@ export function InCallScreen({
   onEndCall,
   settingsButton,
 }: CallScreenProps) {
+  const { calls, partnerMuted, partnerDeafened } = useCall();
   const [isMuted, setIsMuted] = useState(false);
   const [isDeafened, setIsDeafened] = useState(false);
   const [callDuration, setCallDuration] = useState(0);
@@ -43,7 +45,8 @@ export function InCallScreen({
   );
   const appWindow = getCurrentWindow();
 
-  const { messages, sendChatMessage } = useChat();
+  const { messages, sendChatMessage, partnerTyping, sendTypingStatus } =
+    useChat();
   const { partnerName } = useConnection();
 
   const isMinimizedRef = useRef(isMinimized);
@@ -93,20 +96,24 @@ export function InCallScreen({
 
   const toggleMute = () => {
     if (isDeafened) {
+      calls.toggleDeaf();
       setIsDeafened(false);
       setIsMuted(false);
       return;
     }
+    calls.toggleMute();
     setIsMuted((prev) => !prev);
   };
 
   const toggleDeafed = () => {
     if (isMuted && !isDeafened) {
+      calls.toggleDeaf();
       setIsDeafened(true);
       return;
     }
-    setIsMuted((prev) => !prev);
+    calls.toggleDeaf();
     setIsDeafened((prev) => !prev);
+    setIsMuted((prev) => !prev);
   };
 
   const formatTime = (seconds: number) => {
@@ -162,7 +169,7 @@ export function InCallScreen({
             className="flex flex-col items-start flex-1 min-w-0"
             data-tauri-drag-region
           >
-            <span className="text-xs font-semibold text-white truncate">
+            <span className="text-xs font-semibold text-foreground truncate">
               {partnerName}
             </span>
             <span className="text-[10px] text-primary font-mono tabular-nums">
@@ -184,7 +191,7 @@ export function InCallScreen({
                       "0 0 0 2px color-mix(in oklch, var(--primary) 30%, transparent)",
                   }}
                 >
-                  <span className="text-[10px] font-bold text-white leading-none">
+                  <span className="text-[10px] font-bold text-primary-foreground leading-none">
                     {unreadCount}
                   </span>
                 </motion.div>
@@ -194,7 +201,7 @@ export function InCallScreen({
               whileHover={{ scale: 1.08 }}
               whileTap={{ scale: 0.92 }}
               onClick={restore}
-              className="h-6 w-6 rounded-full flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-white/5 transition-colors"
+              className="h-6 w-6 rounded-full flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-secondary/50 transition-colors"
               title="Restaurar"
             >
               <Maximize2 className="w-3 h-3" />
@@ -206,7 +213,7 @@ export function InCallScreen({
   }
 
   return (
-    <>
+    <MotionConfig reducedMotion="user">
       <style>{`
         @keyframes catGlow {
           0%, 100% { opacity: 0.6; transform: scale(1);    }
@@ -220,7 +227,7 @@ export function InCallScreen({
       `}</style>
 
       <main
-        className="w-[700px] h-[200px] rounded-2xl border border-border/40 shadow-xl overflow-hidden relative flex items-center bg-background/70 backdrop-blur-xl"
+        className="w-[700px] h-[200px] rounded-2xl border border-border/40 shadow-xl overflow-hidden relative flex items-center bg-card/95 backdrop-blur-xl glass:bg-transparent glass:backdrop-blur-xs"
         data-tauri-drag-region
       >
         {settingsButton && (
@@ -281,14 +288,19 @@ export function InCallScreen({
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.1 }}
           >
-            <p className="text-sm font-semibold text-white leading-none">
+            <p className="text-sm font-semibold text-foreground leading-none">
               {partnerName}
             </p>
             <p className="text-[11px] font-mono tabular-nums text-primary font-semibold leading-none">
               {formatTime(callDuration)}
             </p>
-            <p className="text-[10px] text-muted-foreground/60 leading-none mt-0.5">
-              En llamada
+            <p className="text-[10px] leading-none mt-0.5 flex items-center gap-1">
+              {partnerMuted && (
+                <span title="Tiene el micrófono silenciado">🎤🚫</span>
+              )}
+              {partnerDeafened && (
+                <span title="Tiene el altavoz silenciado">🔇</span>
+              )}
             </p>
           </motion.div>
         </div>
@@ -301,6 +313,8 @@ export function InCallScreen({
             sendChatMessage={sendChatMessage}
             partnerName={partnerName}
             unreadFromIndex={unreadFromIndex}
+            partnerTyping={partnerTyping}
+            onTypingChange={sendTypingStatus}
           />
         </div>
 
@@ -321,10 +335,14 @@ export function InCallScreen({
               "h-9 w-9 rounded-full border-2 flex items-center justify-center transition-colors",
               isMuted
                 ? "border-destructive/50 bg-destructive/10 text-destructive"
-                : "border-border/50 bg-white/5 hover:border-primary/40 hover:bg-primary/5 text-muted-foreground hover:text-foreground",
+                : "border-border/50 bg-secondary/50 glass:bg-secondary/10 hover:border-primary/40 hover:bg-primary/5 text-muted-foreground hover:text-foreground",
             )}
           >
-            {isMuted ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
+            {isMuted ? (
+              <MicOff className="w-4 h-4" />
+            ) : (
+              <Mic className="w-4 h-4" />
+            )}
           </motion.button>
 
           <motion.button
@@ -336,10 +354,14 @@ export function InCallScreen({
               "h-9 w-9 rounded-full border-2 flex items-center justify-center transition-colors",
               isDeafened
                 ? "border-destructive/50 bg-destructive/10 text-destructive"
-                : "border-border/50 bg-white/5 hover:border-primary/40 hover:bg-primary/5 text-muted-foreground hover:text-foreground",
+                : "border-border/50 bg-secondary/50 glass:bg-secondary/10 hover:border-primary/40 hover:bg-primary/5 text-muted-foreground hover:text-foreground",
             )}
           >
-            {isDeafened ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
+            {isDeafened ? (
+              <VolumeX className="w-4 h-4" />
+            ) : (
+              <Volume2 className="w-4 h-4" />
+            )}
           </motion.button>
 
           <motion.button
@@ -359,12 +381,12 @@ export function InCallScreen({
             whileTap={{ scale: 0.92 }}
             onClick={minimize}
             title="Minimizar"
-            className="h-7 w-7 rounded-full flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-white/5 transition-colors"
+            className="h-7 w-7 rounded-full flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-secondary/50 transition-colors"
           >
             <Minimize2 className="w-4 h-4" />
           </motion.button>
         </motion.div>
       </main>
-    </>
+    </MotionConfig>
   );
 }

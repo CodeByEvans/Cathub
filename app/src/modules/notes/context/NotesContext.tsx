@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useRef, useState } from "react";
-import { createNotesService } from "../services/ index";
+import { createNotesService } from "../services/index";
+import { logger } from "@/shared/logger";
 import { Note } from "../@types/notes.types";
 
 function toNote(raw: Note) {
@@ -24,18 +25,23 @@ export const NotesProvider: React.FC<{ children: React.ReactNode }> = ({
   > | null>(null);
 
   useEffect(() => {
-    createNotesService().then((manager) => {
-      managerRef.current = manager;
-      manager
-        .start((incoming, type) => {
-          if (type === "INSERT") {
-            setNotes((prev) => [toNote(incoming[0]), ...prev].slice(0, 5));
-          }
-        })
-        .then((initialNotes) => {
-          if (initialNotes) setNotes(initialNotes.map(toNote));
-        });
-    });
+    createNotesService()
+      .then((manager) => {
+        managerRef.current = manager;
+        return manager
+          .start((incoming, type) => {
+            if (type === "INSERT") {
+              setNotes((prev) => [toNote(incoming[0]), ...prev].slice(0, 5));
+            }
+          })
+          .then((initialNotes) => {
+            if (initialNotes) setNotes(initialNotes.map(toNote));
+          });
+      })
+      .catch((error) => {
+        // Fallo de bootstrap en segundo plano: las notas quedan vacías.
+        logger.error("notes", "init failed", error);
+      });
     return () => {
       managerRef.current?.stop();
     };

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 
 import { useGeolocation } from "./useGeolocation";
+import { logger } from "@/shared/logger";
 
 import {
   getCityByCoordinates,
@@ -31,7 +32,7 @@ export const useWeather = () => {
         const weather = await getWeatherByCity(city[0].name);
         setData({ [city[0].name]: weather });
       } catch (error) {
-        console.error(error);
+        logger.error("weather", "Error obteniendo el clima", error);
       } finally {
         setLoading(false);
       }

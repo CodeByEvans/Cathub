@@ -33,7 +33,7 @@ export const SettingsPage: React.FC<SettingsProps> = ({ isOpen, onClose, onOpenC
     themeService.currentThemeColor(),
   );
   const [behavior, setBehavior] = useState<BehaviorType>(
-    windowService.currentBehavior(),
+    windowService.getBehavior(),
   );
   const historyRef = React.useRef<ViewType[]>([]);
 
@@ -62,7 +62,7 @@ export const SettingsPage: React.FC<SettingsProps> = ({ isOpen, onClose, onOpenC
       {/* Backdrop */}
       <div className="absolute inset-0 bg-black/50 backdrop-blur-sm z-40 animate-in fade-in duration-200 rounded-xl" />
       {/* Panel - Full widget overlay */}
-      <div className="absolute inset-0 bg-card/10 dark:bg-card/30 backdrop-blur-md z-50 animate-in fade-in duration-300 rounded-xl overflow-hidden">
+      <div className="absolute inset-0 bg-card/10 dark:bg-card/30 backdrop-blur-md z-50 animate-in fade-in duration-300 rounded-xl overflow-hidden" data-tauri-drag-region>
         <button
           onClick={handleClose}
           className="absolute top-2 right-2 z-50 p-1.5 rounded-lg hover:bg-muted/80 transition-colors"

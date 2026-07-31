@@ -1,4 +1,5 @@
 import { SoundKey, SOUNDS } from "@/constants/sounds.constants";
+import { logger } from "@/shared/logger";
 
 class AudioService {
   private ctx: AudioContext | null = null;
@@ -14,6 +15,17 @@ class AudioService {
         this.ctx.resume().catch(() => {});
       }
     });
+
+    // Política de autoplay (WebView2/WKWebView): el contexto puede nacer
+    // "suspended" sin gesto de usuario previo — se reanuda en la primera
+    // interacción, garantizando audio aunque el primer play() llegue antes.
+    if (typeof window !== "undefined") {
+      const resume = () => {
+        this.ctx?.resume().catch(() => {});
+      };
+      window.addEventListener("pointerdown", resume, { once: true });
+      window.addEventListener("keydown", resume, { once: true });
+    }
 
     return this.ctx;
   }
@@ -43,7 +55,7 @@ class AudioService {
       const buf = await fetch(url).then((r) => r.arrayBuffer());
       this.buffers[key] = await ctx.decodeAudioData(buf);
     } catch {
-      console.warn(`Failed to load sound: ${key}`);
+      logger.warn("audio", `Failed to load sound: ${key}`);
     }
   }
 

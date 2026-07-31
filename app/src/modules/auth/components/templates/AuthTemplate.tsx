@@ -1,4 +1,4 @@
-import { Button } from "@/globals/components/atoms/button";
+import { Button } from "@/shared/components/atoms/button";
 import {
   UseFormHandleSubmit,
   UseFormRegister,
@@ -7,7 +7,7 @@ import {
 import { AUTH_FIELDS, AuthMode } from "../../constants/auth-form.constants";
 import { IconInput } from "../molecules/IconInput";
 import { AuthFormLayout } from "../organisms/AuthFormLayout";
-import { deleteValue } from "@/services/store.service";
+import { onboardingRepository } from "@/shared/infrastructure/repositories/onboarding.repository";
 
 type LoginForm = {
   email: string;
@@ -105,7 +105,7 @@ export const AuthTemplate: React.FC<AuthTemplateProps> = ({
         <button
           className="fixed bottom-4 left-4 text-xs px-2 py-1 rounded-md bg-muted text-muted-foreground hover:bg-destructive hover:text-destructive-foreground transition-colors"
           onClick={() => {
-            deleteValue("introduction_completed");
+            onboardingRepository.resetIntroduction();
             window.location.reload();
           }}
         >

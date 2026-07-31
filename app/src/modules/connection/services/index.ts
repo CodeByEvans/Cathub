@@ -4,7 +4,6 @@ import { supabase } from "@/services/supabaseClient";
 import { ConnectionRepository } from "./ConnectionRepository";
 import { ConnectionApiClient } from "./ConnectionApiClient";
 import { envs } from "@/config/envs";
-import { storageProvider } from "@/shared/infrastructure/storage.provider";
 import { ConnectionManager } from "./ConnectionManager";
 import { ConnectionChannelManager } from "./ConnectionChannelManager";
 import { realtimeProvider } from "@/shared/infrastructure/realtime.provider";
@@ -18,11 +17,7 @@ export async function createConnectionService() {
 
   const partnerRepository = new PartnerRepository(supabase);
   const connectionRepository = new ConnectionRepository(supabase, userId);
-  const apiClient = new ConnectionApiClient(
-    acessToken,
-    apiUrl,
-    storageProvider,
-  );
+  const apiClient = new ConnectionApiClient(acessToken, apiUrl);
 
   const channel = new ConnectionChannelManager(
     userId,
@@ -34,7 +29,6 @@ export async function createConnectionService() {
     partnerRepository,
     connectionRepository,
     apiClient,
-    storageProvider,
     channel,
     userId,
   );
@@ -42,5 +36,6 @@ export async function createConnectionService() {
   return {
     connection: connectionManager,
     events,
+    breakConnection: () => connectionManager.breakConnection(),
   };
 }

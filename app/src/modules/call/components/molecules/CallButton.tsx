@@ -1,6 +1,6 @@
 import { cn } from "@/lib/utils";
 import { Phone } from "lucide-react";
-import { Button } from "@/globals/components/atoms/button";
+import { Button } from "@/shared/components/atoms/button";
 import { useCall } from "../../context/CallContext";
 
 export const CallButton = ({ isOnline }: { isOnline: boolean }) => {
@@ -14,8 +14,8 @@ export const CallButton = ({ isOnline }: { isOnline: boolean }) => {
           "w-14 h-14 rounded-full p-0 shadow-lg transition-all duration-300 hover:scale-105 active:scale-95",
         )}
         style={{
-          backgroundColor: "var(--call-button)",
-          color: "var(--call-button-foreground)",
+          backgroundColor: "var(--primary)",
+          color: "var(--primary-foreground)",
         }}
         onClick={() => calls.startCall(true)}
       >

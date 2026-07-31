@@ -178,11 +178,16 @@ unsafe extern "system" fn subclass_proc(
     use windows_sys::Win32::UI::Shell::DefSubclassProc;
     use windows_sys::Win32::UI::WindowsAndMessaging::{
         WM_MOVING, WM_NCACTIVATE, WM_WINDOWPOSCHANGING, WINDOWPOS, SWP_HIDEWINDOW,
+        WM_NCLBUTTONDBLCLK, HTCAPTION,
     };
 
     if msg == WM_WINDOWPOSCHANGING && IS_WIDGET_MODE.load(Ordering::SeqCst) {
         let pos = &mut *(lparam as *mut WINDOWPOS);
         pos.flags &= !SWP_HIDEWINDOW;
+        return 0;
+    }
+
+    if msg == WM_NCLBUTTONDBLCLK && wparam == HTCAPTION as usize {
         return 0;
     }
 
@@ -317,8 +322,16 @@ pub fn run() {
                         }
                     })
                     .build(app)?;
-            }            
-        
+            }
+
+            // Garantizar que la ventana se muestre al arrancar (incluido el
+            // autoinicio con el PC, cuando la red aún no está disponible y el
+            // frontend puede tardar en montar). Mismo comportamiento que el
+            // menú "Mostrar" del tray.
+            let _ = window.unminimize();
+            let _ = window.show();
+            let _ = window.set_focus();
+
             Ok(())
         })
         .plugin(tauri_plugin_opener::init())

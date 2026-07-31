@@ -1,9 +1,8 @@
 import { supabase } from "./supabaseClient";
-import { getValue, setValue, deleteValue } from "./store.service";
+import { sessionRepository } from "@/shared/infrastructure/repositories/session.repository";
 import { themeService } from "@/modules/settings/services/theme.service";
 import { ThemeType } from "@/modules/settings/@types/settings.types";
 import { audioService } from "./audio.service";
-import { STORE_KEYS } from "@/shared/infrastructure/store.keys";
 
 class AppService {
   async initialize(): Promise<{ theme: ThemeType }> {
@@ -17,20 +16,18 @@ class AppService {
     if (error || !user) throw new Error("No hay usuario autenticado");
 
     // Limpiar caché si cambió el usuario
-    const cachedUserId = await getValue(STORE_KEYS.userId);
+    const cachedUserId = await sessionRepository.getUserId();
     if (cachedUserId && cachedUserId !== user.id) {
       await this.clearCache();
     }
-    await setValue(STORE_KEYS.userId, user.id);
+    await sessionRepository.setUserId(user.id);
 
     return { theme };
   }
 
   async clearCache() {
-    await deleteValue(STORE_KEYS.connectionId);
-    await deleteValue(STORE_KEYS.partnerId);
-    await deleteValue(STORE_KEYS.partnerName);
-    await deleteValue(STORE_KEYS.userId);
+    await sessionRepository.clearConnectionCache();
+    await sessionRepository.deleteUserId();
   }
 }
 

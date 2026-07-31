@@ -1,4 +1,5 @@
 import { SupabaseClient } from "@supabase/supabase-js";
+import { AppError } from "@/shared/errors/AppError";
 import { Note, Notes, noteSchema } from "../@types/notes.types";
 
 export class NotesRepository {
@@ -8,7 +9,8 @@ export class NotesRepository {
     private readonly connectionId: string,
   ) {}
 
-  async getNotes(): Promise<Notes | null> {
+  /** Un fallo de la consulta lanza `AppError` — nunca devuelve `null` por error. */
+  async getNotes(): Promise<Notes> {
     try {
       const { data, error } = await this.db
         .from("notes")
@@ -18,11 +20,9 @@ export class NotesRepository {
         .order("created_at", { ascending: false })
         .limit(5);
       if (error) throw error;
-      const notes = data.map((n) => noteSchema.parse(n));
-      return notes;
+      return data.map((n) => noteSchema.parse(n));
     } catch (error) {
-      console.error("❌ Error en getNotes:", error);
-      return null;
+      throw new AppError("notes/fetch-failed", { cause: error });
     }
   }
 
@@ -36,8 +36,11 @@ export class NotesRepository {
       })
       .select()
       .single();
-    if (error) throw error;
-    if (!data) throw new Error("No se pudo enviar la nota");
+    if (error) throw new AppError("notes/send-failed", { cause: error });
+    if (!data)
+      throw new AppError("notes/send-failed", {
+        message: "El insert no devolvió la nota creada",
+      });
     return noteSchema.parse(data);
   }
 }

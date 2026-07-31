@@ -7,3 +7,7 @@ export const WINDOW_SIZES: Record<WindowName, LogicalSize> = {
   register: new LogicalSize(400, 700),
   main: new LogicalSize(700, 200),
 };
+
+export const MAIN_SIZE = new LogicalSize(700, 200);
+export const EXPANDED_SIZE = new LogicalSize(940, 200);
+export const DEFAULT_COMPACT = { width: 420, height: 200 };

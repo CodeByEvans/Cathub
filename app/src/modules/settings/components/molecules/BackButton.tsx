@@ -1,4 +1,4 @@
-import { Button } from "@/globals/components/atoms/button";
+import { Button } from "@/shared/components/atoms/button";
 import { ArrowLeft } from "lucide-react";
 
 export const BackButton: React.FC<{ onClickAction: () => void }> = ({

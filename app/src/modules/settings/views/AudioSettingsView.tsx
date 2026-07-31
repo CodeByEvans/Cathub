@@ -2,7 +2,6 @@ import React, { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { Mic, Volume2, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { getValue } from "@/services/store.service";
 import { useCall } from "@/modules/call/context/CallContext";
 import { audioService } from "@/services/audio.service";
 
@@ -23,8 +22,9 @@ export const AudioSettingsView: React.FC = () => {
       setMicrophones(microphones);
       setSpeakers(speakers);
 
-      const savedMic = await getValue("selectedMicId");
-      const savedSpeaker = await getValue("selectedSpeakerId");
+      // Persistencia leída vía DeviceManager (cargada en createPeerService)
+      const savedMic = devices.micId;
+      const savedSpeaker = devices.speakerId;
 
       if (savedMic) {
         setSelectedMic(savedMic);

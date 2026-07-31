@@ -9,11 +9,8 @@ export class HeartbeatManager {
     if (this.interval) return;
 
     this.interval = setInterval(async () => {
-      try {
-        await this.lastSeen.writeLastSeen();
-      } catch (error) {
-        console.error("❌ Error writing last seen:", error);
-      }
+      // LastSeenManager ya loguea sus errores (best-effort).
+      await this.lastSeen.writeLastSeen();
     }, 30000); // Cada 30 segundos
   }
 

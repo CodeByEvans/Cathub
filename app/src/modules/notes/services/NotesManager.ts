@@ -1,4 +1,5 @@
 import { IAudioService } from "@/shared/interfaces/IAudioService";
+import { AppError } from "@/shared/errors/AppError";
 import { Notes } from "../@types/notes.types";
 import { NotesChannelManager } from "./NotesChannelManager";
 import { INotesRepository } from "./interfaces/INotesRepository";
@@ -33,7 +34,9 @@ export class NotesManager {
   async sendNote(content: string) {
     try {
       if (Date.now() - this.lastSentRef.timestamp < this.COOLDOWN) {
-        throw new Error("Espera un momento antes de enviar otra nota.");
+        throw new AppError("notes/cooldown", {
+          userMessage: "Espera un momento antes de enviar otra nota.",
+        });
       }
       const note = await this.repository.sendNote(content);
       this.audio.play("send", { volume: 0.1 });

@@ -11,7 +11,9 @@ import { AuthMode } from "./constants/auth-form.constants";
 import { loginSchema, registerSchema } from "./schemas/authSchema";
 import { authService } from "./services/auth.service";
 import { handleAuthError } from "./helpers/authErrorHandler";
-import { hasValue, setValue } from "@/services/store.service";
+import { AppError } from "@/shared/errors/AppError";
+import { logger } from "@/shared/logger";
+import { onboardingRepository } from "@/shared/infrastructure/repositories/onboarding.repository";
 import { WINDOW_SIZES } from "@/constants/window.constants";
 
 type LoginForm = {
@@ -41,11 +43,10 @@ export const LoginScreen = () => {
   useEffect(() => {
     const loadStore = async () => {
       try {
-        const completed = await hasValue("introduction_completed");
-        console.log("introduction_completed", completed);
-        setIntroductionCompleted(completed === true);
+        const completed = await onboardingRepository.isIntroductionCompleted();
+        setIntroductionCompleted(completed);
       } catch (error) {
-        console.error(error);
+        logger.warn("auth", "No se pudo leer introduction_completed", error);
       }
     };
     loadStore();
@@ -72,14 +73,18 @@ export const LoginScreen = () => {
 
   const completeIntroduction = () => {
     setIntroductionCompleted(true);
-    setValue("introduction_completed", true);
+    onboardingRepository
+      .completeIntroduction()
+      .catch((error) =>
+        logger.warn("auth", "No se pudo guardar introduction_completed", error),
+      );
   };
 
   const handleRegister = async (data: LoginForm) => {
     try {
-      if (!data.username) throw new Error("Username is required");
+      if (!data.username) throw new AppError("auth/username-required");
       if (data.password !== data.confirmPassword)
-        throw new Error("Passwords do not match");
+        throw new AppError("auth/passwords-do-not-match");
       await authService.register(data.username, data.email, data.password);
       toast.success(
         "Registrado con exito, confirme su correo para activar su cuenta",
@@ -87,7 +92,6 @@ export const LoginScreen = () => {
       reset();
       setMode("login");
     } catch (error) {
-      console.error(error);
       handleAuthError(error);
     }
   };

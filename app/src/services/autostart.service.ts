@@ -1,23 +1,23 @@
 import { enable, disable, isEnabled } from "@tauri-apps/plugin-autostart";
-import { hasValue, setValue } from "./store.service";
+import { onboardingRepository } from "@/shared/infrastructure/repositories/onboarding.repository";
+import { logger } from "@/shared/logger";
 
 export async function initAutostart() {
-  const firstLaunch = await hasValue("firstLaunch");
+  const firstLaunch = await onboardingRepository.isFirstLaunch();
 
   if (!import.meta.env.DEV) {
-    if (!firstLaunch) {
-      console.log("🚀 Primera vez que se ejecuta");
+    if (firstLaunch) {
+      logger.info("autostart", "Primer arranque: activando autostart");
       await enable();
-      await setValue("firstLaunch", true);
+      await onboardingRepository.markLaunched();
     }
   } else {
     try {
-      console.log("🛠️ Modo dev, autostart desactivado");
       await disable();
       const enabled = await isEnabled();
-      console.log("Autostart desactivado:", !enabled);
+      logger.debug("autostart", `Modo dev, autostart desactivado: ${!enabled}`);
     } catch (error) {
-      console.error("Error al desactivar autostart:", error);
+      logger.error("autostart", "Error al desactivar autostart", error);
     }
   }
 }

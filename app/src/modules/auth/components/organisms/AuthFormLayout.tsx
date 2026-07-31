@@ -1,5 +1,5 @@
 import { AuthMode } from "../../constants/auth-form.constants";
-import { CathubLogo } from "@/globals/components/atoms/logo";
+import { CathubLogo } from "@/shared/components/atoms/logo";
 
 export interface AuthFormLayoutProps {
   mode: AuthMode;

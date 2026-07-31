@@ -1,4 +1,4 @@
-import { CathubLogo } from "@/globals/components/atoms/logo";
+import { CathubLogo } from "@/shared/components/atoms/logo";
 import { useConnection } from "@/modules/connection/contexts/ConnectionContext";
 import { useState, useEffect } from "react";
 

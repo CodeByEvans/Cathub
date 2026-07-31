@@ -1,8 +1,9 @@
 import React from "react";
-import { Input } from "@/globals/components/atoms/input";
-import { Button } from "@/globals/components/atoms/button";
+import { Input } from "@/shared/components/atoms/input";
+import { Button } from "@/shared/components/atoms/button";
 import { Send } from "lucide-react";
 import { toast } from "@/components/ui/sonner";
+import { handleAppError } from "@/shared/errors/appErrorHandler";
 import { useNotes } from "../context/NotesContext";
 
 export const NoteInput = () => {
@@ -20,10 +21,7 @@ export const NoteInput = () => {
       });
       setNote("");
     } catch (error) {
-      console.error(error);
-      toast.error(
-        error instanceof Error ? error.message : "Error al enviar la nota",
-      );
+      handleAppError(error, "notes.send");
     }
   };
   return (

@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { Sun, Moon, Gem } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { themeService } from "@/modules/settings/services/theme.service";
+import { handleAppError } from "@/shared/errors/appErrorHandler";
 import { ThemeType, ThemeColor } from "../@types/settings.types";
 import { ColorWheel, hexToHsl } from "../components/organisms/ColorWheel";
 
@@ -38,7 +39,9 @@ export const PersonalizeView: React.FC<PersonalizeViewProps> = ({
   const applyColor = (newColor: string) => {
     if (!/^#[0-9a-fA-F]{6}$/.test(newColor)) return;
     setSelectedColor(newColor);
-    themeService.setColor(newColor);
+    themeService
+      .setColor(newColor)
+      .catch((e) => handleAppError(e, "settings"));
   };
 
   const handleColorChange = (newColor: string) => {
@@ -48,11 +51,15 @@ export const PersonalizeView: React.FC<PersonalizeViewProps> = ({
 
   const handleThemeChange = (theme: ThemeType) => {
     setSelectedTheme(theme);
-    themeService.setTheme(theme);
+    themeService
+      .setTheme(theme)
+      .catch((e) => handleAppError(e, "settings"));
   };
 
   const handleReset = () => {
-    themeService.resetColor();
+    themeService
+      .resetColor()
+      .catch((e) => handleAppError(e, "settings"));
     const defaultColor = themeService.currentThemeColor();
     setColor(defaultColor);
     setSelectedColor(defaultColor);

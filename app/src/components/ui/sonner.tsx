@@ -74,6 +74,22 @@ export function useToast() {
 
 let globalToast: ToastContextValue | null = null;
 
+type ToastOpts = { type?: ToastType; description?: string; duration?: number; id?: string };
+type FeedbackOpts = { description?: string; duration?: number };
+
+interface QueuedToast {
+  kind: "toast" | "success" | "error";
+  message: string;
+  opts?: ToastOpts & FeedbackOpts;
+}
+
+/**
+ * Toasts lanzados antes de que ToastProvider monte (p. ej. durante el
+ * bootstrap de main.tsx). Antes se perdían silenciosamente; ahora se
+ * encolan y se drenan al montar el provider.
+ */
+let pendingToasts: QueuedToast[] = [];
+
 type ToastFn = {
   (message: string, opts?: { type?: ToastType; description?: string; duration?: number; id?: string }): void;
   success: (message: string, opts?: { description?: string; duration?: number }) => void;
@@ -83,14 +99,26 @@ type ToastFn = {
 
 export const toast: ToastFn = Object.assign(
   (message: string, opts?: { type?: ToastType; description?: string; duration?: number; id?: string }) => {
-    return globalToast?.toast(message, opts);
+    if (globalToast) {
+      globalToast.toast(message, opts);
+    } else {
+      pendingToasts.push({ kind: "toast", message, opts });
+    }
   },
   {
     success: (message: string, opts?: { description?: string; duration?: number }) => {
-      globalToast?.success(message, opts);
+      if (globalToast) {
+        globalToast.success(message, opts);
+      } else {
+        pendingToasts.push({ kind: "success", message, opts });
+      }
     },
     error: (message: string, opts?: { description?: string; duration?: number }) => {
-      globalToast?.error(message, opts);
+      if (globalToast) {
+        globalToast.error(message, opts);
+      } else {
+        pendingToasts.push({ kind: "error", message, opts });
+      }
     },
     dismiss: (id: string) => {
       globalToast?.dismiss(id);
@@ -145,6 +173,18 @@ export function ToastProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     globalToast = ctxValue;
+
+    // Drenar toasts encolados antes del montaje del provider
+    if (pendingToasts.length > 0) {
+      const queued = pendingToasts;
+      pendingToasts = [];
+      queued.forEach((item) => {
+        if (item.kind === "success") ctxValue.success(item.message, item.opts);
+        else if (item.kind === "error") ctxValue.error(item.message, item.opts);
+        else ctxValue.toast(item.message, item.opts);
+      });
+    }
+
     return () => {
       globalToast = null;
     };

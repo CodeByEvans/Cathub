@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { NoteComposer } from "./NoteComposer";
-import { ScrollTextIcon, XIcon, ArrowLeftIcon } from "lucide-react";
+import { ScrollTextIcon, XIcon, ArrowLeftIcon, Pencil } from "lucide-react";
 import { useNotes } from "../context/NotesContext";
 
 interface Note {
@@ -63,14 +63,18 @@ export function NotesSection({ isCompact = false }: { isCompact?: boolean }) {
   const { notes } = useNotes();
   const [historyOpen, setHistoryOpen] = useState(false);
   const [expandedNote, setExpandedNote] = useState<Note | null>(null);
+  const [composerOpen, setComposerOpen] = useState(false);
 
   const latestNote = notes[0] ?? null;
   const previousNotes = notes.slice(1);
   return (
-    <div className={`relative flex flex-col h-full flex-1 min-w-0 ${isCompact ? "px-0" : "px-2"} gap-1 overflow-hidden`} data-tauri-drag-region>
+    <div
+      className={`relative flex flex-col h-full flex-1 min-w-0 ${isCompact ? "px-0" : "px-2"} gap-1`}
+      data-tauri-drag-region
+    >
       {/* ── Nota principal ── */}
       <div
-        className="relative flex flex-1 items-center justify-center overflow-hidden rounded-md border shadow-sm pb-2"
+        className="relative flex flex-1 items-center justify-center overflow-hidden rounded-md border shadow-sm pb-2 group"
         data-tauri-drag-region
         style={{
           ...paperStyle,
@@ -102,14 +106,25 @@ export function NotesSection({ isCompact = false }: { isCompact?: boolean }) {
         {previousNotes.length > 0 && (
           <button
             onClick={() => setHistoryOpen(true)}
-            className="absolute top-2 right-2 flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] text-muted-foreground hover:text-foreground hover:bg-black/5 transition-all"
+            className="absolute top-2 right-2 flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] text-muted-foreground hover:text-foreground hover:bg-black/5 opacity-0 group-hover:opacity-100 transition-all duration-300"
           >
             <ScrollTextIcon size={11} />
           </button>
         )}
+
+        <button
+          onClick={() => setComposerOpen(true)}
+          className="absolute bottom-2 right-2 p-1.5 rounded-full text-primary-foreground hover:bg-primary hover:shadow-lg hover:scale-105 active:scale-95 opacity-0 group-hover:opacity-100 transition-all duration-300 z-10"
+          title="Enviar nota"
+        >
+          <Pencil className="w-3.5 h-3.5" />
+        </button>
       </div>
 
-      {!isCompact && <NoteComposer />}
+      <NoteComposer
+        isOpen={composerOpen}
+        onClose={() => setComposerOpen(false)}
+      />
 
       {/* ── Drawer historial ── */}
       <AnimatePresence>

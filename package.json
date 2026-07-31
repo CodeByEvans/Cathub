@@ -9,8 +9,5 @@
         "tauri-dev": "npm --prefix app run tauri dev",
         "tauri-build": "npm --prefix app run tauri build",
         "dev:web": "npm --prefix web run dev"
-    },
-    "dependencies": {
-        "motion": "^12.35.2"
     }
 }

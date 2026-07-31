@@ -1,7 +1,7 @@
 import { ClockSection } from "./modules/clock/components/ClockSection";
 import { NotesSection } from "./modules/notes/components/NotesSection";
 import { CallSection } from "./modules/call/components/organisms/CallSection";
-import { Button } from "./globals/components/atoms/button";
+import { Button } from "./shared/components/atoms/button";
 import { Settings, Maximize2 } from "lucide-react";
 import { SettingsPage } from "./modules/settings/SettingsPage";
 import LinkModal from "./modules/connection/components/LinkModal";
@@ -98,7 +98,7 @@ export function MainView({
 
             <button
               onClick={onToggleCompact}
-              className="absolute bottom-1.5 right-1.5 p-1 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+              className="absolute top-1.5 left-1.5 p-1 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-300"
               title="Expandir"
             >
               <Maximize2 className="w-3 h-3 text-muted-foreground/60" />
@@ -165,4 +165,4 @@ export function MainView({
       )}
     </main>
   );
-};
+}

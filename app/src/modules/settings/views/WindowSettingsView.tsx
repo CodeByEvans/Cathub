@@ -1,5 +1,6 @@
 import React from "react";
 import { windowService } from "../services/window.service";
+import { handleAppError } from "@/shared/errors/appErrorHandler";
 import { BehaviorType } from "@/@types/window.types";
 
 import { WINDOW_BEHAVIOR_OPTIONS } from "../constants/settings-navigation";
@@ -19,7 +20,7 @@ export const WindowSettingsView: React.FC<WindowSettingsProps> = ({
       await windowService.setBehavior(behavior);
       onBehaviorChange(behavior);
     } catch (error) {
-      console.error("Error al cambiar el comportamiento de la ventana:", error);
+      handleAppError(error, "settings", "settings/behavior-failed");
     }
   };
 

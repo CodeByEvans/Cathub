@@ -1,120 +1,80 @@
 import "./App.css";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { IncomingCallModal } from "./modules/call/components/views/IncomingCallModal";
 import { InCallScreen } from "./modules/call/components/views/InCallScreen";
-import { Button } from "./globals/components/atoms/button";
+import { Button } from "./shared/components/atoms/button";
 import { Settings } from "lucide-react";
 import { SettingsPage } from "./modules/settings/SettingsPage";
 import { useClampOnMouseUp } from "./hooks/useClampOnMouseUp";
 import { MainView } from "./MainView";
 import { useSettings } from "./hooks/useSettings";
-import { useAppInit } from "./hooks/useAppInit";
 import { OutgoingCallModal } from "./modules/call/components/views/OutgoingCallModal";
 import { useCall } from "./modules/call/context/CallContext";
-import { getCurrentWindow, LogicalSize } from "@tauri-apps/api/window";
-import { invoke } from "@tauri-apps/api/core";
-import { getValue, setValue } from "@/services/store.service";
-
-const MAIN_SIZE = new LogicalSize(700, 200);
-const EXPANDED_SIZE = new LogicalSize(940, 200);
-const DEFAULT_COMPACT = { width: 420, height: 200 };
-
-async function loadCompactSize(): Promise<{ width: number; height: number }> {
-  try {
-    const saved = await getValue("compactWindowSize");
-    if (saved && typeof saved === "object") {
-      const s = saved as Record<string, unknown>;
-      if (typeof s.width === "number" && typeof s.height === "number") {
-        return { width: s.width, height: s.height };
-      }
-    }
-  } catch {}
-  return DEFAULT_COMPACT;
-}
-
-async function saveCompactSize(width: number, height: number) {
-  try {
-    await setValue("compactWindowSize", { width, height });
-  } catch {}
-}
+import { windowService } from "./modules/settings/services/window.service";
+import { IntroScreen } from "./components/IntroScreen";
+import { getCurrentWindow } from "@tauri-apps/api/window";
 
 function App() {
-  const { isLoading } = useAppInit();
   const { showSettings, openSettings, closeSettings } = useSettings();
   const { calls, callState } = useCall();
   const [showColorPicker, setShowColorPicker] = useState(false);
   const [isCompact, setIsCompact] = useState(false);
-  const compactSizeRef = useRef(DEFAULT_COMPACT);
+  const [introDone, setIntroDone] = useState(false);
+
+  useEffect(() => {
+    getCurrentWindow().show();
+  }, []);
+
+  useEffect(() => {
+    if (introDone) {
+      document.documentElement.style.backgroundColor = "";
+    }
+  }, [introDone]);
 
   useClampOnMouseUp();
 
-  const openColorPicker = () => {
+  useEffect(() => {
+    if (callState === "incoming" && isCompact) {
+      toggleCompact();
+    }
+  }, [callState]);
+
+  const openColorPicker = async () => {
     setShowColorPicker(true);
-    getCurrentWindow().setSize(EXPANDED_SIZE);
+    await windowService.expandForColorPicker();
   };
 
-  const closeColorPicker = () => {
+  const closeColorPicker = async () => {
     setShowColorPicker(false);
-    getCurrentWindow().setSize(isCompact ? new LogicalSize(compactSizeRef.current.width, compactSizeRef.current.height) : MAIN_SIZE);
+    await windowService.restoreFromColorPicker(isCompact);
   };
 
   const toggleCompact = async () => {
     if (showColorPicker) {
-      closeColorPicker();
+      await closeColorPicker();
     }
     const next = !isCompact;
     setIsCompact(next);
 
-    const win = getCurrentWindow();
     if (next) {
-      const saved = await loadCompactSize();
-      compactSizeRef.current = saved;
-      await invoke("set_window_resizable", { resizable: true });
-      await invoke("set_window_min_size", { width: 280, height: 120 });
-      await invoke("set_window_max_size", { width: 700, height: 400 });
-      await win.setSize(new LogicalSize(saved.width, saved.height));
+      await windowService.enableCompactMode();
     } else {
-      await invoke("set_window_min_size", { width: 0, height: 0 });
-      await invoke("set_window_max_size", { width: 5000, height: 5000 });
-      await invoke("set_window_resizable", { resizable: false });
-      await win.setSize(MAIN_SIZE);
+      await windowService.disableCompactMode();
     }
   };
 
   useEffect(() => {
-    if (!isCompact) return;
-
-    let debounceTimer: ReturnType<typeof setTimeout>;
-    const handleResize = async () => {
-      if (debounceTimer) clearTimeout(debounceTimer);
-      debounceTimer = setTimeout(async () => {
-        try {
-          const win = getCurrentWindow();
-          const size = await win.outerSize();
-          const logicalSize = size.toLogical(await win.scaleFactor());
-          compactSizeRef.current = { width: Math.round(logicalSize.width), height: Math.round(logicalSize.height) };
-          await saveCompactSize(logicalSize.width, logicalSize.height);
-        } catch {}
-      }, 500);
-    };
-
-    const win = getCurrentWindow();
-    const unlisten = win.onResized(handleResize);
-
+    if (isCompact) {
+      windowService.startCompactResizeListener();
+    }
     return () => {
-      unlisten.then((fn) => fn());
-      if (debounceTimer) clearTimeout(debounceTimer);
+      windowService.stopCompactResizeListener();
     };
   }, [isCompact]);
 
-  if (isLoading) {
+  if (!introDone) {
     return (
-      <div className="flex items-center justify-center h-screen bg-background text-foreground rounded-xl">
-        <div className="text-center">
-          <div className="animate-spin h-12 w-12 border-4 border-current border-t-transparent rounded-full mx-auto mb-4" />
-          <p>Cargando...</p>
-        </div>
-      </div>
+      <IntroScreen onExitStart={() => {}} onDone={() => setIntroDone(true)} />
     );
   }
 

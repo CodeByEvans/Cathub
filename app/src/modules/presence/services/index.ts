@@ -6,6 +6,7 @@ import { IPresenceRepository } from "./interfaces/IPresenceRepository";
 import { PresenceChannelManager } from "./PresenceChannelManager";
 import { HeartbeatManager } from "./HeartbeatManager";
 import { storageProvider } from "@/shared/infrastructure/storage.provider";
+import { STORE_KEYS } from "@/shared/infrastructure/store.keys";
 import { authProvider } from "@/shared/infrastructure/auth.provider";
 import { realtimeProvider } from "@/shared/infrastructure/realtime.provider";
 
@@ -32,10 +33,10 @@ const presenceRepository: IPresenceRepository = {
 
 export async function createPresenceService() {
   const userId = await authProvider.getUserId();
-  const partnerId = await storageProvider.get("partner_id");
+  const partnerId = await storageProvider.get(STORE_KEYS.partnerId);
   if (!partnerId) throw new Error("No partner");
 
-  const connectionId = await storageProvider.get("connection_id");
+  const connectionId = await storageProvider.get(STORE_KEYS.connectionId);
   if (!connectionId) throw new Error("No connection");
 
   const events = new PresenceEventBus();

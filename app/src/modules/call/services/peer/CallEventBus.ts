@@ -8,6 +8,9 @@ export class CallEventBus {
   private onRemoteStreamCb: Cb<MediaStream> | null = null;
   private onChatMessageCb: Cb<string> | null = null;
   private onErrorMessageCb: Cb<string> | null = null;
+  private onPartnerMutedCb: ((muted: boolean) => void) | null = null;
+  private onPartnerDeafenedCb: ((deafened: boolean) => void) | null = null;
+  private onPartnerTypingCb: ((typing: boolean) => void) | null = null;
 
   // Registro
   onIncomingCall(cb: Cb<string>) {
@@ -31,6 +34,15 @@ export class CallEventBus {
   onErrorMessage(cb: Cb<string>) {
     this.onErrorMessageCb = cb;
   }
+  onPartnerMuted(cb: (muted: boolean) => void) {
+    this.onPartnerMutedCb = cb;
+  }
+  onPartnerDeafened(cb: (deafened: boolean) => void) {
+    this.onPartnerDeafenedCb = cb;
+  }
+  onPartnerTyping(cb: (typing: boolean) => void) {
+    this.onPartnerTypingCb = cb;
+  }
 
   // Emisión
   emitIncomingCall(callerId: string) {
@@ -53,5 +65,14 @@ export class CallEventBus {
   }
   emitErrorMessage(msg: string) {
     this.onErrorMessageCb?.(msg);
+  }
+  emitPartnerMuted(muted: boolean) {
+    this.onPartnerMutedCb?.(muted);
+  }
+  emitPartnerDeafened(deafened: boolean) {
+    this.onPartnerDeafenedCb?.(deafened);
+  }
+  emitPartnerTyping(typing: boolean) {
+    this.onPartnerTypingCb?.(typing);
   }
 }

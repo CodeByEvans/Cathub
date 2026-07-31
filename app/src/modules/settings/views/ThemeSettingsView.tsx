@@ -1,4 +1,5 @@
 import { themeService } from "@/modules/settings/services/theme.service";
+import { handleAppError } from "@/shared/errors/appErrorHandler";
 
 import React from "react";
 
@@ -19,7 +20,9 @@ export const ThemeSettingsView: React.FC<ThemeSettingsProps> = ({
 }) => {
   const handleThemeChange = (theme: ThemeType) => {
     setSelectedTheme(theme);
-    themeService.setTheme(theme);
+    themeService
+      .setTheme(theme)
+      .catch((e) => handleAppError(e, "settings"));
   };
   return (
     <>

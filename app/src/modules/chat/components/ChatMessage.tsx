@@ -1,3 +1,4 @@
+import { motion } from "framer-motion";
 import { Message } from "../@types/chat.types";
 
 interface ChatMessageProps {
@@ -5,7 +6,7 @@ interface ChatMessageProps {
   partnerName: string;
 }
 
-export function ChatMessage({ message, partnerName }: ChatMessageProps) {
+export function ChatMessage({ message }: ChatMessageProps) {
   const isMe = message.sender === "me";
 
   const time = new Date(message.timestamp).toLocaleTimeString("es-ES", {
@@ -14,23 +15,28 @@ export function ChatMessage({ message, partnerName }: ChatMessageProps) {
   });
 
   return (
-    <div className={`flex w-full ${isMe ? "justify-end" : "justify-start"}`}>
+    <motion.div
+      className={`flex w-full ${isMe ? "justify-end" : "justify-start"}`}
+      initial={{ opacity: 0, y: 8, scale: 0.95, x: isMe ? 6 : -6 }}
+      animate={{ opacity: 1, y: 0, scale: 1, x: 0 }}
+      transition={{ type: "spring", stiffness: 380, damping: 26 }}
+    >
       <div
-        className={`flex flex-col gap-0.5 max-w-[75%] ${isMe ? "items-end" : "items-start"}`}
+        className={`flex items-end gap-1.5 max-w-[80%] px-3 py-1.5 rounded-2xl text-xs leading-relaxed break-words ${
+          isMe
+            ? "bg-primary text-primary-foreground rounded-br-sm shadow-[0_2px_12px_hsl(var(--primary)/0.25)]"
+            : "bg-secondary/80 text-foreground border border-border/40 rounded-bl-sm"
+        }`}
       >
-        <div
-          className={`px-3 py-1.5 rounded-2xl text-sm leading-relaxed break-words ${
-            isMe
-              ? "bg-primary text-primary-foreground rounded-br-sm"
-              : "bg-muted text-primary-foreground rounded-bl-sm"
+        <span>{message.message}</span>
+        <span
+          className={`text-[9px] font-mono tabular-nums shrink-0 ${
+            isMe ? "text-primary-foreground/60" : "text-muted-foreground/60"
           }`}
         >
-          {message.message}
-        </div>
-        <span className="text-[10px] text-muted-foreground px-1">
-          {isMe ? "tú" : partnerName} · {time}
+          {time}
         </span>
       </div>
-    </div>
+    </motion.div>
   );
 }

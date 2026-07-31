@@ -8,6 +8,7 @@ export interface ICallActions {
   toggleDeaf(): boolean;
   toggleVideo(): boolean;
   sendChatMessage(message: string): Promise<void>;
+  sendTypingStatus(isTyping: boolean): void;
   simulateIncomingCall(): void;
   simulateInCall(): void;
   simulateOutgoingCall(): void;

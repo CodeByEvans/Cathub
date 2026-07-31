@@ -8,10 +8,11 @@ import { PeerConnectionManager } from "./PeerConnectionManager";
 import { CallManager } from "./CallManager";
 import { authProvider } from "@/shared/infrastructure/auth.provider";
 import { storageProvider } from "@/shared/infrastructure/storage.provider";
+import { STORE_KEYS } from "@/shared/infrastructure/store.keys";
 
 export async function createPeerService() {
   const userId = await authProvider.getUserId();
-  const partnerId = await storageProvider.get("partner_id");
+  const partnerId = await storageProvider.get(STORE_KEYS.partnerId);
   if (!partnerId) throw new Error("No partner");
 
   const events = new CallEventBus();

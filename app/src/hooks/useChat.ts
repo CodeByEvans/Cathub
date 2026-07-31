@@ -1,12 +1,13 @@
 import { useEffect, useState } from "react";
 import { Message } from "@/modules/chat/@types/chat.types";
 import { audioService } from "@/services/audio.service";
+import { logger } from "@/shared/logger";
 import { useCall } from "@/modules/call/context/CallContext";
 
 export const useChat = () => {
   const [messages, setMessages] = useState<Message[]>([]);
 
-  const { onChatMessage, calls } = useCall();
+  const { onChatMessage, calls, partnerTyping } = useCall();
 
   useEffect(() => {
     onChatMessage((message) => {
@@ -32,9 +33,13 @@ export const useChat = () => {
         { sender: "me", message, timestamp: Date.now() },
       ]);
     } catch (error) {
-      console.error("❌ Error enviando mensaje:", error);
+      logger.error("chat", "Error enviando mensaje", error);
     }
   };
 
-  return { messages, sendChatMessage };
+  const sendTypingStatus = (isTyping: boolean) => {
+    calls.sendTypingStatus(isTyping);
+  };
+
+  return { messages, sendChatMessage, partnerTyping, sendTypingStatus };
 };

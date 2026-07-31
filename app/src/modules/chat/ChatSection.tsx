@@ -8,6 +8,8 @@ interface ChatSectionProps {
   sendChatMessage: (message: string) => void;
   isConnected?: boolean;
   unreadFromIndex?: number;
+  partnerTyping?: boolean;
+  onTypingChange?: (typing: boolean) => void;
 }
 
 export function ChatSection({
@@ -16,6 +18,8 @@ export function ChatSection({
   sendChatMessage,
   isConnected = true,
   unreadFromIndex,
+  partnerTyping,
+  onTypingChange,
 }: ChatSectionProps) {
   return (
     <div className="flex flex-col h-full w-full overflow-hidden">
@@ -23,8 +27,13 @@ export function ChatSection({
         messages={messages}
         partnerName={partnerName}
         unreadFromIndex={unreadFromIndex}
+        partnerTyping={partnerTyping}
       />
-      <ChatInput onSend={sendChatMessage} disabled={!isConnected} />
+      <ChatInput
+        onSend={sendChatMessage}
+        onTypingChange={onTypingChange}
+        disabled={!isConnected}
+      />
     </div>
   );
 }

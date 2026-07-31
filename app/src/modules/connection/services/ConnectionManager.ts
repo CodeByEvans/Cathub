@@ -1,4 +1,5 @@
-import { IStorageProvider } from "@/interfaces/IStorageProvider";
+import { AppError, isAppError } from "@/shared/errors/AppError";
+import { sessionRepository } from "@/shared/infrastructure/repositories/session.repository";
 import { IConnectionApiClient } from "../interfaces/IConnectionApiClient";
 import { IPartnerRepository } from "../interfaces/IPartnerRepository";
 import { IConnectionRepository } from "../interfaces/IConnectionRepository";
@@ -9,7 +10,6 @@ export class ConnectionManager {
     private readonly partner: IPartnerRepository,
     private readonly repository: IConnectionRepository,
     private readonly apiClient: IConnectionApiClient,
-    private readonly storage: IStorageProvider,
     private readonly channel: ConnectionChannelManager,
     private readonly userId: string,
   ) {}
@@ -33,13 +33,21 @@ export class ConnectionManager {
     await this.channel.disconnect();
   }
 
+  async breakConnection(): Promise<boolean> {
+    const cached = await this.getCachedConnection();
+    if (!cached) return false;
+
+    const success = await this.apiClient.breakConnection(cached.connectionId);
+    if (success) {
+      await sessionRepository.clearConnectionCache();
+    }
+    return success;
+  }
+
   async createConnection(connectionRequestId: string) {
     try {
       const connection =
         await this.apiClient.createConnection(connectionRequestId);
-      if (!connection) throw new Error("No se pudo crear la conexión");
-
-      await this.storage.set("connection_id", connection.id);
 
       const partnerId =
         connection.user_a === this.userId
@@ -48,9 +56,11 @@ export class ConnectionManager {
 
       const partnerData = await this.partner.getPartnerData(partnerId);
       if (!partnerData)
-        throw new Error("No se pudo obtener la información del partner");
+        throw new AppError("connection/create-failed", {
+          message: "No se pudo obtener la información del partner",
+        });
 
-      await this.storage.delete("connection_request_link");
+      await sessionRepository.deleteConnectionRequestLink();
       const result = {
         connectionId: connection.id,
         partnerName: partnerData.username,
@@ -61,25 +71,13 @@ export class ConnectionManager {
 
       return result;
     } catch (error) {
-      console.error(error);
-      throw new Error("Error al crear la conexión");
+      if (isAppError(error)) throw error;
+      throw new AppError("connection/create-failed", { cause: error });
     }
   }
 
   private async getCachedConnection() {
-    const connectionId = await this.storage.get("connection_id");
-    const partnerId = await this.storage.get("partner_id");
-    const partnerName = await this.storage.get("partner_name");
-
-    if (connectionId && partnerId && partnerName) {
-      return {
-        connectionId,
-        partnerId,
-        partnerName,
-      };
-    }
-
-    return null;
+    return sessionRepository.getConnectionCache();
   }
 
   async getConnection() {
@@ -96,7 +94,9 @@ export class ConnectionManager {
       const partnerData = await this.partner.getPartnerData(partnerId);
 
       if (!partnerData)
-        throw new Error("No se pudo obtener la información del partner");
+        throw new AppError("connection/fetch-failed", {
+          message: "No se pudo obtener la información del partner",
+        });
 
       const result = {
         connectionId: connection.id,
@@ -108,22 +108,19 @@ export class ConnectionManager {
 
       return result;
     } catch (error) {
-      console.error(error);
-      throw new Error("Error al obtener la conexión");
+      if (isAppError(error)) throw error;
+      throw new AppError("connection/fetch-failed", { cause: error });
     }
   }
 
   private async ensureConnectionRequestLink() {
-    const cachedLink = await this.storage.get("connection_request_link");
+    const cachedLink = await sessionRepository.getConnectionRequestLink();
     if (cachedLink) return cachedLink;
 
-    let link = await this.apiClient.getConnectionRequestLink();
-    if (!link) {
-      link = await this.apiClient.generateConnectionRequestLink();
-    }
-    if (!link) throw new Error("No se pudo generar el enlace de conexión");
+    const existing = await this.apiClient.getConnectionRequestLink();
+    const link = existing ?? (await this.apiClient.generateConnectionRequestLink());
 
-    await this.storage.set("connection_request_link", link);
+    await sessionRepository.setConnectionRequestLink(link);
     return link;
   }
 
@@ -142,8 +139,6 @@ export class ConnectionManager {
     partnerId: string;
     partnerName: string;
   }) {
-    await this.storage.set("connection_id", data.connectionId);
-    await this.storage.set("partner_id", data.partnerId);
-    await this.storage.set("partner_name", data.partnerName);
+    await sessionRepository.saveConnectionCache(data);
   }
 }

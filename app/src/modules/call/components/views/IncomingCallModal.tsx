@@ -3,8 +3,8 @@ import { Phone, PhoneOff } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
-import { Button } from "@/globals/components/atoms/button";
-import CathubLogoWidget from "@/globals/components/atoms/logo-widget";
+import { Button } from "@/shared/components/atoms/button";
+import CathubLogoWidget from "@/shared/components/atoms/logo-widget";
 import { PawTrail } from "../organisms/PawTrail";
 import { useConnection } from "@/modules/connection/contexts/ConnectionContext";
 

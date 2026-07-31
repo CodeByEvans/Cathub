@@ -2,6 +2,7 @@ import { DataConnection, MediaConnection } from "peerjs";
 import Peer from "peerjs";
 import { CallEventBus } from "./CallEventBus";
 import { StreamManager } from "./StreamManager";
+import { logger } from "@/shared/logger";
 
 import { IWindowService } from "./interfaces/IWindowService";
 import { IAudioService } from "@/shared/interfaces/IAudioService";
@@ -149,15 +150,21 @@ export class CallManager {
     }
   }
 
+  sendTypingStatus(isTyping: boolean) {
+    this.sendStatus("__TYPING__", isTyping);
+  }
+
   toggleMute() {
     const isMuted = this.streams.toggleMute();
     this.audio.play(isMuted ? "mute" : "unmute", { volume: 0.2 });
+    this.sendStatus("__MUTE__", isMuted);
     return isMuted;
   }
 
   toggleDeaf() {
     const isDeaf = this.streams.toggleDeaf();
     this.audio.play(isDeaf ? "mute" : "unmute", { volume: 0.2 });
+    this.sendStatus("__DEAF__", isDeaf);
     return isDeaf;
   }
   toggleVideo() {
@@ -175,6 +182,8 @@ export class CallManager {
     call.on("stream", async (remoteStream) => {
       await this.streams.attachRemoteStream(remoteStream, speakerId);
       this.audio.stop("outgoingCall");
+      this.audio.stop("callStarted");
+      this.audio.stop("ringtone");
       this.events.emitRemoteStream(remoteStream);
       this.events.emitCallConnected();
       this._isInCall = true;
@@ -205,7 +214,38 @@ export class CallManager {
       this.events.emitCallConnected();
       return;
     }
+    if (data.startsWith("__MUTE__:")) {
+      const muted = data.split(":")[1] === "true";
+      this.events.emitPartnerMuted(muted);
+      return;
+    }
+    if (data.startsWith("__DEAF__:")) {
+      const deafened = data.split(":")[1] === "true";
+      this.events.emitPartnerDeafened(deafened);
+      return;
+    }
+    if (data.startsWith("__TYPING__:")) {
+      const typing = data.split(":")[1] === "true";
+      this.events.emitPartnerTyping(typing);
+      return;
+    }
+    // Un mensaje real siempre limpia el indicador de "escribiendo…"
+    this.events.emitPartnerTyping(false);
     this.events.emitChatMessage(data);
+  }
+
+  private sendStatus(
+    type: "__MUTE__" | "__DEAF__" | "__TYPING__",
+    value: boolean,
+  ) {
+    try {
+      if (this.currentDataConnection?.open) {
+        this.currentDataConnection.send(`${type}:${value}`);
+      }
+    } catch (error) {
+      // Best-effort: no interrumpir la llamada por un mensaje de estado
+      logger.debug("call", "sendStatus failed", error);
+    }
   }
 
   private cleanup() {

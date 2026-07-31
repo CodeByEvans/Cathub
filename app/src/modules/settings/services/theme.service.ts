@@ -1,5 +1,10 @@
-import { toast } from "@/components/ui/sonner";
-import { getValue, setValue } from "@/services/store.service";
+import { logger } from "@/shared/logger";
+import { AppError } from "@/shared/errors/AppError";
+import {
+  DEFAULT_THEME,
+  DEFAULT_THEME_COLOR,
+  settingsRepository,
+} from "./settings.repository";
 import { ThemeColor, ThemeType } from "../@types/settings.types";
 
 interface ThemeState {
@@ -14,7 +19,7 @@ const COLOR_KEYS = [
   "--call-button",
 ] as const;
 
-const DEFAULT_COLOR = "#3b82f6";
+const DEFAULT_COLOR = DEFAULT_THEME_COLOR;
 
 function hexToRgb(hex: string): { r: number; g: number; b: number } | null {
   const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
@@ -68,7 +73,7 @@ function removeColorFromDOM() {
 }
 
 class ThemeService {
-  private theme: ThemeType = "light";
+  private theme: ThemeType = DEFAULT_THEME;
   private themes: ThemeType[] = ["light", "dark", "glass"];
   private themeColor: ThemeColor = DEFAULT_COLOR;
 
@@ -82,59 +87,44 @@ class ThemeService {
 
   async getTheme(): Promise<ThemeState> {
     try {
-      const storedTheme = (await getValue("theme")) as ThemeType | null;
-
-      this.theme =
-        storedTheme && this.themes.includes(storedTheme)
-          ? storedTheme
-          : "light";
+      this.theme = await settingsRepository.getTheme();
 
       document.documentElement.classList.remove(...this.themes);
       document.documentElement.classList.add(this.theme);
 
       return { theme: this.theme };
     } catch (error) {
-      toast.error(
-        "Error al obtener el tema, se usará el tema claro por defecto.",
-      );
-      return { theme: "light" };
+      logger.warn("theme", "Error al obtener el tema, usando claro", error);
+      return { theme: DEFAULT_THEME };
     }
   }
 
   async setTheme(theme: ThemeType) {
     if (!this.themes.includes(theme)) {
-      toast.error("Tema no válido");
-      return;
+      throw new AppError("settings/theme-failed", {
+        message: `Tema no válido: ${theme}`,
+      });
     }
     try {
-      await setValue("theme", theme);
+      await settingsRepository.setTheme(theme);
 
       document.documentElement.classList.remove(...this.themes);
       document.documentElement.classList.add(theme);
 
       this.theme = theme;
     } catch (error) {
-      toast.error("Error al guardar el tema, no se pudo cambiar.");
+      throw new AppError("settings/theme-failed", { cause: error });
     }
   }
 
   async getColor(): Promise<ThemeColor> {
     try {
-      const color = (await getValue("themeColor")) as ThemeColor | null;
-
-      if (color) {
-        this.themeColor = color;
-        applyColorToDOM(color);
-        return color;
-      }
-
-      this.themeColor = DEFAULT_COLOR;
-      applyColorToDOM(DEFAULT_COLOR);
-      return DEFAULT_COLOR;
+      const color = await settingsRepository.getColor();
+      this.themeColor = color;
+      applyColorToDOM(color);
+      return color;
     } catch (error) {
-      toast.error(
-        "Error al obtener el color, se usará el color por defecto.",
-      );
+      logger.warn("theme", "Error al obtener el color, usando default", error);
       this.themeColor = DEFAULT_COLOR;
       applyColorToDOM(DEFAULT_COLOR);
       return DEFAULT_COLOR;
@@ -143,22 +133,22 @@ class ThemeService {
 
   async setColor(color: ThemeColor) {
     try {
-      await setValue("themeColor", color);
+      await settingsRepository.setColor(color);
       applyColorToDOM(color);
       this.themeColor = color;
     } catch (error) {
-      toast.error("Error al guardar el color, no se pudo cambiar.");
+      throw new AppError("settings/color-failed", { cause: error });
     }
   }
 
   async resetColor() {
     try {
-      await setValue("themeColor", null);
+      await settingsRepository.resetColor();
       removeColorFromDOM();
       this.themeColor = DEFAULT_COLOR;
       applyColorToDOM(DEFAULT_COLOR);
     } catch (error) {
-      toast.error("Error al reiniciar el color.");
+      throw new AppError("settings/color-failed", { cause: error });
     }
   }
 }

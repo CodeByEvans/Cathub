@@ -1,8 +1,10 @@
-import { getValue, setValue } from "@/services/store.service";
+import { logger } from "@/shared/logger";
+import { settingsRepository, WindowBehavior } from "./settings.repository";
 import { invoke } from "@tauri-apps/api/core";
-import { getCurrentWindow, Window } from "@tauri-apps/api/window";
+import { getCurrentWindow, LogicalSize } from "@tauri-apps/api/window";
+import { MAIN_SIZE, EXPANDED_SIZE, DEFAULT_COMPACT } from "@/constants/window.constants";
 
-type Behavior = "widget" | "app" | "floating";
+type Behavior = WindowBehavior;
 
 interface WindowState {
   behavior: Behavior;
@@ -11,15 +13,22 @@ interface WindowState {
 export class WindowService {
   private behavior: Behavior = "app";
   private readonly behaviors: Behavior[] = ["widget", "app", "floating"];
+  private compactSize = { ...DEFAULT_COMPACT };
+  private compactResizeUnlisten: (() => void) | null = null;
+  private compactResizeDebounce: ReturnType<typeof setTimeout> | null = null;
 
-  private async getWindow(): Promise<Window> {
+  private async getWindow() {
     const win = getCurrentWindow();
     if (!win) throw new Error("No se pudo obtener la ventana actual");
     return win;
   }
 
-  currentBehavior(): Behavior {
+  getBehavior(): Behavior {
     return this.behavior;
+  }
+
+  getCompactSize() {
+    return this.compactSize;
   }
 
   async show() {
@@ -28,36 +37,35 @@ export class WindowService {
     await this.bringToFront();
   }
 
-  async getBehavior(): Promise<WindowState> {
+  async getBehaviorState(): Promise<WindowState> {
     try {
-      const stored = (await getValue("window_behavior")) as Behavior;
-      this.behavior = this.behaviors.includes(stored) ? stored : "app";
-      console.log("Comportamiento de ventana actual:", this.behavior);
+      this.behavior = await settingsRepository.getWindowBehavior();
+      logger.debug("window", `Comportamiento de ventana actual: ${this.behavior}`);
 
       const win = await this.getWindow();
       await this.applyBehavior(win, this.behavior);
 
       return { behavior: this.behavior };
     } catch (err) {
-      console.error("Error al obtener comportamiento:", err);
+      logger.error("window", "Error al obtener comportamiento", err);
       return { behavior: "app" };
     }
   }
 
   async setBehavior(behavior: Behavior) {
     if (!this.behaviors.includes(behavior)) {
-      console.error("Comportamiento no válido:", behavior);
+      logger.warn("window", `Comportamiento no válido: ${behavior}`);
       return;
     }
 
     this.behavior = behavior;
-    await setValue("window_behavior", behavior);
+    await settingsRepository.setWindowBehavior(behavior);
 
     const win = await this.getWindow();
     await this.applyBehavior(win, behavior);
   }
 
-  private behaviorActions: Record<Behavior, (win: Window) => Promise<void>> = {
+  private behaviorActions: Record<Behavior, (win: import("@tauri-apps/api/window").Window) => Promise<void>> = {
     widget: async (win) => {
       await win.setAlwaysOnBottom(true);
       await win.setSkipTaskbar(true);
@@ -81,7 +89,7 @@ export class WindowService {
     },
   };
 
-  private async applyBehavior(win: Window, behavior: Behavior) {
+  private async applyBehavior(win: import("@tauri-apps/api/window").Window, behavior: Behavior) {
     const action = this.behaviorActions[behavior];
     await action(win);
   }
@@ -96,6 +104,91 @@ export class WindowService {
   async restoreBehavior() {
     const win = await this.getWindow();
     await this.applyBehavior(win, this.behavior);
+  }
+
+  async loadCompactSize(): Promise<{ width: number; height: number }> {
+    try {
+      const saved = await settingsRepository.getCompactWindowSize();
+      if (saved) {
+        this.compactSize = saved;
+        return this.compactSize;
+      }
+    } catch (err) {
+      logger.warn("window", "Error al cargar tamaño compacto", err);
+    }
+    return DEFAULT_COMPACT;
+  }
+
+  async saveCompactSize(width: number, height: number) {
+    this.compactSize = { width, height };
+    try {
+      await settingsRepository.setCompactWindowSize({ width, height });
+    } catch (err) {
+      logger.warn("window", "Error al guardar tamaño compacto", err);
+    }
+  }
+
+  async enableCompactMode() {
+    const win = await this.getWindow();
+    const saved = await this.loadCompactSize();
+    await invoke("set_window_resizable", { resizable: true });
+    await invoke("set_window_min_size", { width: 280, height: 120 });
+    await invoke("set_window_max_size", { width: 700, height: 400 });
+    await win.setSize(new LogicalSize(saved.width, saved.height));
+  }
+
+  async disableCompactMode() {
+    const win = await this.getWindow();
+    await invoke("set_window_min_size", { width: 0, height: 0 });
+    await invoke("set_window_max_size", { width: 5000, height: 5000 });
+    await invoke("set_window_resizable", { resizable: false });
+    await win.setSize(MAIN_SIZE);
+  }
+
+  async expandForColorPicker() {
+    const win = await this.getWindow();
+    await win.setSize(EXPANDED_SIZE);
+  }
+
+  async restoreFromColorPicker(isCompact: boolean) {
+    const win = await this.getWindow();
+    if (isCompact) {
+      await win.setSize(new LogicalSize(this.compactSize.width, this.compactSize.height));
+    } else {
+      await win.setSize(MAIN_SIZE);
+    }
+  }
+
+  async startCompactResizeListener() {
+    this.stopCompactResizeListener();
+    const win = await this.getWindow();
+    const handleResize = async () => {
+      if (this.compactResizeDebounce) clearTimeout(this.compactResizeDebounce);
+      this.compactResizeDebounce = setTimeout(async () => {
+        try {
+          const size = await win.outerSize();
+          const logicalSize = size.toLogical(await win.scaleFactor());
+          const width = Math.round(logicalSize.width);
+          const height = Math.round(logicalSize.height);
+          await this.saveCompactSize(width, height);
+        } catch (err) {
+          logger.warn("window", "Error en resize listener", err);
+        }
+      }, 500);
+    };
+    const unlisten = await win.onResized(handleResize);
+    this.compactResizeUnlisten = unlisten;
+  }
+
+  stopCompactResizeListener() {
+    if (this.compactResizeUnlisten) {
+      this.compactResizeUnlisten();
+      this.compactResizeUnlisten = null;
+    }
+    if (this.compactResizeDebounce) {
+      clearTimeout(this.compactResizeDebounce);
+      this.compactResizeDebounce = null;
+    }
   }
 }
 

@@ -11,6 +11,7 @@ import {
   Sun,
   UserCog,
   UserX,
+  Globe,
 } from "lucide-react";
 import {
   SettingsButtonProps,
@@ -21,7 +22,7 @@ import { BehaviorType } from "@/@types/window.types";
 
 export const MAIN_SETTINGS: SettingsButtonProps[] = [
   {
-    icon: <Layout className="w-6 h-6  mb-1" />,
+    icon: <Layout className="w-6 h-6 mb-1" />,
     text: "App",
     action: "app-settings",
   },
@@ -38,7 +39,6 @@ export const MAIN_SETTINGS: SettingsButtonProps[] = [
   {
     icon: <UserX className="w-6 h-6 text-destructive mb-1" />,
     text: "Romper conexión",
-
     action: "break-connection",
   },
   {
@@ -58,6 +58,11 @@ export const APP_SETTINGS: SettingsButtonProps[] = [
     icon: <AppWindow className="w-6 h-6  mb-1" />,
     text: "Modo de ventana",
     action: "window-settings",
+  },
+  {
+    icon: <Globe className="w-6 h-6 mb-1" />,
+    text: "Arranque automático",
+    action: "autostart",
   },
 ];
 
@@ -81,8 +86,6 @@ export const THEME_OPTIONS: OptionCardProps<ThemeType>[] = [
     description: "Transparente",
   },
 ];
-
-
 
 export const WINDOW_BEHAVIOR_OPTIONS: OptionCardProps<BehaviorType>[] = [
   {

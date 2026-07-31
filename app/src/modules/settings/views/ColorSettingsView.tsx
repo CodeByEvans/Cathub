@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { HexColorPicker } from "react-colorful";
 import { themeService } from "../services/theme.service";
+import { handleAppError } from "@/shared/errors/appErrorHandler";
 import { ThemeColor } from "../@types/settings.types";
 
 interface ColorSettingsProps {
@@ -21,7 +22,9 @@ export const ColorSettingsView: React.FC<ColorSettingsProps> = ({
   const applyColor = (newColor: string) => {
     if (!/^#[0-9a-fA-F]{6}$/.test(newColor)) return;
     setSelectedColor(newColor);
-    themeService.setColor(newColor);
+    themeService
+      .setColor(newColor)
+      .catch((e) => handleAppError(e, "settings"));
   };
 
   const handlePickerChange = (newColor: string) => {
@@ -30,7 +33,9 @@ export const ColorSettingsView: React.FC<ColorSettingsProps> = ({
   };
 
   const handleReset = () => {
-    themeService.resetColor();
+    themeService
+      .resetColor()
+      .catch((e) => handleAppError(e, "settings"));
     const defaultColor = themeService.currentThemeColor();
     setColor(defaultColor);
     setSelectedColor(defaultColor);

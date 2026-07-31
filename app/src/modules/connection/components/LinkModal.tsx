@@ -1,4 +1,4 @@
-import { Input } from "@/globals/components/atoms/input";
+import { Input } from "@/shared/components/atoms/input";
 
 import React from "react";
 

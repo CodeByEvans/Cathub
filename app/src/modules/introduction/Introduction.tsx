@@ -17,11 +17,12 @@ import {
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
-import { Button } from "@/globals/components/atoms/button";
+import { Button } from "@/shared/components/atoms/button";
 
 import { themeService } from "@/modules/settings/services/theme.service";
 import { windowService } from "../settings/services/window.service";
-import { CathubLogo } from "@/globals/components/atoms/logo";
+import { handleAppError } from "@/shared/errors/appErrorHandler";
+import { CathubLogo } from "@/shared/components/atoms/logo";
 import { HexColorPicker } from "react-colorful";
 
 type FeatureType =
@@ -59,7 +60,7 @@ export function Introduction({ onComplete }: IntroductionProps) {
   const [isAnimating, setIsAnimating] = useState(false);
 
   useEffect(() => {
-    setSelectedBehavior(windowService.currentBehavior());
+    setSelectedBehavior(windowService.getBehavior());
     setSelectedTheme(themeService.currentTheme());
   }, []);
 
@@ -157,12 +158,16 @@ export function Introduction({ onComplete }: IntroductionProps) {
   };
 
   const handleThemeChange = (theme: ThemeType) => {
-    themeService.setTheme(theme);
+    themeService
+      .setTheme(theme)
+      .catch((e) => handleAppError(e, "settings"));
     setSelectedTheme(theme);
   };
 
   const handleColorChange = (color: string) => {
-    themeService.setColor(color);
+    themeService
+      .setColor(color)
+      .catch((e) => handleAppError(e, "settings"));
     setSelectedColor(color);
   };
 
@@ -317,7 +322,7 @@ export function Introduction({ onComplete }: IntroductionProps) {
         <HexColorPicker
           color={selectedColor}
           onChange={handleColorChange}
-          className="!w-36 !h-36"
+          className="!w-32 !h-32"
         />
       );
     }
@@ -340,7 +345,7 @@ export function Introduction({ onComplete }: IntroductionProps) {
   return (
     <section className="w-[700px] h-[200px] bg-background rounded-xl border border-border/50 shadow-xl overflow-hidden">
       <div
-        className="h-full flex flex-col justify-between p-5"
+        className="h-full flex flex-col justify-between p-4"
         data-tauri-drag-region
       >
         {/* Main content */}

@@ -1,44 +1,40 @@
 import { load, Store } from "@tauri-apps/plugin-store";
+import { AppError } from "@/shared/errors/AppError";
 
 let store: Store | null = null;
 
-export async function getStore() {
+async function getStore() {
   if (!store) store = await load("store.json");
   return store;
 }
 
-export async function setValue(key: string, value: any): Promise<string> {
+/**
+ * ⚠️ Detalle interno de `shared/infrastructure/storage.provider.ts`.
+ * No importar este archivo desde ningún otro módulo.
+ */
+export async function setValue(key: string, value: unknown): Promise<void> {
   try {
     const storeInstance = await getStore();
     await storeInstance.set(key, value);
     await storeInstance.save();
-    return value;
   } catch (error) {
-    console.error(`Error guardando clave ${key} en store:`, error);
-    throw new Error(`No se pudo guardar la clave ${key}`);
+    throw new AppError("store/write-failed", {
+      message: `No se pudo guardar la clave ${key}`,
+      cause: error,
+    });
   }
 }
 
-export async function getValue(key: string): Promise<string | null> {
+/** ⚠️ Detalle interno de `storage.provider` — no importar desde otros módulos. */
+export async function getValue(key: string): Promise<unknown> {
   const storeInstance = await getStore();
-  const value = await storeInstance.get<string>(key);
+  const value = await storeInstance.get<unknown>(key);
   return value ?? null;
 }
 
+/** ⚠️ Detalle interno de `storage.provider` — no importar desde otros módulos. */
 export async function deleteValue(key: string): Promise<void> {
   const storeInstance = await getStore();
   await storeInstance.delete(key);
   await storeInstance.save();
-}
-
-export async function clearStore(): Promise<void> {
-  const storeInstance = await getStore();
-  await storeInstance.clear();
-  await storeInstance.save();
-}
-
-export async function hasValue(key: string): Promise<boolean> {
-  const storeInstance = await getStore();
-  const value = await storeInstance.get(key);
-  return value !== null && value !== undefined;
 }

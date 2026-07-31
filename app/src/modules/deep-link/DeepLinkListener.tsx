@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { getCurrent, onOpenUrl } from "@tauri-apps/plugin-deep-link";
-import { toast } from "@/components/ui/sonner";
+import { handleAppError } from "@/shared/errors/appErrorHandler";
 import { handleDeepLink } from "./handlers/deepLink.handler";
 
 const DeepLinkListener = () => {
@@ -9,15 +9,15 @@ const DeepLinkListener = () => {
     getCurrent()
       .then((urls) => {
         if (urls && urls.length > 0) {
-          handleDeepLink(urls[0]);
+          return handleDeepLink(urls[0]);
         }
       })
-      .catch((err) => {
-        toast.error(`Error al obtener la URL inicial: ${err}`);
-      });
+      .catch((err) => handleAppError(err, "deeplink", "deeplink/failed"));
 
     const unlisten = onOpenUrl((urls) => {
-      handleDeepLink(urls[0]);
+      handleDeepLink(urls[0]).catch((err) =>
+        handleAppError(err, "deeplink", "deeplink/failed"),
+      );
     });
     return () => {
       unlisten.then((fn) => fn());
