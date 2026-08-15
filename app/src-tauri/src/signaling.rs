@@ -322,6 +322,15 @@ fn handle_broadcast(app: &AppHandle, event: &str, payload: Value) {
         "candidate" => {
             let _ = app.emit("signal:candidate", payload);
         }
+        "hangup" => {
+            let _ = app.emit("signal:hangup", payload);
+        }
+        "chat" => {
+            let _ = app.emit("signal:chat", payload);
+        }
+        "status" => {
+            let _ = app.emit("signal:status", payload);
+        }
         _ => {}
     }
 }

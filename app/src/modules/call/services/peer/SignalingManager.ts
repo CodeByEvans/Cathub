@@ -21,13 +21,29 @@ export interface SignalError {
   msg?: unknown;
 }
 
-export type SignalEvent = "offer" | "answer" | "candidate";
+export interface SignalChat {
+  connectionId: string;
+  message: string;
+}
+
+export type SignalStatusType = "__MUTE__" | "__DEAF__" | "__TYPING__";
+
+export interface SignalStatus {
+  connectionId: string;
+  type: SignalStatusType;
+  value: boolean;
+}
+
+export type SignalEvent = "offer" | "answer" | "candidate" | "hangup" | "chat" | "status";
 
 export interface SignalHandlers {
   onOpen?: () => void;
   onOffer?: (offer: IncomingOffer) => void;
   onAnswer?: (msg: SignalMessage) => void;
   onCandidate?: (msg: SignalCandidate) => void;
+  onHangup?: (msg: { connectionId: string }) => void;
+  onChat?: (msg: SignalChat) => void;
+  onStatus?: (msg: SignalStatus) => void;
   onError?: (msg: SignalError) => void;
   onClosed?: () => void;
 }
@@ -64,6 +80,17 @@ export class SignalingManager {
       await listen<SignalCandidate>("signal:candidate", (e) =>
         this.handlers.onCandidate?.(e.payload),
       ),
+    );
+    this.unlisteners.push(
+      await listen<{ connectionId: string }>("signal:hangup", (e) =>
+        this.handlers.onHangup?.(e.payload),
+      ),
+    );
+    this.unlisteners.push(
+      await listen<SignalChat>("signal:chat", (e) => this.handlers.onChat?.(e.payload)),
+    );
+    this.unlisteners.push(
+      await listen<SignalStatus>("signal:status", (e) => this.handlers.onStatus?.(e.payload)),
     );
     this.unlisteners.push(
       await listen<SignalError>("signal:error", (e) => this.handlers.onError?.(e.payload)),

@@ -8,6 +8,9 @@ import {
   SignalMessage,
   SignalCandidate,
   SignalError,
+  SignalChat,
+  SignalStatus,
+  SignalStatusType,
 } from "./SignalingManager";
 
 import { IWindowService } from "./interfaces/IWindowService";
@@ -22,7 +25,6 @@ const RTC_CONFIG: RTCConfiguration = {
 
 export class CallManager {
   private pc: RTCPeerConnection | null = null;
-  private dataChannel: RTCDataChannel | null = null;
   private pendingOffer: IncomingOffer | null = null;
   private callConnectionId: string | null = null;
   private activeSpeakerId: string | null = null;
@@ -78,6 +80,34 @@ export class CallManager {
     }
   }
 
+  handleHangup() {
+    // Colgar/cancelar remoto: terminar la llamada o el ringing.
+    if (!this._isIncomingCall && !this._isOutgoingCall && !this._isInCall) {
+      return;
+    }
+    this.cleanup();
+    this.events.emitCallEnded();
+    this.window.restoreBehavior();
+  }
+
+  handleChat(msg: SignalChat) {
+    this.events.emitChatMessage(msg.message);
+  }
+
+  handleStatus(msg: SignalStatus) {
+    switch (msg.type) {
+      case "__MUTE__":
+        this.events.emitPartnerMuted(msg.value);
+        break;
+      case "__DEAF__":
+        this.events.emitPartnerDeafened(msg.value);
+        break;
+      case "__TYPING__":
+        this.events.emitPartnerTyping(msg.value);
+        break;
+    }
+  }
+
   handleConnectionError(msg: SignalError) {
     // Interno: una caída de la señalización no debe sonar como colgar ni
     // terminar una llamada en curso (el media fluye P2P).
@@ -100,10 +130,6 @@ export class CallManager {
       this.callConnectionId = `mc_${this.randomId()}`;
 
       const pc = this.createPeerConnection();
-
-      const dc = pc.createDataChannel("chat");
-      this.setupDataChannel(dc);
-
       localStream.getTracks().forEach((track) => pc.addTrack(track, localStream));
 
       const offer = await pc.createOffer();
@@ -143,32 +169,46 @@ export class CallManager {
     this.activeSpeakerId = speakerId;
     this._isIncomingCall = false;
 
-    const localStream = await this.streams.getLocalStream(
-      audioOnly,
-      micConstraints,
-    );
-    const pc = this.createPeerConnection();
-    localStream.getTracks().forEach((track) => pc.addTrack(track, localStream));
+    try {
+      const localStream = await this.streams.getLocalStream(
+        audioOnly,
+        micConstraints,
+      );
+      const pc = this.createPeerConnection();
+      localStream.getTracks().forEach((track) => pc.addTrack(track, localStream));
 
-    await pc.setRemoteDescription(offer.sdp);
-    const answer = await pc.createAnswer();
-    await pc.setLocalDescription(answer);
+      await pc.setRemoteDescription(offer.sdp);
+      const answer = await pc.createAnswer();
+      await pc.setLocalDescription(answer);
 
-    this.audio.stop("ringtone");
-    this.audio.play("callStarted", { volume: 0.3, loop: true });
-    this.window.restoreBehavior();
+      this.audio.stop("ringtone");
+      this.audio.play("callStarted", { volume: 0.3, loop: true });
+      this.window.restoreBehavior();
 
-    await this.signaling.send("answer", {
-      connectionId: this.callConnectionId,
-      sdp: answer,
-    });
+      await this.signaling.send("answer", {
+        connectionId: this.callConnectionId,
+        sdp: answer,
+      });
 
-    return localStream;
+      return localStream;
+    } catch (error) {
+      logger.error("call", "acceptCall failed", error);
+      this.audio.stop("ringtone");
+      this.cleanup();
+      this.events.emitCallEnded();
+      this.events.emitErrorMessage(
+        error instanceof Error ? error.message : "Error al aceptar la llamada",
+      );
+      this.window.restoreBehavior();
+      throw new Error("No se pudo aceptar la llamada");
+    }
   }
 
   rejectCall() {
     this._isIncomingCall = false;
-    this.sendControl("__HANGUP__");
+    this.signaling
+      .send("hangup", { connectionId: this.callConnectionId })
+      .catch(() => {});
     this.pendingOffer = null;
     this.audio.stop("ringtone");
     this.audio.play("callEnded", { volume: 0.3 });
@@ -178,27 +218,34 @@ export class CallManager {
   }
 
   async cancelCall() {
-    this.sendControl("__HANGUP__");
+    this.signaling
+      .send("hangup", { connectionId: this.callConnectionId })
+      .catch(() => {});
     await new Promise((r) => setTimeout(r, 100));
     this.audio.play("callEnded", { volume: 0.3 });
     this.cleanup();
     this.events.emitCallEnded();
+    this.window.restoreBehavior();
   }
 
   async endCall() {
-    this.sendControl("__HANGUP__");
+    this.signaling
+      .send("hangup", { connectionId: this.callConnectionId })
+      .catch(() => {});
     await new Promise((r) => setTimeout(r, 100));
     this.audio.play("callEnded", { volume: 0.3 });
     this.cleanup();
     this.events.emitCallEnded();
+    this.window.restoreBehavior();
   }
 
   // ── Chat y estado ────────────────────────────────────────────────────────
 
   async sendChatMessage(message: string) {
-    if (this.dataChannel?.readyState === "open") {
-      this.dataChannel.send(message);
-    }
+    if (!this.callConnectionId) return;
+    await this.signaling
+      .send("chat", { connectionId: this.callConnectionId, message })
+      .catch(() => {});
   }
 
   sendTypingStatus(isTyping: boolean) {
@@ -225,6 +272,13 @@ export class CallManager {
 
   // ── Interno ──────────────────────────────────────────────────────────────
 
+  private sendStatus(type: SignalStatusType, value: boolean) {
+    if (!this.callConnectionId) return;
+    this.signaling
+      .send("status", { connectionId: this.callConnectionId, type, value })
+      .catch(() => {});
+  }
+
   private createPeerConnection(): RTCPeerConnection {
     const pc = new RTCPeerConnection(RTC_CONFIG);
     this.pc = pc;
@@ -241,20 +295,20 @@ export class CallManager {
     };
 
     pc.ontrack = async (evt) => {
-      const remoteStream = evt.streams[0] ?? new MediaStream([evt.track]);
-      await this.streams.attachRemoteStream(remoteStream, this.activeSpeakerId);
-      this.audio.stop("outgoingCall");
-      this.audio.stop("callStarted");
-      this.audio.stop("ringtone");
-      this.events.emitRemoteStream(remoteStream);
-      this.events.emitCallConnected();
-      this._isInCall = true;
-      this._isOutgoingCall = false;
-      this._isIncomingCall = false;
-    };
-
-    pc.ondatachannel = (evt) => {
-      this.setupDataChannel(evt.channel);
+      try {
+        const remoteStream = evt.streams[0] ?? new MediaStream([evt.track]);
+        await this.streams.attachRemoteStream(remoteStream, this.activeSpeakerId);
+        this.audio.stop("outgoingCall");
+        this.audio.stop("callStarted");
+        this.audio.stop("ringtone");
+        this.events.emitRemoteStream(remoteStream);
+        this.events.emitCallConnected();
+        this._isInCall = true;
+        this._isOutgoingCall = false;
+        this._isIncomingCall = false;
+      } catch (error) {
+        logger.error("call", "ontrack failed", error);
+      }
     };
 
     pc.oniceconnectionstatechange = () => {
@@ -269,62 +323,6 @@ export class CallManager {
     return pc;
   }
 
-  private setupDataChannel(dc: RTCDataChannel) {
-    this.dataChannel = dc;
-    dc.onmessage = (evt) => this.handleDataMessage(evt.data as string);
-  }
-
-  private handleDataMessage(data: string) {
-    if (data === "__HANGUP__") {
-      this.cleanup();
-      this.events.emitCallEnded();
-      this.window.restoreBehavior();
-      return;
-    }
-    if (data.startsWith("__MUTE__:")) {
-      const muted = data.split(":")[1] === "true";
-      this.events.emitPartnerMuted(muted);
-      return;
-    }
-    if (data.startsWith("__DEAF__:")) {
-      const deafened = data.split(":")[1] === "true";
-      this.events.emitPartnerDeafened(deafened);
-      return;
-    }
-    if (data.startsWith("__TYPING__:")) {
-      const typing = data.split(":")[1] === "true";
-      this.events.emitPartnerTyping(typing);
-      return;
-    }
-    // Un mensaje real siempre limpia el indicador de "escribiendo…"
-    this.events.emitPartnerTyping(false);
-    this.events.emitChatMessage(data);
-  }
-
-  private sendStatus(
-    type: "__MUTE__" | "__DEAF__" | "__TYPING__",
-    value: boolean,
-  ) {
-    try {
-      if (this.dataChannel?.readyState === "open") {
-        this.dataChannel.send(`${type}:${value}`);
-      }
-    } catch (error) {
-      // Best-effort: no interrumpir la llamada por un mensaje de estado
-      logger.debug("call", "sendStatus failed", error);
-    }
-  }
-
-  private sendControl(message: "__HANGUP__") {
-    try {
-      if (this.dataChannel?.readyState === "open") {
-        this.dataChannel.send(message);
-      }
-    } catch (error) {
-      logger.debug("call", "sendControl failed", error);
-    }
-  }
-
   private cleanup() {
     this._isIncomingCall = false;
     this._isOutgoingCall = false;
@@ -337,15 +335,9 @@ export class CallManager {
     this.audio.stopAll();
     this.streams.cleanup();
 
-    if (this.dataChannel) {
-      this.dataChannel.onmessage = null;
-      this.dataChannel.close();
-      this.dataChannel = null;
-    }
     if (this.pc) {
       this.pc.onicecandidate = null;
       this.pc.ontrack = null;
-      this.pc.ondatachannel = null;
       this.pc.oniceconnectionstatechange = null;
       this.pc.close();
       this.pc = null;

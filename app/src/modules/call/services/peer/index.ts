@@ -31,6 +31,9 @@ export async function createPeerService() {
     onOffer: (offer) => calls.handleIncomingOffer(offer),
     onAnswer: (msg) => calls.handleAnswer(msg),
     onCandidate: (msg) => calls.handleCandidate(msg),
+    onHangup: () => calls.handleHangup(),
+    onChat: (msg) => calls.handleChat(msg),
+    onStatus: (msg) => calls.handleStatus(msg),
     onError: (msg) => calls.handleConnectionError(msg),
   });
 

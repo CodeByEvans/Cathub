@@ -1,3 +1,5 @@
+import { logger } from "@/shared/logger";
+
 export class StreamManager {
   private localStream: MediaStream | null = null;
   private remoteAudioEl: HTMLAudioElement | null = null;
@@ -21,9 +23,18 @@ export class StreamManager {
     }
     this.remoteAudioEl.srcObject = stream;
     if (speakerId && this.remoteAudioEl.setSinkId) {
-      await this.remoteAudioEl.setSinkId(speakerId);
+      try {
+        await this.remoteAudioEl.setSinkId(speakerId);
+      } catch (error) {
+        // Dispositivo no disponible: seguir con la salida por defecto.
+        logger.debug("call", "setSinkId failed", error);
+      }
     }
-    await this.remoteAudioEl.play();
+    try {
+      await this.remoteAudioEl.play();
+    } catch (error) {
+      logger.debug("call", "remote play failed", error);
+    }
   }
 
   toggleMute(): boolean {
