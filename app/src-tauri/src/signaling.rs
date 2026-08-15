@@ -20,6 +20,7 @@ struct Inner {
     sender: Option<WsWrite>,
     stopping: bool,
     connection_id: String,
+    user_id: String,
     supabase_url: String,
     anon_key: String,
 }
@@ -42,6 +43,7 @@ impl SignalingManager {
                 sender: None,
                 stopping: false,
                 connection_id: String::new(),
+                user_id: String::new(),
                 supabase_url: String::new(),
                 anon_key: String::new(),
             })),
@@ -64,7 +66,13 @@ impl SignalingManager {
         )
     }
 
-    pub fn start(&self, connection_id: String, supabase_url: String, anon_key: String) {
+    pub fn start(
+        &self,
+        connection_id: String,
+        user_id: String,
+        supabase_url: String,
+        anon_key: String,
+    ) {
         let app = self.app.clone();
         let inner = self.inner.clone();
         tauri::async_runtime::spawn(async move {
@@ -72,8 +80,13 @@ impl SignalingManager {
                 let mut g = inner.lock().await;
                 g.stopping = false;
                 g.connection_id = connection_id;
+                g.user_id = user_id;
                 g.supabase_url = supabase_url;
                 g.anon_key = anon_key;
+                eprintln!(
+                    "[signal] start user_id={} connection_id={} url={}",
+                    g.user_id, g.connection_id, g.supabase_url
+                );
             }
             run_loop(app, inner).await;
         });
@@ -87,15 +100,21 @@ impl SignalingManager {
         }
     }
 
-    pub async fn send(&self, msg_type: String, payload: Value) -> Result<(), String> {
-        let (url, key, topic) = {
+    pub async fn send(&self, msg_type: String, mut payload: Value) -> Result<(), String> {
+        let (url, key, topic, user_id) = {
             let g = self.inner.lock().await;
             (
                 Self::broadcast_url(&g.supabase_url),
                 g.anon_key.clone(),
                 format!("call:{}", g.connection_id),
+                g.user_id.clone(),
             )
         };
+
+        // Identificar al emisor para poder filtrar el eco propio en recepción.
+        if let Some(obj) = payload.as_object_mut() {
+            obj.insert("src".to_string(), Value::String(user_id));
+        }
 
         let body = serde_json::json!({
             "messages": [{
@@ -119,7 +138,10 @@ impl SignalingManager {
         if resp.status() == 202 {
             Ok(())
         } else {
-            Err(format!("broadcast failed: {}", resp.status()))
+            let status = resp.status();
+            let body = resp.text().await.unwrap_or_default();
+            eprintln!("[signal] broadcast failed: {status} {body}");
+            Err(format!("broadcast failed: {status}"))
         }
     }
 }
@@ -222,18 +244,35 @@ async fn handle_connection(
         }
     });
 
+    let user_id = { inner.lock().await.user_id.clone() };
+
     while let Some(msg) = read.next().await {
         match msg {
             Ok(Message::Text(text)) => {
                 if let Ok(arr) = serde_json::from_str::<Vec<Value>>(&text) {
                     let event = arr.get(3).and_then(|v| v.as_str()).unwrap_or("");
                     let payload = arr.get(4).cloned().unwrap_or(Value::Null);
-                    handle_phoenix(app, event, payload);
+                    if event == "broadcast" {
+                        // Broadcast entregado como JSON (en vez de binario).
+                        // Forma: payload = {type: "broadcast", event, payload}.
+                        let ev = payload.get("event").and_then(|v| v.as_str()).unwrap_or("");
+                        let data = payload.get("payload").cloned().unwrap_or(Value::Null);
+                        eprintln!("[signal] broadcast (json) event={ev}");
+                        dispatch_broadcast(app, &user_id, ev, data);
+                    } else {
+                        handle_phoenix(app, event, payload);
+                    }
                 }
             }
             Ok(Message::Binary(bytes)) => {
-                if let Some((event, payload)) = decode_broadcast(&bytes) {
-                    handle_broadcast(app, &event, payload);
+                match decode_broadcast(&bytes) {
+                    Some((event, payload)) => {
+                        eprintln!("[signal] broadcast (binary) event={event}");
+                        dispatch_broadcast(app, &user_id, &event, payload);
+                    }
+                    None => {
+                        eprintln!("[signal] binary frame no decodificado (len={})", bytes.len());
+                    }
                 }
             }
             Ok(Message::Close(_)) => break,
@@ -252,9 +291,11 @@ async fn handle_connection(
 fn handle_phoenix(app: &AppHandle, event: &str, payload: Value) {
     match event {
         "phx_reply" => {
-            if let Some("ok") = payload.get("status").and_then(|v| v.as_str()) {
+            let status = payload.get("status").and_then(|v| v.as_str()).unwrap_or("");
+            if status == "ok" {
                 let _ = app.emit("signal:open", ());
             } else {
+                eprintln!("[signal] phx_reply error: {payload}");
                 let _ = app.emit(
                     "signal:error",
                     serde_json::json!({ "code": "JOIN_ERROR", "msg": payload }),
@@ -262,6 +303,7 @@ fn handle_phoenix(app: &AppHandle, event: &str, payload: Value) {
             }
         }
         "phx_error" => {
+            eprintln!("[signal] phx_error: {payload}");
             let _ = app.emit("signal:error", serde_json::json!({ "code": "JOIN_ERROR" }));
         }
         _ => {}
@@ -282,6 +324,22 @@ fn handle_broadcast(app: &AppHandle, event: &str, payload: Value) {
         }
         _ => {}
     }
+}
+
+/// Filtra el eco propio y limpia `src` antes de despachar el broadcast.
+/// Al enviar por REST, el servidor entrega el broadcast a todos los suscritos,
+/// incluida nuestra propia conexión (el `self: false` solo aplica al envío WS).
+fn dispatch_broadcast(app: &AppHandle, user_id: &str, event: &str, mut data: Value) {
+    if let Some(src) = data.get("src").and_then(|v| v.as_str()) {
+        if src == user_id {
+            eprintln!("[signal] eco propio ignorado event={event}");
+            return;
+        }
+    }
+    if let Some(obj) = data.as_object_mut() {
+        obj.remove("src");
+    }
+    handle_broadcast(app, event, data);
 }
 
 /// Decodifica un frame de broadcast binario (kind 4) de Supabase Realtime.
@@ -330,10 +388,11 @@ fn wake(app: &AppHandle) {
 pub fn signal_start(
     manager: tauri::State<'_, SignalingManager>,
     connection_id: String,
+    user_id: String,
     supabase_url: String,
     anon_key: String,
 ) {
-    manager.start(connection_id, supabase_url, anon_key);
+    manager.start(connection_id, user_id, supabase_url, anon_key);
 }
 
 #[tauri::command]

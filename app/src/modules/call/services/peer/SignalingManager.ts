@@ -47,11 +47,11 @@ export class SignalingManager {
     this.handlers = handlers;
   }
 
-  async start(connectionId: string, supabaseUrl: string, anonKey: string) {
+  async start(connectionId: string, userId: string, supabaseUrl: string, anonKey: string) {
     if (this.started) return;
     this.started = true;
 
-    await invoke("signal_start", { connectionId, supabaseUrl, anonKey });
+    await invoke("signal_start", { connectionId, userId, supabaseUrl, anonKey });
 
     this.unlisteners.push(await listen("signal:open", () => this.handlers.onOpen?.()));
     this.unlisteners.push(

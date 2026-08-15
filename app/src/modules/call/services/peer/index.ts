@@ -6,11 +6,13 @@ import { DeviceManager } from "./DeviceManager";
 import { StreamManager } from "./StreamManager";
 import { SignalingManager } from "./SignalingManager";
 import { CallManager } from "./CallManager";
+import { authProvider } from "@/shared/infrastructure/auth.provider";
 import { storageProvider } from "@/shared/infrastructure/storage.provider";
 import { STORE_KEYS } from "@/shared/infrastructure/store.keys";
 import { envs } from "@/config/envs";
 
 export async function createPeerService() {
+  const userId = await authProvider.getUserId();
   const partnerId = await storageProvider.get(STORE_KEYS.partnerId);
   if (!partnerId) throw new Error("No partner");
 
@@ -32,7 +34,7 @@ export async function createPeerService() {
     onError: (msg) => calls.handleConnectionError(msg),
   });
 
-  await signaling.start(connectionId, envs.supabaseUrl, envs.supabaseAnonKey);
+  await signaling.start(connectionId, userId, envs.supabaseUrl, envs.supabaseAnonKey);
 
   return {
     events,
