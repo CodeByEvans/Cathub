@@ -1,15 +1,31 @@
-import { DataConnection, MediaConnection } from "peerjs";
-import Peer from "peerjs";
 import { CallEventBus } from "./CallEventBus";
 import { StreamManager } from "./StreamManager";
 import { logger } from "@/shared/logger";
 
+import {
+  SignalingManager,
+  IncomingOffer,
+  SignalMessage,
+  SignalCandidate,
+  SignalError,
+} from "./SignalingManager";
+
 import { IWindowService } from "./interfaces/IWindowService";
 import { IAudioService } from "@/shared/interfaces/IAudioService";
 
+const RTC_CONFIG: RTCConfiguration = {
+  iceServers: [
+    { urls: "stun:stun.l.google.com:19302" },
+    { urls: "stun:stun1.l.google.com:19302" },
+  ],
+};
+
 export class CallManager {
-  private currentCall: MediaConnection | null = null;
-  private currentDataConnection: DataConnection | null = null;
+  private pc: RTCPeerConnection | null = null;
+  private dataChannel: RTCDataChannel | null = null;
+  private pendingOffer: IncomingOffer | null = null;
+  private callConnectionId: string | null = null;
+  private activeSpeakerId: string | null = null;
   private outgoingCallSoundTimer: ReturnType<typeof setTimeout> | null = null;
 
   private _isIncomingCall = false;
@@ -31,40 +47,67 @@ export class CallManager {
     private readonly streams: StreamManager,
     private readonly audio: IAudioService,
     private readonly window: IWindowService,
+    private readonly signaling: SignalingManager,
   ) {}
 
-  handleDataConnection(conn: DataConnection) {
-    this.currentDataConnection = conn;
-    conn.on("data", (data) => this.handleDataMessage(data as string));
-  }
+  // ── Señalización entrante ────────────────────────────────────────────────
 
-  handleIncomingCall(call: MediaConnection) {
-    this.currentCall = call;
+  handleIncomingOffer(offer: IncomingOffer) {
+    this.pendingOffer = offer;
     this._isIncomingCall = true;
-    this.events.emitIncomingCall(call.peer);
+    this.events.emitIncomingCall(offer.connectionId);
     this.audio.play("ringtone", { volume: 0.3, loop: true });
     this.window.bringToFront();
   }
 
+  async handleAnswer(msg: SignalMessage) {
+    if (!this.pc || msg.connectionId !== this.callConnectionId) return;
+    try {
+      await this.pc.setRemoteDescription(msg.sdp);
+    } catch (error) {
+      logger.warn("call", "handleAnswer failed", error);
+    }
+  }
+
+  async handleCandidate(msg: SignalCandidate) {
+    if (!this.pc || msg.connectionId !== this.callConnectionId) return;
+    try {
+      await this.pc.addIceCandidate(msg.candidate);
+    } catch (error) {
+      logger.debug("call", "addIceCandidate failed", error);
+    }
+  }
+
+  handleConnectionError(msg: SignalError) {
+    // Interno: una caída de la señalización no debe sonar como colgar ni
+    // terminar una llamada en curso (el media fluye P2P).
+    logger.warn("call", "Error de conexión (señalización)", msg);
+  }
+
+  // ── Llamadas ─────────────────────────────────────────────────────────────
+
   async startCall(
-    peer: Peer,
-    partnerId: string,
     audioOnly: boolean,
     micConstraints: MediaTrackConstraints | boolean,
     speakerId: string | null,
   ) {
     try {
-      const dataConn = peer.connect(partnerId);
-      this.currentDataConnection = dataConn;
-      dataConn.on("data", (data) => this.handleDataMessage(data as string));
-
       const localStream = await this.streams.getLocalStream(
         audioOnly,
         micConstraints,
       );
-      const call = peer.call(partnerId, localStream);
-      this.currentCall = call;
-      this.setupCallListeners(call, speakerId);
+      this.activeSpeakerId = speakerId;
+      this.callConnectionId = `mc_${this.randomId()}`;
+
+      const pc = this.createPeerConnection();
+
+      const dc = pc.createDataChannel("chat");
+      this.setupDataChannel(dc);
+
+      localStream.getTracks().forEach((track) => pc.addTrack(track, localStream));
+
+      const offer = await pc.createOffer();
+      await pc.setLocalDescription(offer);
 
       this._isOutgoingCall = true;
       this.events.emitOutgoingCall();
@@ -73,6 +116,11 @@ export class CallManager {
         this.audio.play("outgoingCall", { loop: true, volume: 0.4 });
         this.outgoingCallSoundTimer = null;
       }, 1500);
+
+      await this.signaling.send("offer", {
+        connectionId: this.callConnectionId,
+        sdp: offer,
+      });
 
       return localStream;
     } catch (error) {
@@ -88,65 +136,68 @@ export class CallManager {
     micConstraints: MediaTrackConstraints | boolean,
     speakerId: string | null,
   ) {
-    if (!this.currentCall) throw new Error("No hay llamada entrante");
-    if (this.currentDataConnection?.open) {
-      this.currentDataConnection.send("__CALL_ACCEPTED__");
-    }
+    if (!this.pendingOffer) throw new Error("No hay llamada entrante");
+    const offer = this.pendingOffer;
+    this.pendingOffer = null;
+    this.callConnectionId = offer.connectionId;
+    this.activeSpeakerId = speakerId;
     this._isIncomingCall = false;
 
     const localStream = await this.streams.getLocalStream(
       audioOnly,
       micConstraints,
     );
-    this.currentCall.answer(localStream);
-    this.setupCallListeners(this.currentCall, speakerId);
+    const pc = this.createPeerConnection();
+    localStream.getTracks().forEach((track) => pc.addTrack(track, localStream));
+
+    await pc.setRemoteDescription(offer.sdp);
+    const answer = await pc.createAnswer();
+    await pc.setLocalDescription(answer);
 
     this.audio.stop("ringtone");
     this.audio.play("callStarted", { volume: 0.3, loop: true });
     this.window.restoreBehavior();
+
+    await this.signaling.send("answer", {
+      connectionId: this.callConnectionId,
+      sdp: answer,
+    });
 
     return localStream;
   }
 
   rejectCall() {
     this._isIncomingCall = false;
-    if (this.currentDataConnection?.open) {
-      this.currentDataConnection.send("__HANGUP__");
-      this.currentDataConnection.close();
-    }
-    this.currentCall?.close();
-    this.currentCall = null;
-    this.currentDataConnection = null;
+    this.sendControl("__HANGUP__");
+    this.pendingOffer = null;
     this.audio.stop("ringtone");
     this.audio.play("callEnded", { volume: 0.3 });
+    this.cleanup();
     this.events.emitCallEnded();
     this.window.restoreBehavior();
   }
 
   async cancelCall() {
-    if (this.currentDataConnection?.open) {
-      this.currentDataConnection.send("__HANGUP__");
-      await new Promise((r) => setTimeout(r, 100));
-    }
-
-    this.cleanup();
+    this.sendControl("__HANGUP__");
+    await new Promise((r) => setTimeout(r, 100));
     this.audio.play("callEnded", { volume: 0.3 });
+    this.cleanup();
     this.events.emitCallEnded();
   }
 
   async endCall() {
-    if (this.currentDataConnection?.open) {
-      this.currentDataConnection.send("__HANGUP__");
-      await new Promise((r) => setTimeout(r, 100));
-    }
-    this.cleanup();
+    this.sendControl("__HANGUP__");
+    await new Promise((r) => setTimeout(r, 100));
     this.audio.play("callEnded", { volume: 0.3 });
+    this.cleanup();
     this.events.emitCallEnded();
   }
 
+  // ── Chat y estado ────────────────────────────────────────────────────────
+
   async sendChatMessage(message: string) {
-    if (this.currentDataConnection?.open) {
-      this.currentDataConnection.send(message);
+    if (this.dataChannel?.readyState === "open") {
+      this.dataChannel.send(message);
     }
   }
 
@@ -167,20 +218,31 @@ export class CallManager {
     this.sendStatus("__DEAF__", isDeaf);
     return isDeaf;
   }
+
   toggleVideo() {
     return this.streams.toggleVideo();
   }
 
-  handleCallError(message: string) {
-    this.audio.play("callEnded", { volume: 0.3 });
-    this.cleanup();
-    this.events.emitCallEnded();
-    this.events.emitErrorMessage(message);
-  }
+  // ── Interno ──────────────────────────────────────────────────────────────
 
-  private setupCallListeners(call: MediaConnection, speakerId: string | null) {
-    call.on("stream", async (remoteStream) => {
-      await this.streams.attachRemoteStream(remoteStream, speakerId);
+  private createPeerConnection(): RTCPeerConnection {
+    const pc = new RTCPeerConnection(RTC_CONFIG);
+    this.pc = pc;
+
+    pc.onicecandidate = (evt) => {
+      if (!evt.candidate || !evt.candidate.candidate) return;
+      if (!this.callConnectionId) return;
+      this.signaling
+        .send("candidate", {
+          candidate: evt.candidate.toJSON(),
+          connectionId: this.callConnectionId,
+        })
+        .catch(() => {});
+    };
+
+    pc.ontrack = async (evt) => {
+      const remoteStream = evt.streams[0] ?? new MediaStream([evt.track]);
+      await this.streams.attachRemoteStream(remoteStream, this.activeSpeakerId);
       this.audio.stop("outgoingCall");
       this.audio.stop("callStarted");
       this.audio.stop("ringtone");
@@ -188,30 +250,35 @@ export class CallManager {
       this.events.emitCallConnected();
       this._isInCall = true;
       this._isOutgoingCall = false;
-    });
+      this._isIncomingCall = false;
+    };
 
-    call.on("close", () => {
-      this.cleanup();
-      this.events.emitCallEnded();
-      this.window.restoreBehavior();
-    });
+    pc.ondatachannel = (evt) => {
+      this.setupDataChannel(evt.channel);
+    };
 
-    call.on("error", () => {
-      this.cleanup();
-      this.events.emitCallEnded();
-    });
+    pc.oniceconnectionstatechange = () => {
+      const state = pc.iceConnectionState;
+      if (state === "failed" || state === "closed") {
+        this.cleanup();
+        this.events.emitCallEnded();
+        this.window.restoreBehavior();
+      }
+    };
+
+    return pc;
+  }
+
+  private setupDataChannel(dc: RTCDataChannel) {
+    this.dataChannel = dc;
+    dc.onmessage = (evt) => this.handleDataMessage(evt.data as string);
   }
 
   private handleDataMessage(data: string) {
     if (data === "__HANGUP__") {
       this.cleanup();
       this.events.emitCallEnded();
-      return;
-    }
-    if (data === "__CALL_ACCEPTED__") {
-      this._isInCall = true;
-      this._isOutgoingCall = false;
-      this.events.emitCallConnected();
+      this.window.restoreBehavior();
       return;
     }
     if (data.startsWith("__MUTE__:")) {
@@ -239,12 +306,22 @@ export class CallManager {
     value: boolean,
   ) {
     try {
-      if (this.currentDataConnection?.open) {
-        this.currentDataConnection.send(`${type}:${value}`);
+      if (this.dataChannel?.readyState === "open") {
+        this.dataChannel.send(`${type}:${value}`);
       }
     } catch (error) {
       // Best-effort: no interrumpir la llamada por un mensaje de estado
       logger.debug("call", "sendStatus failed", error);
+    }
+  }
+
+  private sendControl(message: "__HANGUP__") {
+    try {
+      if (this.dataChannel?.readyState === "open") {
+        this.dataChannel.send(message);
+      }
+    } catch (error) {
+      logger.debug("call", "sendControl failed", error);
     }
   }
 
@@ -259,13 +336,31 @@ export class CallManager {
     }
     this.audio.stopAll();
     this.streams.cleanup();
-    this.currentCall?.close();
-    this.currentCall = null;
-    this.currentDataConnection?.close();
-    this.currentDataConnection = null;
+
+    if (this.dataChannel) {
+      this.dataChannel.onmessage = null;
+      this.dataChannel.close();
+      this.dataChannel = null;
+    }
+    if (this.pc) {
+      this.pc.onicecandidate = null;
+      this.pc.ontrack = null;
+      this.pc.ondatachannel = null;
+      this.pc.oniceconnectionstatechange = null;
+      this.pc.close();
+      this.pc = null;
+    }
+    this.pendingOffer = null;
+    this.callConnectionId = null;
+    this.activeSpeakerId = null;
   }
 
-  // Simulaciones de llamada para development
+  private randomId() {
+    return Math.random().toString(36).slice(2) + Date.now().toString(36);
+  }
+
+  // ── Simulaciones para development ────────────────────────────────────────
+
   simulateIncomingCall() {
     if (!import.meta.env.DEV) return;
     this._isIncomingCall = true;

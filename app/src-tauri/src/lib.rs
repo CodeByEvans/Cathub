@@ -1,4 +1,5 @@
 mod audio;
+mod signaling;
 
 use tauri::{
     Manager,
@@ -264,6 +265,8 @@ pub fn run() {
                     .map_err(|e| format!("audio init failed: {e}"))?,
             );
 
+            app.manage(signaling::SignalingManager::new(app.handle().clone()));
+
             #[cfg(desktop)]
             if let Err(e) = app.deep_link().register("cathub") {
                 println!("Failed to register deep link scheme: {:?}", e);
@@ -342,7 +345,7 @@ pub fn run() {
             Ok(())
         })
         .plugin(tauri_plugin_opener::init())
-        .invoke_handler(tauri::generate_handler![greet, clamp_window, set_dock_visibility, set_widget_behavior, set_normal_behavior, set_window_resizable, set_window_min_size, set_window_max_size, audio::play_sound, audio::stop_sound, audio::stop_all_sounds])
+        .invoke_handler(tauri::generate_handler![greet, clamp_window, set_dock_visibility, set_widget_behavior, set_normal_behavior, set_window_resizable, set_window_min_size, set_window_max_size, audio::play_sound, audio::stop_sound, audio::stop_all_sounds, signaling::signal_start, signaling::signal_send, signaling::signal_stop])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

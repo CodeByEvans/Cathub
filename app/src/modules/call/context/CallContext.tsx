@@ -70,7 +70,7 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({
 
     return () => {
       if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
-      moduleRef.current?.connection.destroy();
+      moduleRef.current?.signaling.stop();
     };
   }, []);
 
@@ -88,8 +88,6 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({
   const callActions: ICallActions = {
     startCall: (audioOnly = true) =>
       module.calls.startCall(
-        module.connection.getPeer(),
-        module.partnerId,
         audioOnly,
         module.devices.getMicConstraints(),
         module.devices.speakerId,
