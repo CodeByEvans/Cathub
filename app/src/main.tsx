@@ -7,7 +7,6 @@ import { themeService } from "@/modules/settings/services/theme.service";
 import { platform } from "@tauri-apps/plugin-os";
 import { windowService } from "./modules/settings/services/window.service";
 import { initAutostart } from "./services/autostart.service";
-import { audioService } from "./services/audio.service";
 import { AuthGuard } from "./modules/auth/AuthGuard";
 import { AppProviders } from "./providers/AppProdivers";
 import { logger } from "@/shared/logger";
@@ -24,11 +23,6 @@ async function bootstrap() {
     // Un fallo del store/autostart no debe impedir que la app renderice.
     logger.error("bootstrap", "autostart init failed", error);
   }
-
-  // Cargar los buffers de sonido en segundo plano (sin bloquear el render)
-  audioService
-    .init()
-    .catch((error) => logger.warn("bootstrap", "audio init failed", error));
 
   Promise.all([
     themeService.getTheme(),
