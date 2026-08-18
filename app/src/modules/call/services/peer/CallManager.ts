@@ -26,6 +26,7 @@ const RTC_CONFIG: RTCConfiguration = {
 export class CallManager {
   private pc: RTCPeerConnection | null = null;
   private pendingOffer: IncomingOffer | null = null;
+  private pendingCandidates: SignalCandidate[] = [];
   private callConnectionId: string | null = null;
   private activeSpeakerId: string | null = null;
   private outgoingCallSoundTimer: ReturnType<typeof setTimeout> | null = null;
@@ -56,6 +57,7 @@ export class CallManager {
 
   handleIncomingOffer(offer: IncomingOffer) {
     this.pendingOffer = offer;
+    this.callConnectionId = offer.connectionId;
     this._isIncomingCall = true;
     this.events.emitIncomingCall(offer.connectionId);
     this.audio.play("ringtone", { volume: 0.3, loop: true });
@@ -66,13 +68,22 @@ export class CallManager {
     if (!this.pc || msg.connectionId !== this.callConnectionId) return;
     try {
       await this.pc.setRemoteDescription(msg.sdp);
+      this._isInCall = true;
+      this._isOutgoingCall = false;
+      this.audio.stop("outgoingCall");
+      this.events.emitCallConnected();
     } catch (error) {
       logger.warn("call", "handleAnswer failed", error);
     }
   }
 
   async handleCandidate(msg: SignalCandidate) {
-    if (!this.pc || msg.connectionId !== this.callConnectionId) return;
+    if (msg.connectionId !== this.callConnectionId) return;
+    if (!this.pc) {
+      // Candidates que llegan durante el ringing: encolar para no perderlos.
+      this.pendingCandidates.push(msg);
+      return;
+    }
     try {
       await this.pc.addIceCandidate(msg.candidate);
     } catch (error) {
@@ -178,12 +189,26 @@ export class CallManager {
       localStream.getTracks().forEach((track) => pc.addTrack(track, localStream));
 
       await pc.setRemoteDescription(offer.sdp);
+
+      // Volcar los ICE candidates que llegaron durante el ringing.
+      const buffered = this.pendingCandidates;
+      this.pendingCandidates = [];
+      for (const c of buffered) {
+        try {
+          await pc.addIceCandidate(c.candidate);
+        } catch (error) {
+          logger.debug("call", "addIceCandidate (buffered) failed", error);
+        }
+      }
+
       const answer = await pc.createAnswer();
       await pc.setLocalDescription(answer);
 
       this.audio.stop("ringtone");
       this.audio.play("callStarted", { volume: 0.3, loop: true });
       this.window.restoreBehavior();
+      this._isInCall = true;
+      this.events.emitCallConnected();
 
       await this.signaling.send("answer", {
         connectionId: this.callConnectionId,
@@ -302,10 +327,6 @@ export class CallManager {
         this.audio.stop("callStarted");
         this.audio.stop("ringtone");
         this.events.emitRemoteStream(remoteStream);
-        this.events.emitCallConnected();
-        this._isInCall = true;
-        this._isOutgoingCall = false;
-        this._isIncomingCall = false;
       } catch (error) {
         logger.error("call", "ontrack failed", error);
       }
@@ -343,6 +364,7 @@ export class CallManager {
       this.pc = null;
     }
     this.pendingOffer = null;
+    this.pendingCandidates = [];
     this.callConnectionId = null;
     this.activeSpeakerId = null;
   }
