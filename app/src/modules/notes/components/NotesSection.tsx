@@ -161,8 +161,8 @@ export function NotesSection({
           aria-hidden="true"
           className="absolute inset-0 m-auto pointer-events-none select-none"
           style={{
-            width: "55%",
-            height: "55%",
+            width: "68%",
+            height: "68%",
             objectFit: "contain",
             opacity: 0.18,
             zIndex: -1,
