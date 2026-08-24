@@ -1,5 +1,5 @@
 import { cn } from "@/lib/utils";
-import { Phone } from "lucide-react";
+import { PhoneCall } from "lucide-react";
 import { Button } from "@/shared/components/atoms/button";
 import { useCall } from "../../context/CallContext";
 
@@ -19,7 +19,7 @@ export const CallButton = ({ isOnline }: { isOnline: boolean }) => {
         }}
         onClick={() => calls.startCall(true)}
       >
-        <Phone className="w-6 h-6" />
+        <PhoneCall className="w-6 h-6" />
       </Button>
     </div>
   );
