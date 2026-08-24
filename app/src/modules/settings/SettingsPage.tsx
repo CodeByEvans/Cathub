@@ -3,13 +3,14 @@ import { ThemeType, ViewType } from "./@types/settings.types";
 import { X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
-import { BehaviorType } from "@/@types/window.types";
+import { BehaviorType, ControlsPosition } from "@/@types/window.types";
 import { BackButton } from "./components/molecules/BackButton";
 import {
   MainSettingsView,
   AppSettingsView,
   ThemeSettingsView,
   WindowSettingsView,
+  WindowControlsSettingsView,
   EditProfileView,
   ColorSettingsView,
   PersonalizeView,
@@ -22,9 +23,17 @@ export interface SettingsProps {
   isOpen: boolean;
   onClose: () => void;
   onOpenColorPicker?: () => void;
+  controlsPosition: ControlsPosition;
+  onControlsPositionChange: (position: ControlsPosition) => void;
 }
 
-export const SettingsPage: React.FC<SettingsProps> = ({ isOpen, onClose, onOpenColorPicker }) => {
+export const SettingsPage: React.FC<SettingsProps> = ({
+  isOpen,
+  onClose,
+  onOpenColorPicker,
+  controlsPosition,
+  onControlsPositionChange,
+}) => {
   const [currentView, setCurrentView] = useState<ViewType>("main");
   const [selectedTheme, setSelectedTheme] = useState<ThemeType>(
     themeService.currentTheme(),
@@ -112,6 +121,13 @@ export const SettingsPage: React.FC<SettingsProps> = ({ isOpen, onClose, onOpenC
               <WindowSettingsView
                 selectedBehavior={behavior}
                 onBehaviorChange={setBehavior}
+              />
+            )}
+
+            {currentView === "window-controls" && (
+              <WindowControlsSettingsView
+                selectedPosition={controlsPosition}
+                onPositionChange={onControlsPositionChange}
               />
             )}
 

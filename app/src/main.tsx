@@ -28,6 +28,7 @@ async function bootstrap() {
     themeService.getTheme(),
     windowService.getBehaviorState(),
     themeService.getColor(),
+    windowService.loadControlsPosition(),
   ]).catch((error) => logger.error("bootstrap", "init settings failed", error));
 
   const os = await platform();

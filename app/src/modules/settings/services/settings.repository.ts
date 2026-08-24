@@ -1,15 +1,18 @@
 import { storageProvider } from "@/shared/infrastructure/storage.provider";
 import { STORE_KEYS } from "@/shared/infrastructure/store.keys";
 import { ThemeColor, ThemeType } from "../@types/settings.types";
+import { ControlsPosition } from "@/@types/window.types";
 
 const THEMES: ThemeType[] = ["light", "dark", "glass"];
 const BEHAVIORS = ["widget", "app", "floating"] as const;
+const CONTROLS_POSITIONS: ControlsPosition[] = ["left", "right"];
 
 export type WindowBehavior = (typeof BEHAVIORS)[number];
 
 export const DEFAULT_THEME: ThemeType = "light";
 export const DEFAULT_THEME_COLOR: ThemeColor = "#3b82f6";
 export const DEFAULT_BEHAVIOR: WindowBehavior = "app";
+export const DEFAULT_CONTROLS_POSITION: ControlsPosition = "right";
 
 /**
  * Dueño único del patrón leer-validar-fallback de la configuración persistida
@@ -67,5 +70,24 @@ export const settingsRepository = {
     height: number;
   }): Promise<void> {
     await storageProvider.set(STORE_KEYS.compactWindowSize, size);
+  },
+
+  async getCompactMode(): Promise<boolean> {
+    return (await storageProvider.get(STORE_KEYS.compactMode)) === true;
+  },
+
+  async setCompactMode(mode: boolean): Promise<void> {
+    await storageProvider.set(STORE_KEYS.compactMode, mode);
+  },
+
+  async getWindowControlsPosition(): Promise<ControlsPosition> {
+    const stored = await storageProvider.get(STORE_KEYS.windowControlsPosition);
+    return stored && CONTROLS_POSITIONS.includes(stored as ControlsPosition)
+      ? (stored as ControlsPosition)
+      : DEFAULT_CONTROLS_POSITION;
+  },
+
+  async setWindowControlsPosition(position: ControlsPosition): Promise<void> {
+    await storageProvider.set(STORE_KEYS.windowControlsPosition, position);
   },
 };

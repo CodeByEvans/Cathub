@@ -37,6 +37,12 @@ fn set_dock_visibility(_app: tauri::AppHandle, visible: bool) {
     }
 }
 
+// Comando para salir de la app (botón "Salir" del widget)
+#[tauri::command]
+fn quit_app(app: tauri::AppHandle) {
+    app.exit(0);
+}
+
 // Comando para clamar la ventana
 #[tauri::command]
 async fn clamp_window(window: tauri::Window) {
@@ -345,7 +351,7 @@ pub fn run() {
             Ok(())
         })
         .plugin(tauri_plugin_opener::init())
-        .invoke_handler(tauri::generate_handler![greet, clamp_window, set_dock_visibility, set_widget_behavior, set_normal_behavior, set_window_resizable, set_window_min_size, set_window_max_size, audio::play_sound, audio::stop_sound, audio::stop_all_sounds, signaling::signal_start, signaling::signal_send, signaling::signal_stop])
+        .invoke_handler(tauri::generate_handler![greet, quit_app, clamp_window, set_dock_visibility, set_widget_behavior, set_normal_behavior, set_window_resizable, set_window_min_size, set_window_max_size, audio::play_sound, audio::stop_sound, audio::stop_all_sounds, signaling::signal_start, signaling::signal_send, signaling::signal_stop])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

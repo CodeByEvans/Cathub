@@ -2,13 +2,15 @@ import { ClockSection } from "./modules/clock/components/ClockSection";
 import { NotesSection } from "./modules/notes/components/NotesSection";
 import { CallSection } from "./modules/call/components/organisms/CallSection";
 import { Button } from "./shared/components/atoms/button";
-import { Settings, Maximize2 } from "lucide-react";
 import { SettingsPage } from "./modules/settings/SettingsPage";
 import LinkModal from "./modules/connection/components/LinkModal";
 import React from "react";
 import { useConnection } from "./modules/connection/contexts/ConnectionContext";
 import { ColorPickerPanel } from "./modules/settings/components/organisms/ColorPickerPanel";
 import { motion, AnimatePresence } from "framer-motion";
+import { WindowControls } from "./components/WindowControls";
+import { YarnBall } from "./shared/components/atoms/yarn-ball";
+import { ControlsPosition } from "./@types/window.types";
 
 interface MainViewProps {
   onSimulateIncomingCall: () => void;
@@ -19,6 +21,8 @@ interface MainViewProps {
   onCloseColorPicker: () => void;
   isCompact: boolean;
   onToggleCompact: () => void;
+  controlsPosition: ControlsPosition;
+  onControlsPositionChange: (position: ControlsPosition) => void;
 }
 
 export function MainView({
@@ -30,6 +34,8 @@ export function MainView({
   onCloseColorPicker,
   isCompact,
   onToggleCompact,
+  controlsPosition,
+  onControlsPositionChange,
 }: MainViewProps) {
   const { isLinked } = useConnection();
   const [showSettings, setShowSettings] = React.useState(false);
@@ -52,33 +58,40 @@ export function MainView({
       } ${getWidth()}`}
       data-tauri-drag-region
     >
-      {/* Full-mode top buttons */}
-      {!showColorPicker && !isCompact && (
-        <div className="absolute top-1 right-1 z-10 flex gap-0.5">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={onToggleCompact}
-            className="h-6 w-6 text-muted-foreground/40 hover:text-foreground transition-colors"
-            title="Compactar"
-          >
-            <Maximize2 className="w-3 h-3 rotate-90" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => setShowSettings(true)}
-            className="h-6 w-6 text-muted-foreground/40 hover:text-foreground transition-colors"
-          >
-            <Settings className="w-3.5 h-3.5" />
-          </Button>
-        </div>
+      {/* Controles de ventana (solo modo completo, sin el selector de color) */}
+      {!isCompact && !showColorPicker && (
+        <>
+          {controlsPosition === "left" && (
+            <div className="absolute top-1 left-1 z-10">
+              <WindowControls position="left" />
+            </div>
+          )}
+          <div className="absolute top-1 right-1 z-10 flex items-center gap-0.5">
+            {controlsPosition === "right" && (
+              <>
+                <WindowControls position="right" />
+                <div className="w-px self-stretch bg-border/30 mx-0.5" />
+              </>
+            )}
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setShowSettings(true)}
+              className="h-6 w-6 text-muted-foreground/50 hover:text-primary hover:bg-primary/10 transition-colors"
+              title="Configuración"
+            >
+              <YarnBall className="w-4 h-4" />
+            </Button>
+          </div>
+        </>
       )}
 
       <SettingsPage
         isOpen={showSettings}
         onClose={() => setShowSettings(false)}
         onOpenColorPicker={handleOpenColorPicker}
+        controlsPosition={controlsPosition}
+        onControlsPositionChange={onControlsPositionChange}
       />
 
       {!isLinked && <LinkModal />}
@@ -94,15 +107,7 @@ export function MainView({
             exit={{ opacity: 0 }}
             transition={{ duration: 0.1 }}
           >
-            <NotesSection isCompact />
-
-            <button
-              onClick={onToggleCompact}
-              className="absolute top-1.5 left-1.5 p-1 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-              title="Expandir"
-            >
-              <Maximize2 className="w-3 h-3 text-muted-foreground/60" />
-            </button>
+            <NotesSection isCompact onToggleCompact={onToggleCompact} />
           </motion.section>
         ) : (
           <motion.section
@@ -121,7 +126,7 @@ export function MainView({
               }
             >
               <ClockSection />
-              <NotesSection />
+              <NotesSection onToggleCompact={onToggleCompact} />
               <CallSection />
             </div>
 

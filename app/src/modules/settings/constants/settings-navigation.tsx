@@ -12,18 +12,21 @@ import {
   UserCog,
   UserX,
   Globe,
+  PanelLeft,
+  PanelRight,
+  PanelTop,
 } from "lucide-react";
 import {
   SettingsButtonProps,
   OptionCardProps,
   ThemeType,
 } from "../@types/settings.types";
-import { BehaviorType } from "@/@types/window.types";
+import { BehaviorType, ControlsPosition } from "@/@types/window.types";
 
 export const MAIN_SETTINGS: SettingsButtonProps[] = [
   {
     icon: <Layout className="w-6 h-6 mb-1" />,
-    text: "App",
+    text: "General",
     action: "app-settings",
   },
   {
@@ -58,6 +61,11 @@ export const APP_SETTINGS: SettingsButtonProps[] = [
     icon: <AppWindow className="w-6 h-6  mb-1" />,
     text: "Modo de ventana",
     action: "window-settings",
+  },
+  {
+    icon: <PanelTop className="w-6 h-6 mb-1" />,
+    text: "Botones de ventana",
+    action: "window-controls",
   },
   {
     icon: <Globe className="w-6 h-6 mb-1" />,
@@ -105,5 +113,20 @@ export const WINDOW_BEHAVIOR_OPTIONS: OptionCardProps<BehaviorType>[] = [
     title: "Flotante",
     description: "Siempre visible",
     icon: <Layers className="w-5 h-5" />,
+  },
+];
+
+export const WINDOW_CONTROLS_POSITION_OPTIONS: OptionCardProps<ControlsPosition>[] = [
+  {
+    value: "left",
+    title: "Izquierda",
+    description: "Esquina superior",
+    icon: <PanelLeft className="w-5 h-5" />,
+  },
+  {
+    value: "right",
+    title: "Derecha",
+    description: "Esquina superior",
+    icon: <PanelRight className="w-5 h-5" />,
   },
 ];

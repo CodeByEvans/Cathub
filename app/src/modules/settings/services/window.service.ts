@@ -3,6 +3,7 @@ import { settingsRepository, WindowBehavior } from "./settings.repository";
 import { invoke } from "@tauri-apps/api/core";
 import { getCurrentWindow, LogicalSize } from "@tauri-apps/api/window";
 import { MAIN_SIZE, EXPANDED_SIZE, DEFAULT_COMPACT } from "@/constants/window.constants";
+import { ControlsPosition } from "@/@types/window.types";
 
 type Behavior = WindowBehavior;
 
@@ -12,6 +13,7 @@ interface WindowState {
 
 export class WindowService {
   private behavior: Behavior = "app";
+  private controlsPosition: ControlsPosition = "right";
   private readonly behaviors: Behavior[] = ["widget", "app", "floating"];
   private compactSize = { ...DEFAULT_COMPACT };
   private compactResizeUnlisten: (() => void) | null = null;
@@ -49,6 +51,29 @@ export class WindowService {
     } catch (err) {
       logger.error("window", "Error al obtener comportamiento", err);
       return { behavior: "app" };
+    }
+  }
+
+  async loadControlsPosition(): Promise<ControlsPosition> {
+    try {
+      this.controlsPosition = await settingsRepository.getWindowControlsPosition();
+      return this.controlsPosition;
+    } catch (err) {
+      logger.warn("window", "Error al cargar posición de botones", err);
+      return this.controlsPosition;
+    }
+  }
+
+  getControlsPosition(): ControlsPosition {
+    return this.controlsPosition;
+  }
+
+  async setControlsPosition(position: ControlsPosition) {
+    this.controlsPosition = position;
+    try {
+      await settingsRepository.setWindowControlsPosition(position);
+    } catch (err) {
+      logger.warn("window", "Error al guardar posición de botones", err);
     }
   }
 
@@ -125,6 +150,23 @@ export class WindowService {
       await settingsRepository.setCompactWindowSize({ width, height });
     } catch (err) {
       logger.warn("window", "Error al guardar tamaño compacto", err);
+    }
+  }
+
+  async loadCompactMode(): Promise<boolean> {
+    try {
+      return await settingsRepository.getCompactMode();
+    } catch (err) {
+      logger.warn("window", "Error al cargar modo compacto", err);
+      return false;
+    }
+  }
+
+  async saveCompactMode(mode: boolean) {
+    try {
+      await settingsRepository.setCompactMode(mode);
+    } catch (err) {
+      logger.warn("window", "Error al guardar modo compacto", err);
     }
   }
 

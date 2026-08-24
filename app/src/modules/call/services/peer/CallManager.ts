@@ -70,6 +70,10 @@ export class CallManager {
       await this.pc.setRemoteDescription(msg.sdp);
       this._isInCall = true;
       this._isOutgoingCall = false;
+      if (this.outgoingCallSoundTimer) {
+        clearTimeout(this.outgoingCallSoundTimer);
+        this.outgoingCallSoundTimer = null;
+      }
       this.audio.stop("outgoingCall");
       this.events.emitCallConnected();
     } catch (error) {
@@ -204,8 +208,8 @@ export class CallManager {
       const answer = await pc.createAnswer();
       await pc.setLocalDescription(answer);
 
-      this.audio.stop("ringtone");
-      this.audio.play("callStarted", { volume: 0.3, loop: true });
+      this.audio.stopAll();
+      this.audio.play("callStarted", { volume: 0.3 });
       this.window.restoreBehavior();
       this._isInCall = true;
       this.events.emitCallConnected();

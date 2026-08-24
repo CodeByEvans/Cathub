@@ -9,6 +9,7 @@ export type ViewType =
   | "color-settings"
   | "personalize"
   | "window-settings"
+  | "window-controls"
   | "audio-settings"
   | "edit-profile"
   | "change-username"

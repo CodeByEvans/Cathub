@@ -13,6 +13,8 @@ export const STORE_KEYS = {
   themeColor: "themeColor",
   windowBehavior: "window_behavior",
   compactWindowSize: "compactWindowSize",
+  compactMode: "compactMode",
+  windowControlsPosition: "windowControlsPosition",
   // onboarding
   firstLaunch: "firstLaunch",
   introductionCompleted: "introduction_completed",
@@ -37,6 +39,8 @@ export interface StoreValueMap {
   themeColor: string;
   window_behavior: string;
   compactWindowSize: { width: number; height: number };
+  compactMode: boolean;
+  windowControlsPosition: string;
   firstLaunch: boolean;
   introduction_completed: boolean;
 }

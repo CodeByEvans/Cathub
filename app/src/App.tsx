@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { IncomingCallModal } from "./modules/call/components/views/IncomingCallModal";
 import { InCallScreen } from "./modules/call/components/views/InCallScreen";
 import { Button } from "./shared/components/atoms/button";
-import { Settings } from "lucide-react";
+import { YarnBall } from "./shared/components/atoms/yarn-ball";
 import { SettingsPage } from "./modules/settings/SettingsPage";
 import { useClampOnMouseUp } from "./hooks/useClampOnMouseUp";
 import { MainView } from "./MainView";
@@ -13,6 +13,7 @@ import { useCall } from "./modules/call/context/CallContext";
 import { windowService } from "./modules/settings/services/window.service";
 import { IntroScreen } from "./components/IntroScreen";
 import { getCurrentWindow } from "@tauri-apps/api/window";
+import { ControlsPosition } from "./@types/window.types";
 
 function App() {
   const { showSettings, openSettings, closeSettings } = useSettings();
@@ -20,9 +21,28 @@ function App() {
   const [showColorPicker, setShowColorPicker] = useState(false);
   const [isCompact, setIsCompact] = useState(false);
   const [introDone, setIntroDone] = useState(false);
+  const [controlsPosition, setControlsPosition] = useState<ControlsPosition>(
+    windowService.getControlsPosition(),
+  );
 
   useEffect(() => {
     getCurrentWindow().show();
+  }, []);
+
+  useEffect(() => {
+    windowService.loadControlsPosition().then(setControlsPosition);
+  }, []);
+
+  useEffect(() => {
+    windowService
+      .loadCompactMode()
+      .then((compact) => {
+        if (compact) {
+          setIsCompact(true);
+          windowService.enableCompactMode();
+        }
+      })
+      .catch(() => {});
   }, []);
 
   useEffect(() => {
@@ -55,6 +75,7 @@ function App() {
     }
     const next = !isCompact;
     setIsCompact(next);
+    await windowService.saveCompactMode(next);
 
     if (next) {
       await windowService.enableCompactMode();
@@ -92,11 +113,16 @@ function App() {
               onClick={openSettings}
               className="absolute top-1 right-1 z-10 text-muted-foreground hover:text-foreground transition-colors"
             >
-              <Settings />
+              <YarnBall className="w-4 h-4" />
             </Button>
           }
         />
-        <SettingsPage isOpen={showSettings} onClose={closeSettings} />
+        <SettingsPage
+          isOpen={showSettings}
+          onClose={closeSettings}
+          controlsPosition={controlsPosition}
+          onControlsPositionChange={setControlsPosition}
+        />
       </>
     );
   }
@@ -138,6 +164,8 @@ function App() {
         onCloseColorPicker={closeColorPicker}
         isCompact={isCompact}
         onToggleCompact={toggleCompact}
+        controlsPosition={controlsPosition}
+        onControlsPositionChange={setControlsPosition}
       />
     </>
   );

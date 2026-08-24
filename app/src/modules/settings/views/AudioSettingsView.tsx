@@ -26,20 +26,31 @@ export const AudioSettingsView: React.FC = () => {
       const savedMic = devices.micId;
       const savedSpeaker = devices.speakerId;
 
-      if (savedMic) {
-        setSelectedMic(savedMic);
-      } else if (microphones.length > 0) {
-        setSelectedMic(microphones[0].deviceId);
-      }
+      const defaultId = (list: MediaDeviceInfo[]) =>
+        list.find((d) => d.deviceId === "default")?.deviceId ??
+        list[0]?.deviceId ??
+        "";
 
-      if (savedSpeaker) {
-        setSelectedSpeaker(savedSpeaker);
-      } else if (speakers.length > 0) {
-        setSelectedSpeaker(speakers[0].deviceId);
-      }
+      const micIds = microphones.map((d) => d.deviceId);
+      const speakerIds = speakers.map((d) => d.deviceId);
 
-      if (savedMic && savedSpeaker) {
-        devices.setDevices(savedMic, savedSpeaker);
+      const resolvedMic =
+        savedMic && micIds.includes(savedMic)
+          ? savedMic
+          : defaultId(microphones);
+      const resolvedSpeaker =
+        savedSpeaker && speakerIds.includes(savedSpeaker)
+          ? savedSpeaker
+          : defaultId(speakers);
+
+      setSelectedMic(resolvedMic);
+      setSelectedSpeaker(resolvedSpeaker);
+
+      if (
+        (resolvedMic !== savedMic || resolvedSpeaker !== savedSpeaker) &&
+        (resolvedMic || resolvedSpeaker)
+      ) {
+        await devices.setDevices(resolvedMic, resolvedSpeaker);
       }
     };
     load();

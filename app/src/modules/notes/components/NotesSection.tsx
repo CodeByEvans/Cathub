@@ -1,8 +1,17 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { NoteComposer } from "./NoteComposer";
-import { ScrollTextIcon, XIcon, ArrowLeftIcon, Pencil } from "lucide-react";
+import {
+  ScrollTextIcon,
+  XIcon,
+  ArrowLeftIcon,
+  Pencil,
+  Maximize2,
+  Send,
+  X,
+} from "lucide-react";
 import { useNotes } from "../context/NotesContext";
+import { toast } from "@/components/ui/sonner";
+import { handleAppError } from "@/shared/errors/appErrorHandler";
 
 interface Note {
   id: number;
@@ -59,14 +68,78 @@ const foldInner: React.CSSProperties = {
   borderColor: "transparent transparent var(--note-fold, #f5ede0) transparent",
 };
 
-export function NotesSection({ isCompact = false }: { isCompact?: boolean }) {
-  const { notes } = useNotes();
+export function NotesSection({
+  isCompact = false,
+  onToggleCompact,
+}: {
+  isCompact?: boolean;
+  onToggleCompact?: () => void;
+}) {
+  const { notes, sendNote } = useNotes();
   const [historyOpen, setHistoryOpen] = useState(false);
   const [expandedNote, setExpandedNote] = useState<Note | null>(null);
-  const [composerOpen, setComposerOpen] = useState(false);
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState("");
+  const inputRef = useRef<HTMLDivElement>(null);
 
   const latestNote = notes[0] ?? null;
   const previousNotes = notes.slice(1);
+
+  const startEditing = () => {
+    setDraft("");
+    setEditing(true);
+  };
+
+  useEffect(() => {
+    if (editing && inputRef.current) {
+      inputRef.current.focus();
+    }
+  }, [editing]);
+
+  const handleInput = (e: React.FormEvent<HTMLDivElement>) => {
+    const el = e.currentTarget;
+    let text = el.innerText;
+    if (text.length > 200) {
+      text = text.slice(0, 200);
+      el.innerText = text;
+      const range = document.createRange();
+      range.selectNodeContents(el);
+      range.collapse(false);
+      const sel = window.getSelection();
+      sel?.removeAllRanges();
+      sel?.addRange(range);
+    }
+    setDraft(text);
+  };
+
+  const handleSend = async () => {
+    const content = draft.trim();
+    if (!content) return;
+    try {
+      await sendNote(content);
+      toast.success("Nota enviada");
+      setDraft("");
+      setEditing(false);
+    } catch (error) {
+      handleAppError(error, "notes.send");
+    }
+  };
+
+  const handleCancel = () => {
+    setDraft("");
+    setEditing(false);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      handleSend();
+    }
+    if (e.key === "Escape") {
+      handleCancel();
+    }
+  };
+
   return (
     <div
       className={`relative flex flex-col h-full flex-1 min-w-0 ${isCompact ? "px-0" : "px-2"} gap-1`}
@@ -74,7 +147,7 @@ export function NotesSection({ isCompact = false }: { isCompact?: boolean }) {
     >
       {/* ── Nota principal ── */}
       <div
-        className="relative flex flex-1 items-center justify-center overflow-hidden rounded-md border shadow-sm pb-2 group"
+        className="relative flex flex-1 items-center justify-center overflow-hidden rounded-md border shadow-sm  group"
         data-tauri-drag-region
         style={{
           ...paperStyle,
@@ -82,49 +155,140 @@ export function NotesSection({ isCompact = false }: { isCompact?: boolean }) {
             "2px 2px 8px rgba(0,0,0,0.08), inset 0 1px 3px rgba(0,0,0,0.04)",
         }}
       >
+        <img
+          src="/cat3.svg"
+          alt=""
+          aria-hidden="true"
+          className="absolute inset-0 m-auto pointer-events-none select-none"
+          style={{
+            width: "55%",
+            height: "55%",
+            objectFit: "contain",
+            opacity: 0.18,
+            zIndex: -1,
+          }}
+        />
+
+        {editing ? (
+          <motion.div
+            className="absolute inset-0 flex items-center justify-center"
+            initial={{ opacity: 0, scale: 0.96 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ type: "spring", stiffness: 300, damping: 26 }}
+          >
+            <div
+              ref={inputRef}
+              contentEditable
+              suppressContentEditableWarning
+              onInput={handleInput}
+              onKeyDown={handleKeyDown}
+              className="w-full text-center outline-none break-words"
+              style={{
+                fontFamily: "'Caveat', cursive",
+                fontSize: "1.4rem",
+                lineHeight: 1.5,
+                padding: "0 1.25rem",
+                color: "var(--note-text, inherit)",
+                whiteSpace: "pre-wrap",
+                wordBreak: "break-word",
+                maxHeight: "100%",
+                overflowY: "auto",
+              }}
+            />
+
+            {!draft && (
+              <span
+                className="absolute inset-0 flex items-center justify-center text-center pointer-events-none"
+                style={{
+                  fontFamily: "'Caveat', cursive",
+                  fontSize: "1.4rem",
+                  lineHeight: 1.5,
+                  padding: "0 1.25rem",
+                  color: "var(--note-muted, #b0a090)",
+                  whiteSpace: "pre-wrap",
+                }}
+              >
+                Escribe tu nota…
+              </span>
+            )}
+
+            <button
+              onClick={handleCancel}
+              className="absolute top-2 right-2 p-1 rounded-full hover:bg-black/8 text-muted-foreground hover:text-foreground transition-colors z-10"
+              title="Cancelar"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+
+            <motion.button
+              initial={false}
+              animate={{
+                opacity: draft.trim() ? 1 : 0,
+                scale: draft.trim() ? 1 : 0.8,
+                y: draft.trim() ? 0 : 6,
+              }}
+              transition={{ type: "spring", stiffness: 300, damping: 24 }}
+              onClick={handleSend}
+              disabled={!draft.trim()}
+              style={{ pointerEvents: draft.trim() ? "auto" : "none" }}
+              className="absolute bottom-2.5 left-2.5 flex items-center gap-1 px-3 py-1 rounded-full bg-primary hover:bg-primary/90 disabled:opacity-40 text-primary-foreground text-[11px] font-medium transition-colors glass:text-white z-10"
+            >
+              <Send className="w-3.5 h-3.5" />
+              Enviar
+            </motion.button>
+          </motion.div>
+        ) : (
+          <>
+            {latestNote ? (
+              <>
+                <p className="m-0 px-5 text-center leading-relaxed text-2xl glass:text-white">
+                  {latestNote.content}
+                </p>
+                <span className="absolute bottom-1.5 left-2.5 text-[11px] text-muted-foreground">
+                  {formatNoteTime(latestNote.timestamp)}
+                </span>
+              </>
+            ) : (
+              <p
+                className="m-0 text-sm italic text-center"
+                style={{ color: "var(--note-muted, #b0a090)" }}
+              >
+                Sin notas aún...
+              </p>
+            )}
+
+            {previousNotes.length > 0 && (
+              <button
+                onClick={() => setHistoryOpen(true)}
+                className="absolute top-2 right-2 flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] text-muted-foreground hover:text-foreground hover:bg-black/5 opacity-0 group-hover:opacity-100 transition-all duration-300"
+              >
+                <ScrollTextIcon size={11} />
+              </button>
+            )}
+
+            <button
+              onClick={startEditing}
+              className="absolute bottom-2 right-2 p-1.5 rounded-full text-primary-foreground hover:bg-primary hover:shadow-lg hover:scale-105 active:scale-95 opacity-0 group-hover:opacity-100 transition-all duration-300 z-10"
+              title="Enviar nota"
+            >
+              <Pencil className="w-3.5 h-3.5" />
+            </button>
+          </>
+        )}
+
         <div style={foldOuter} />
         <div style={foldInner} />
 
-        {latestNote ? (
-          <>
-            <p className="m-0 px-5 text-center leading-relaxed text-2xl glass:text-white">
-              {latestNote.content}
-            </p>
-            <span className="absolute bottom-1.5 left-2.5 text-[11px] text-muted-foreground">
-              {formatNoteTime(latestNote.timestamp)}
-            </span>
-          </>
-        ) : (
-          <p
-            className="m-0 text-sm italic text-center"
-            style={{ color: "var(--note-muted, #b0a090)" }}
-          >
-            Sin notas aún...
-          </p>
-        )}
-
-        {previousNotes.length > 0 && (
+        {!editing && onToggleCompact && (
           <button
-            onClick={() => setHistoryOpen(true)}
-            className="absolute top-2 right-2 flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] text-muted-foreground hover:text-foreground hover:bg-black/5 opacity-0 group-hover:opacity-100 transition-all duration-300"
+            onClick={onToggleCompact}
+            className="absolute top-2 left-2 p-1 rounded-full text-muted-foreground/60 hover:text-foreground hover:bg-black/5 opacity-0 group-hover:opacity-100 transition-all duration-300"
+            title={isCompact ? "Expandir" : "Compactar"}
           >
-            <ScrollTextIcon size={11} />
+            <Maximize2 className={`w-3 h-3 ${isCompact ? "" : "rotate-90"}`} />
           </button>
         )}
-
-        <button
-          onClick={() => setComposerOpen(true)}
-          className="absolute bottom-2 right-2 p-1.5 rounded-full text-primary-foreground hover:bg-primary hover:shadow-lg hover:scale-105 active:scale-95 opacity-0 group-hover:opacity-100 transition-all duration-300 z-10"
-          title="Enviar nota"
-        >
-          <Pencil className="w-3.5 h-3.5" />
-        </button>
       </div>
-
-      <NoteComposer
-        isOpen={composerOpen}
-        onClose={() => setComposerOpen(false)}
-      />
 
       {/* ── Drawer historial ── */}
       <AnimatePresence>

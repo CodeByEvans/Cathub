@@ -43,6 +43,9 @@ export const AppSettingsView: React.FC<AppSettingsProps> = ({
             case "window-settings":
               setCurrentView("window-settings");
               break;
+            case "window-controls":
+              setCurrentView("window-controls");
+              break;
             case "autostart":
               handleAutostart();
               break;

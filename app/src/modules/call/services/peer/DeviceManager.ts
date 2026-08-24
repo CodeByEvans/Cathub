@@ -31,9 +31,8 @@ export class DeviceManager {
   }
 
   getMicConstraints(): MediaTrackConstraints | boolean {
-    return this.selectedMicId
-      ? { deviceId: { ideal: this.selectedMicId } }
-      : true;
+    if (!this.selectedMicId || this.selectedMicId === "default") return true;
+    return { deviceId: { ideal: this.selectedMicId } };
   }
 
   get micId() {
