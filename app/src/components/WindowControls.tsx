@@ -6,11 +6,11 @@ import { QuitConfirmModal } from "./QuitConfirmModal";
 import { windowService } from "@/modules/settings/services/window.service";
 import { ControlsPosition } from "@/@types/window.types";
 
-const controlClass =
-  "h-6 w-6 inline-flex items-center justify-center rounded-md text-muted-foreground/50 hover:text-foreground hover:bg-accent/40 transition-colors outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50";
+const circleBase =
+  "h-3.5 w-3.5 rounded-full flex items-center justify-center border border-black/10 transition-transform active:scale-90";
 
-const quitClass =
-  "h-6 w-6 inline-flex items-center justify-center rounded-md text-muted-foreground/50 hover:text-destructive hover:bg-destructive/10 transition-colors outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50";
+const glyphClass =
+  "text-black/60 opacity-0 group-hover:opacity-100 transition-opacity";
 
 export function WindowControls({
   position = "right",
@@ -43,10 +43,10 @@ export function WindowControls({
       key="minimize"
       type="button"
       onClick={minimize}
-      className={controlClass}
+      className={`${circleBase} bg-[#febc2e] hover:bg-[#ffcc4d]`}
       title="Minimizar"
     >
-      <Minus className="w-3.5 h-3.5" />
+      <Minus className={`w-2.5 h-2.5 ${glyphClass}`} strokeWidth={2.5} />
     </button>
   );
 
@@ -55,10 +55,10 @@ export function WindowControls({
       key="close"
       type="button"
       onClick={hide}
-      className={controlClass}
+      className={`${circleBase} bg-[#28c840] hover:bg-[#3ddb56]`}
       title="Ocultar al tray"
     >
-      <X className="w-3.5 h-3.5" />
+      <X className={`w-2.5 h-2.5 ${glyphClass}`} strokeWidth={2.5} />
     </button>
   );
 
@@ -67,10 +67,10 @@ export function WindowControls({
       key="quit"
       type="button"
       onClick={() => setConfirmOpen(true)}
-      className={quitClass}
+      className={`${circleBase} bg-[#ff5f57] hover:bg-[#ff7a73]`}
       title="Salir de Cathub"
     >
-      <Power className="w-3.5 h-3.5" />
+      <Power className={`w-2.5 h-2.5 ${glyphClass}`} strokeWidth={2.5} />
     </button>
   );
 
@@ -82,7 +82,7 @@ export function WindowControls({
 
   return (
     <>
-      <div className="flex items-center gap-0.5">{buttons}</div>
+      <div className="flex items-center gap-1.5 group">{buttons}</div>
 
       <QuitConfirmModal
         open={confirmOpen}
