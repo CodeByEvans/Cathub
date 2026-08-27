@@ -1,13 +1,9 @@
 {
     "private": true,
-    "workspaces": [
-        "app",
-        "web"
-    ],
     "scripts": {
-        "dev:app": "npm --prefix app run dev",
-        "tauri-dev": "npm --prefix app run tauri dev",
-        "tauri-build": "npm --prefix app run tauri build",
+        "dev:app": "pnpm -C app run dev",
+        "tauri-dev": "pnpm -C app run tauri dev",
+        "tauri-build": "pnpm -C app run tauri build",
         "dev:web": "npm --prefix web run dev"
     }
 }
