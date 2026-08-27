@@ -19,6 +19,7 @@ function App() {
   const { showSettings, openSettings, closeSettings } = useSettings();
   const { calls, callState } = useCall();
   const [showColorPicker, setShowColorPicker] = useState(false);
+  const [showWidgetsEditor, setShowWidgetsEditor] = useState(false);
   const [isCompact, setIsCompact] = useState(false);
   const [introDone, setIntroDone] = useState(false);
   const [controlsPosition, setControlsPosition] = useState<ControlsPosition>(
@@ -60,6 +61,7 @@ function App() {
   }, [callState]);
 
   const openColorPicker = async () => {
+    setShowWidgetsEditor(false);
     setShowColorPicker(true);
     await windowService.expandForColorPicker();
   };
@@ -69,9 +71,23 @@ function App() {
     await windowService.restoreFromColorPicker(isCompact);
   };
 
+  const openWidgetsEditor = async () => {
+    setShowColorPicker(false);
+    setShowWidgetsEditor(true);
+    await windowService.expandForWidgets();
+  };
+
+  const closeWidgetsEditor = async () => {
+    setShowWidgetsEditor(false);
+    await windowService.restoreFromWidgets(isCompact);
+  };
+
   const toggleCompact = async () => {
     if (showColorPicker) {
       await closeColorPicker();
+    }
+    if (showWidgetsEditor) {
+      await closeWidgetsEditor();
     }
     const next = !isCompact;
     setIsCompact(next);
@@ -162,6 +178,9 @@ function App() {
         showColorPicker={showColorPicker}
         onOpenColorPicker={openColorPicker}
         onCloseColorPicker={closeColorPicker}
+        showWidgetsEditor={showWidgetsEditor}
+        onOpenWidgetsEditor={openWidgetsEditor}
+        onCloseWidgetsEditor={closeWidgetsEditor}
         isCompact={isCompact}
         onToggleCompact={toggleCompact}
         controlsPosition={controlsPosition}

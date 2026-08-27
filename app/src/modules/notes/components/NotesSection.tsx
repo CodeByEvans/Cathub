@@ -142,7 +142,7 @@ export function NotesSection({
 
   return (
     <div
-      className={`relative flex flex-col h-full flex-1 min-w-0 ${isCompact ? "px-0" : "px-2"} gap-1`}
+      className={`relative flex flex-col h-full flex-[2] min-w-0 ${isCompact ? "px-0" : "px-2"} gap-1`}
       data-tauri-drag-region
     >
       {/* ── Nota principal ── */}

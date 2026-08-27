@@ -15,6 +15,12 @@ export const STORE_KEYS = {
   compactWindowSize: "compactWindowSize",
   compactMode: "compactMode",
   windowControlsPosition: "windowControlsPosition",
+  sectionLayout: "sectionLayout",
+  hiddenSections: "hiddenSections",
+  dateFormat: "dateFormat",
+  clockFormat: "clockFormat",
+  weatherBorder: "weatherBorder",
+  weatherIconColor: "weatherIconColor",
   // onboarding
   firstLaunch: "firstLaunch",
   introductionCompleted: "introduction_completed",
@@ -41,6 +47,12 @@ export interface StoreValueMap {
   compactWindowSize: { width: number; height: number };
   compactMode: boolean;
   windowControlsPosition: string;
+  sectionLayout: { left: string[]; right: string[] };
+  hiddenSections: string[];
+  dateFormat: string;
+  clockFormat: string;
+  weatherBorder: boolean;
+  weatherIconColor: string;
   firstLaunch: boolean;
   introduction_completed: boolean;
 }

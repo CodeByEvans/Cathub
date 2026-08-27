@@ -1,15 +1,9 @@
-import { CathubLogo } from "@/shared/components/atoms/logo";
-import { useConnection } from "@/modules/connection/contexts/ConnectionContext";
 import { useState, useEffect } from "react";
+import { useWidgetSettings } from "@/modules/widgets/context/WidgetSettingsContext";
 
-interface ClockSectionProps {
-  partnerAvatar?: string;
-}
-
-export function ClockSection({ partnerAvatar }: ClockSectionProps) {
+export function ClockSection() {
   const [time, setTime] = useState(new Date());
-
-  const { partnerName } = useConnection();
+  const { clockFormat } = useWidgetSettings();
 
   useEffect(() => {
     const timer = setInterval(() => setTime(new Date()), 1000);
@@ -17,46 +11,21 @@ export function ClockSection({ partnerAvatar }: ClockSectionProps) {
   }, []);
 
   const formatTime = (date: Date) => {
+    if (clockFormat === "12h") {
+      const hour = date.getHours() % 12 || 12;
+      const minute = date.getMinutes().toString().padStart(2, "0");
+      return `${hour}:${minute}`;
+    }
     return date.toLocaleTimeString("es-ES", {
       hour: "2-digit",
       minute: "2-digit",
     });
   };
 
-  const formatDate = (date: Date) => {
-    return date.toLocaleDateString("es-ES", {
-      weekday: "short",
-      day: "numeric",
-      month: "short",
-    });
-  };
-
   return (
-    <div className="flex flex-col items-center justify-center gap-2 px-4 h-full min-w-[180px]">
-      {/* Time display */}
-      <div className="text-4xl font-bold text-primary tracking-tight">
+    <div className="flex flex-col items-center justify-center px-4">
+      <div className="text-4xl font-bold text-primary tracking-tight whitespace-nowrap">
         {formatTime(time)}
-      </div>
-
-      {/* Date */}
-      <div className="text-xs text-muted-foreground capitalize">
-        {formatDate(time)}
-      </div>
-
-      {/* Partner info */}
-      <div className="flex items-center gap-2 mt-1">
-        {partnerAvatar ? (
-          <img
-            src={partnerAvatar || "/placeholder.svg"}
-            alt={partnerName}
-            className="w-6 h-6 rounded-full object-cover ring-2 ring-primary/30"
-          />
-        ) : (
-          <CathubLogo size="sm" />
-        )}
-        <span className="text-sm font-medium text-muted-foreground truncate max-w-[100px]">
-          {partnerName}
-        </span>
       </div>
     </div>
   );

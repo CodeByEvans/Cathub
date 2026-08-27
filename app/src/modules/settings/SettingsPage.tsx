@@ -23,6 +23,7 @@ export interface SettingsProps {
   isOpen: boolean;
   onClose: () => void;
   onOpenColorPicker?: () => void;
+  onOpenWidgetsEditor?: () => void;
   controlsPosition: ControlsPosition;
   onControlsPositionChange: (position: ControlsPosition) => void;
 }
@@ -31,6 +32,7 @@ export const SettingsPage: React.FC<SettingsProps> = ({
   isOpen,
   onClose,
   onOpenColorPicker,
+  onOpenWidgetsEditor,
   controlsPosition,
   onControlsPositionChange,
 }) => {
@@ -91,7 +93,10 @@ export const SettingsPage: React.FC<SettingsProps> = ({
             transition={{ duration: 0.15 }}
           >
             {currentView === "main" && (
-              <MainSettingsView setCurrentView={goToView} />
+              <MainSettingsView
+                setCurrentView={goToView}
+                onOpenWidgetsEditor={onOpenWidgetsEditor ?? (() => {})}
+              />
             )}
 
             {currentView === "app-settings" && (

@@ -10,10 +10,12 @@ import { ViewType } from "../@types/settings.types";
 
 export interface SettingsPanelProps {
   setCurrentView: (view: ViewType) => void;
+  onOpenWidgetsEditor: () => void;
 }
 
 export const MainSettingsView: React.FC<SettingsPanelProps> = ({
   setCurrentView,
+  onOpenWidgetsEditor,
 }) => {
   const { breakConnection } = useConnection();
 
@@ -39,6 +41,9 @@ export const MainSettingsView: React.FC<SettingsPanelProps> = ({
           switch (action) {
             case "app-settings":
               setCurrentView("app-settings");
+              break;
+            case "widgets":
+              onOpenWidgetsEditor();
               break;
             case "audio-settings":
               setCurrentView("audio-settings");

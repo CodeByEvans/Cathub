@@ -3,6 +3,7 @@ import { ConnectionProvider } from "@/modules/connection/contexts/ConnectionCont
 import { PresenceProvider } from "@/modules/presence/context/PresenceContext";
 import { useConnection } from "@/modules/connection/contexts/ConnectionContext";
 import { NotesProvider } from "@/modules/notes/context/NotesContext";
+import { WidgetSettingsProvider } from "@/modules/widgets/context/WidgetSettingsContext";
 
 const InnerProviders: React.FC<{ children: React.ReactNode }> = ({
   children,
@@ -23,7 +24,9 @@ const InnerProviders: React.FC<{ children: React.ReactNode }> = ({
 export const AppProviders: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => (
-  <ConnectionProvider>
-    <InnerProviders>{children}</InnerProviders>
-  </ConnectionProvider>
+  <WidgetSettingsProvider>
+    <ConnectionProvider>
+      <InnerProviders>{children}</InnerProviders>
+    </ConnectionProvider>
+  </WidgetSettingsProvider>
 );

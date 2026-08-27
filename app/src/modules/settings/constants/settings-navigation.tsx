@@ -15,6 +15,7 @@ import {
   PanelLeft,
   PanelRight,
   PanelTop,
+  LayoutGrid,
 } from "lucide-react";
 import {
   SettingsButtonProps,
@@ -28,6 +29,11 @@ export const MAIN_SETTINGS: SettingsButtonProps[] = [
     icon: <Layout className="w-6 h-6 mb-1" />,
     text: "General",
     action: "app-settings",
+  },
+  {
+    icon: <LayoutGrid className="w-6 h-6 mb-1" />,
+    text: "Widgets",
+    action: "widgets",
   },
   {
     icon: <Mic className="w-6 h-6 mb-1" />,

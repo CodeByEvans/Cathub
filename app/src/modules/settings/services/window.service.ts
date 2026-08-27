@@ -2,7 +2,7 @@ import { logger } from "@/shared/logger";
 import { settingsRepository, WindowBehavior } from "./settings.repository";
 import { invoke } from "@tauri-apps/api/core";
 import { getCurrentWindow, LogicalSize } from "@tauri-apps/api/window";
-import { MAIN_SIZE, EXPANDED_SIZE, DEFAULT_COMPACT } from "@/constants/window.constants";
+import { MAIN_SIZE, EXPANDED_SIZE, WIDGETS_EXPANDED_SIZE, DEFAULT_COMPACT } from "@/constants/window.constants";
 import { ControlsPosition } from "@/@types/window.types";
 
 type Behavior = WindowBehavior;
@@ -193,6 +193,20 @@ export class WindowService {
   }
 
   async restoreFromColorPicker(isCompact: boolean) {
+    const win = await this.getWindow();
+    if (isCompact) {
+      await win.setSize(new LogicalSize(this.compactSize.width, this.compactSize.height));
+    } else {
+      await win.setSize(MAIN_SIZE);
+    }
+  }
+
+  async expandForWidgets() {
+    const win = await this.getWindow();
+    await win.setSize(WIDGETS_EXPANDED_SIZE);
+  }
+
+  async restoreFromWidgets(isCompact: boolean) {
     const win = await this.getWindow();
     if (isCompact) {
       await win.setSize(new LogicalSize(this.compactSize.width, this.compactSize.height));
